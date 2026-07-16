@@ -1,0 +1,46 @@
+import express, { NextFunction, Request, Response } from "express"
+import cors from "cors"
+import cookieParser from "cookie-parser"
+import { env } from "./config/env";
+import errorMiddleware from "./middlewares/error";
+
+const app = express()
+
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || env.allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("CORS origin is not allowed"));
+    },
+  }),
+);
+
+// body parser
+app.use(express.json({limit: "50mb"}))
+
+app.use(cookieParser())
+
+
+app.get("/test", (req, res, next)  => {
+    res.status(200).json({
+        success: true,
+        message: "Backend in running"
+    })
+})
+
+// Middleware for Errors
+
+app.use(errorMiddleware)
+
+// app.all("*", (req: Request,res: Response,next: NextFunction) => {
+//     const err = new Error(`ROute ${req.originalUrl} not found`) as any;
+//     err.statusCode = 404;
+//     next(err)
+// })
+
+export default app
+
