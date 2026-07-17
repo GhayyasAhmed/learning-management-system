@@ -24,7 +24,7 @@ export const registerUser = catchAsyncError(async (req: Request, res: Response, 
         // CRUCIAL: Use findOne so it returns null if the user does not exist
         const isEmailExist = await UserModel.findOne({ email });
         if (isEmailExist) {
-            return next(new ErrorHandler("Email already exists", 400));
+            return next(new ErrorHandler("User already exists", 400));
         }
 
         const user: IRegistrationBody = {
@@ -81,10 +81,56 @@ export const createActiviationToken = (user: IRegistrationBody): IActivationToke
         { user, activationCode },
         process.env.ACTIVATION_SECRET as Secret,
         {
-            // Fix: Asserting as string resolves the overload type incompatibility
             expiresIn: finalExpiry
         }
     );
 
     return { token, activationCode };
 };
+
+
+//activate user
+
+interface IActivationRequest{
+    activationToken: string;
+    activationCode: string;
+}
+
+
+export const activateUser = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {activationToken, activationCode} = req.body as IActivationRequest;
+        const newUser: {user: IUser; activationCode:string} = jwt.verify(
+            activationToken,
+            process.env.ACTIVATION_SECRET as string
+        ) as {user: IUser; activationCode:string}
+
+        if(newUser.activationCode !== activationCode){
+            return next(new ErrorHandler("Invalid activation code", 400))
+        }
+        
+        const {name, email, password} = newUser.user
+
+        const existUser = await UserModel.findOne({email})
+
+        if(existUser){
+            return next(new ErrorHandler("User already exists", 400))
+        }
+
+        const user = await UserModel.create({
+            name,
+            email,
+            password
+        })
+
+        res.status(201).json({
+            success:true,
+            message: "User registered successfully"
+        })
+
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+
+})
