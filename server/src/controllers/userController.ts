@@ -1,12 +1,12 @@
-import { Request, Response, NextFunction } from "express";
+import "dotenv/config";
+import { NextFunction, Request, Response } from "express";
+import jwt, { Secret } from "jsonwebtoken";
+import type { StringValue } from "ms";
+import { redis } from "../config/redis.js";
+import catchAsyncError from "../middlewares/catchAsyncError.js";
 import UserModel, { IUser } from "../models/user.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
-import catchAsyncError from "../middlewares/catchAsyncError.js";
-import jwt, { Secret } from "jsonwebtoken";
-import "dotenv/config";
-import type { StringValue } from "ms"
-import ejs from "ejs"
-import path from "path";
+import { sendToken } from "../utils/jwt.js";
 import sendEmail from "../utils/sendEmail.js";
 
 // Use lowercase primitive types 'string' instead of uppercase 'String'
@@ -34,12 +34,12 @@ export const registerUser = catchAsyncError(async (req: Request, res: Response, 
         };
 
         const activationToken = createActiviationToken(user);
-        const {activationCode} = activationToken
+        const { activationCode } = activationToken
 
-        const data = {user: {name: user.name}, activationCode}
+        const data = { user: { name: user.name }, activationCode }
         // const html = await ejs.renderFile(path.join(import.meta.dirname, "../mails/activation-mail.ejs"), data)
 
-        try{
+        try {
             await sendEmail({
                 email: user.email,
                 subject: "Activate Your Account",
@@ -52,9 +52,9 @@ export const registerUser = catchAsyncError(async (req: Request, res: Response, 
                 activationToken: activationToken.token
             })
         }
-        catch(error:any){
-            return next(new ErrorHandler(error.message,400))
-            
+        catch (error: any) {
+            return next(new ErrorHandler(error.message, 400))
+
         }
     }
     catch (error: any) {
@@ -70,13 +70,13 @@ interface IActivationToken {
 const expiryTime = process.env.JWT_EXPIRE;
 
 // Create a type guard or fallback to a known literal string
-const finalExpiry = (expiryTime && typeof expiryTime === "string") 
-    ? (expiryTime as StringValue) 
+const finalExpiry = (expiryTime && typeof expiryTime === "string")
+    ? (expiryTime as StringValue)
     : "5m";
 
 export const createActiviationToken = (user: IRegistrationBody): IActivationToken => {
     const activationCode = Math.floor(1000 + Math.random() * 9000).toString();
-    
+
     const token = jwt.sign(
         { user, activationCode },
         process.env.ACTIVATION_SECRET as Secret,
@@ -91,7 +91,7 @@ export const createActiviationToken = (user: IRegistrationBody): IActivationToke
 
 //activate user
 
-interface IActivationRequest{
+interface IActivationRequest {
     activationToken: string;
     activationCode: string;
 }
@@ -99,21 +99,21 @@ interface IActivationRequest{
 
 export const activateUser = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const {activationToken, activationCode} = req.body as IActivationRequest;
-        const newUser: {user: IUser; activationCode:string} = jwt.verify(
+        const { activationToken, activationCode } = req.body as IActivationRequest;
+        const newUser: { user: IUser; activationCode: string } = jwt.verify(
             activationToken,
             process.env.ACTIVATION_SECRET as string
-        ) as {user: IUser; activationCode:string}
+        ) as { user: IUser; activationCode: string }
 
-        if(newUser.activationCode !== activationCode){
+        if (newUser.activationCode !== activationCode) {
             return next(new ErrorHandler("Invalid activation code", 400))
         }
-        
-        const {name, email, password} = newUser.user
 
-        const existUser = await UserModel.findOne({email})
+        const { name, email, password } = newUser.user
 
-        if(existUser){
+        const existUser = await UserModel.findOne({ email })
+
+        if (existUser) {
             return next(new ErrorHandler("User already exists", 400))
         }
 
@@ -124,7 +124,7 @@ export const activateUser = catchAsyncError(async (req: Request, res: Response, 
         })
 
         res.status(201).json({
-            success:true,
+            success: true,
             message: "User registered successfully"
         })
 
@@ -133,4 +133,55 @@ export const activateUser = catchAsyncError(async (req: Request, res: Response, 
         return next(new ErrorHandler(error.message, 400));
     }
 
+})
+
+
+
+interface ILoginRequest {
+    email: string;
+    password: string;
+}
+
+export const loginUser = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+
+        const { email, password } = req.body as ILoginRequest;
+
+        if (!email || !password) {
+            return next(new ErrorHandler("Please enter email & password", 400))
+        }
+
+        const user = await UserModel.findOne({ email }).select("+password")
+
+        if (!user) {
+            return next(new ErrorHandler("Invalid email or password", 401))
+        }
+
+        const isPasswordMatched = await user.comparePassword(password);
+        if (!isPasswordMatched) {
+            return next(new ErrorHandler("Invalid email or password", 401))
+        }
+
+        sendToken(user, 200, res, "Login successful")
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
+
+    }
+
+})
+
+export const logoutUser = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        res.cookie("accessToken", null, { expires: new Date(Date.now()), httpOnly: true })
+        res.cookie("refreshToken", null, { expires: new Date(Date.now()), httpOnly: true })
+
+        redis.del(req.user?._id.toString() || "")
+
+        res.status(200).json({ success: true, message: "Logged out successfully" })
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
+
+    }
 })
