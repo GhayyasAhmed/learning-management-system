@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
-import jwt, { Secret } from "jsonwebtoken";
+import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import type { StringValue } from "ms";
 import { redis } from "../config/redis.js";
 import catchAsyncError from "../middlewares/catchAsyncError.js";
@@ -8,6 +8,7 @@ import UserModel, { IUser } from "../models/user.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import { sendToken } from "../utils/jwt.js";
 import sendEmail from "../utils/sendEmail.js";
+import { accessTokenOptions, refreshTokenOptions } from "../utils/jwt.js";
 
 // Use lowercase primitive types 'string' instead of uppercase 'String'
 interface IRegistrationBody {
@@ -183,5 +184,82 @@ export const logoutUser = catchAsyncError(async (req: Request, res: Response, ne
     catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
 
+    }
+})
+
+
+export const updateAccessToken = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const refreshToken = req.cookies.refreshToken as string;
+        const decodedRefreshToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN as string) as JwtPayload;
+        if (!decodedRefreshToken) {
+            return next(new ErrorHandler("Invalid refresh token", 401));
+        }
+        const session = await redis.get(decodedRefreshToken.id as string);
+        if (!session) {
+            return next(new ErrorHandler("Session expired. Please log in again.", 401));
+        }
+
+        const user = JSON.parse(session) as IUser;
+
+        const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN as string, { expiresIn: "5m" });
+
+        const newRefreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN as string, { expiresIn: "59m" });
+
+        res.cookie("accessToken", accessToken, accessTokenOptions);
+        res.cookie("refreshToken", newRefreshToken, refreshTokenOptions);
+        res.status(200).json({ success: true, message: "Access token updated successfully", accessToken });
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
+    }
+})
+
+
+export const getUserInfo = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // getUserById(userId, res);
+        const user = await UserModel.findById(req.user?._id);
+        return res.status(200).json({
+            success: true,
+            user
+        });
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
+    }
+})
+
+
+// social auth
+
+interface ISocialAuthRequest {
+    name: string;
+    email: string;
+    avatar: {
+        public_id: string;
+        url: string;
+    };
+}
+
+export const socialAuth = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { name, email, avatar } = req.body as ISocialAuthRequest;
+        const user = await UserModel.findOne({ email });
+        if(!user){
+            const newUser = await UserModel.create({
+                name,
+                email,
+                avatar
+            })
+            sendToken(newUser, 201, res, "User registered successfully")
+        }
+        else{
+            sendToken(user, 200, res, "Login successful")
+        }
+
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
     }
 })
