@@ -1,7 +1,5 @@
-import mongoose, { Document, Schema, Model } from "mongoose";
-import bcrypt from "bcryptjs"
 import "dotenv/config";
-import jwt from "jsonwebtoken"
+import mongoose, { Document, Model, Schema } from "mongoose";
 
 interface IComment extends Document {
     user: mongoose.Types.ObjectId;
@@ -99,10 +97,10 @@ const courseDataSchema: Schema<ICourseData> = new mongoose.Schema({
         type: String,
         required: true
     },
-    videoThumbnail: {
-        type: Object,
-        required: true
-    },
+    // videoThumbnail: {
+    //     type: Object,
+    //     required: true
+    // },
     videoSection: {
         type: String,
         required: true
@@ -158,11 +156,11 @@ const courseSchema: Schema<ICourse> = new mongoose.Schema({
     thumbnail: {
         public_id: {
             type: String,
-            required: true
+            // required: true
         },
         url: {
             type: String,
-            required: true
+            // required: true
         },
     },
     tags: {

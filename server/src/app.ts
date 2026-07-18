@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser"
 import { env } from "./config/env.js";
 import errorMiddleware from "./middlewares/error.js";
 import userRouter from "./routes/userRoutes.js"
+import courseRouter from "./routes/courseRoutes.js";
 
 const app = express()
 
@@ -27,6 +28,7 @@ app.use(cookieParser())
 
 
 app.use("/api/v1/user", userRouter)
+app.use("/api/v1/course", courseRouter)
 
 app.get("/test", (req, res, next)  => {
     res.status(200).json({
