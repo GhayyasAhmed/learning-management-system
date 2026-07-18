@@ -25,7 +25,7 @@ export interface ICourseData extends Document {
     title: string;
     description: string;
     videoUrl: string;
-    videoThumbnail: object;
+    // videoThumbnail: object;
     videoSection: string;
     videoLength: number;
     videoPlayer: string;
@@ -39,7 +39,7 @@ export interface ICourse extends Document {
     description?: string;
     price: number;
     estimatedPrice?: number;
-    thumbnail: object;
+    thumbnail: { public_id: string; url: string } | string;
     tags: string;
     level: string;
     demoUrl: string;

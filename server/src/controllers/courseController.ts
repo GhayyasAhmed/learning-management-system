@@ -1,10 +1,9 @@
+import cloudinary from "cloudinary";
 import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
-import UserModel, { IUser } from "../models/user.model.js";
 import catchAsyncError from "../middlewares/catchAsyncError.js";
-import CourseModel, {ICourse} from "../models/course.model.js";
+import CourseModel, { ICourse } from "../models/course.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
-import cloudinary from "cloudinary";
 
 export const createCourse = catchAsyncError(async (data: ICourse, res: Response, next: NextFunction) => {
     try {
@@ -14,7 +13,7 @@ export const createCourse = catchAsyncError(async (data: ICourse, res: Response,
             course,
             message: "Course created successfully"
         })
-        
+
     }
     catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
@@ -27,7 +26,7 @@ export const uploadCourse = catchAsyncError(async (req: Request, res: Response, 
     try {
         const data = req.body
         const thumbnail = data.thumbnail
-        if(thumbnail){
+        if (thumbnail) {
             const result = await cloudinary.v2.uploader.upload(thumbnail, {
                 folder: "courses"
             })
@@ -38,8 +37,64 @@ export const uploadCourse = catchAsyncError(async (req: Request, res: Response, 
             }
         }
 
-        createCourse(data,res,next)
+        createCourse(data, res, next)
 
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
+
+    }
+})
+
+
+// Define what the thumbnail looks like when it's an object in the DB
+interface IStoredThumbnail {
+    public_id: string;
+    url: string;
+}
+
+export const editCourse = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params
+        let course = await CourseModel.findById(id)
+        if (!course) {
+            return next(new ErrorHandler("Course not found", 404));
+        }
+        const data = req.body as ICourse
+        const thumbnail = data.thumbnail
+
+        const savedThumbnail = course.thumbnail as IStoredThumbnail;
+
+        // If a new thumbnail string is sent, destroy the old one and upload the new one
+        if (thumbnail && typeof thumbnail === "string" && thumbnail.startsWith("data:image")) {
+            // Check if the course already has a public_id stored to delete it from Cloudinary
+
+            if (savedThumbnail && savedThumbnail.public_id) {
+                await cloudinary.v2.uploader.destroy(savedThumbnail.public_id);
+            }
+
+            const result = await cloudinary.v2.uploader.upload(thumbnail, {
+                folder: "courses"
+            });
+
+            data.thumbnail = {
+                public_id: result.public_id,
+                url: result.secure_url
+            };
+        } else {
+            // Keep existing thumbnail if no new one was provided in the update payload
+            data.thumbnail = course.thumbnail;
+        }
+
+        // Fix: Use Mongoose's native .set method to safely merge changes into the document
+        course.set(data);
+        const updatedCourse = await course.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Course updated successfully",
+            data: updatedCourse
+        });
     }
     catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
