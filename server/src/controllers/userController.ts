@@ -205,9 +205,13 @@ export const updateAccessToken = catchAsyncError(async (req: Request, res: Respo
         const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN as string, { expiresIn: "5m" });
 
         const newRefreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN as string, { expiresIn: "59m" });
+        
+        req.user = user; // Update the user in the request object
 
         res.cookie("accessToken", accessToken, accessTokenOptions);
         res.cookie("refreshToken", newRefreshToken, refreshTokenOptions);
+
+        await redis.set(user._id.toString(), JSON.stringify(user), "EX", parseInt(process.env.REFRESH_TOKEN_EXPIRE || "59", 10) * 60);
         res.status(200).json({ success: true, message: "Access token updated successfully", accessToken });
     }
     catch (error: any) {
@@ -218,12 +222,16 @@ export const updateAccessToken = catchAsyncError(async (req: Request, res: Respo
 
 export const getUserInfo = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // getUserById(userId, res);
-        const user = await UserModel.findById(req.user?._id);
-        return res.status(200).json({
-            success: true,
-            user
-        });
+        // get user info from redis cache without password
+        const user = await redis.get(req.user?._id.toString() || "") as string | null;
+        if (user) {
+            const userData = JSON.parse(user);
+            delete userData.password; // Remove password from the user object before sending the response
+            return res.status(200).json({
+                success: true,
+                user: userData
+            });
+        }
     }
     catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
@@ -246,7 +254,7 @@ export const socialAuth = catchAsyncError(async (req: Request, res: Response, ne
     try {
         const { name, email, avatar } = req.body as ISocialAuthRequest;
         const user = await UserModel.findOne({ email });
-        if(!user){
+        if (!user) {
             const newUser = await UserModel.create({
                 name,
                 email,
@@ -254,10 +262,54 @@ export const socialAuth = catchAsyncError(async (req: Request, res: Response, ne
             })
             sendToken(newUser, 201, res, "User registered successfully")
         }
-        else{
+        else {
             sendToken(user, 200, res, "Login successful")
         }
 
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
+    }
+})
+
+//update user info 
+interface IUpdateUserInfoRequest {
+    name?: string;
+    email?: string;
+    avatar?: {
+        public_id: string;
+        url: string;
+    };
+}
+
+
+export const updateUserInfo = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { name, email, avatar } = req.body as IUpdateUserInfoRequest;
+        const user = await UserModel.findById(req.user?._id);
+        if (!user) {
+            return next(new ErrorHandler("User not found", 404))
+        }
+        if (email) {
+            const isEmailExist = await UserModel.findOne({ email });
+            if (isEmailExist && isEmailExist._id.toString() !== user._id.toString()) {
+                return next(new ErrorHandler("email already in use", 400));
+            }
+            user.email = email;
+        }
+
+        if (name) user.name = name;
+        if (avatar) user.avatar = avatar;
+
+        await user.save();
+
+        await redis.set(user._id.toString(), JSON.stringify(user), "EX", parseInt(process.env.REFRESH_TOKEN_EXPIRE || "59", 10) * 60);
+
+        res.status(200).json({
+            success: true,
+            message: "User info updated successfully",
+            user
+        })
     }
     catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
