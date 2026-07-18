@@ -1,6 +1,9 @@
 import app from "./app.js";
 import { connectDatabase } from "./config/database.js";
 import { env } from "./config/env.js";
+import connectCloudinary from "./config/cloudinary.js";
+
+connectCloudinary();
 
 async function startServer() {
   try {

@@ -1,8 +1,7 @@
 import { Router } from "express";
 import {
     activateUser, getUserInfo, loginUser, logoutUser, registerUser,
-    updateAccessToken, socialAuth, updateUserInfo
-
+    updateAccessToken, socialAuth, updateUserInfo, updateUserPassword, updateProfilePicture
 } from "../controllers/userController.js";
 import { isAuthenticated } from "../middlewares/auth.js";
 
@@ -17,5 +16,7 @@ userRouter.get("/refreshtoken", updateAccessToken)
 userRouter.get("/me", isAuthenticated, getUserInfo)
 userRouter.post("/social-auth", socialAuth)
 userRouter.patch("/me/update", isAuthenticated, updateUserInfo)
+userRouter.put("/password/update", isAuthenticated, updateUserPassword)
+userRouter.put("/me/update/profile-picture", isAuthenticated, updateProfilePicture)
 
 export default userRouter

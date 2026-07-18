@@ -9,6 +9,7 @@ import ErrorHandler from "../utils/errorhandler.js";
 import { sendToken } from "../utils/jwt.js";
 import sendEmail from "../utils/sendEmail.js";
 import { accessTokenOptions, refreshTokenOptions } from "../utils/jwt.js";
+import cloudinary from "cloudinary";
 
 // Use lowercase primitive types 'string' instead of uppercase 'String'
 interface IRegistrationBody {
@@ -205,7 +206,7 @@ export const updateAccessToken = catchAsyncError(async (req: Request, res: Respo
         const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN as string, { expiresIn: "5m" });
 
         const newRefreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN as string, { expiresIn: "59m" });
-        
+
         req.user = user; // Update the user in the request object
 
         res.cookie("accessToken", accessToken, accessTokenOptions);
@@ -310,6 +311,94 @@ export const updateUserInfo = catchAsyncError(async (req: Request, res: Response
             message: "User info updated successfully",
             user
         })
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
+    }
+})
+
+
+// update user password
+interface IUpdatePasswordRequest {
+    oldPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+}
+
+export const updateUserPassword = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const user = await UserModel.findById(req.user?._id).select("+password") as IUser | null;
+
+        // for social auth users, password will be undefined, so we need to check for that
+        if (user?.password === undefined) {
+            return next(new ErrorHandler("Invalid user", 400))
+        }
+
+        const { oldPassword, newPassword, confirmPassword } = req.body as IUpdatePasswordRequest;
+        const isPasswordMatched = await user?.comparePassword(oldPassword);
+        if (!isPasswordMatched) {
+            return next(new ErrorHandler("Old password is incorrect", 400))
+        }
+
+        if (newPassword !== confirmPassword) {
+            return next(new ErrorHandler("New password and confirm password do not match", 400))
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        sendToken(user, 200, res, "Password updated successfully")
+
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
+    }
+})
+
+interface IUpdateProfilePictureRequest {
+    avatar: string
+}
+
+
+//update profile picture
+export const updateProfilePicture = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { avatar } = req.body as IUpdateProfilePictureRequest;
+        if (!avatar) {
+            return next(new ErrorHandler("Please provide a profile picture", 400))
+        }
+        const user = await UserModel.findById(req.user?._id);
+        if (!user) {
+            return next(new ErrorHandler("User not found", 404))
+        }
+
+        if (user?.avatar?.public_id) {
+            // delete the old profile picture from cloudinary
+            await cloudinary.v2.uploader.destroy(user.avatar.public_id)
+        }
+
+        // upload the new profile picture to cloudinary
+        const result = await cloudinary.v2.uploader.upload(avatar, {
+            folder: "profile_pictures",
+            width: 150,
+            // crop: "scale"
+        })
+
+        user.avatar = {
+            public_id: result.public_id,
+            url: result.secure_url
+        }
+
+        await user.save();
+
+        await redis.set(user._id.toString(), JSON.stringify(user), "EX", parseInt(process.env.REFRESH_TOKEN_EXPIRE || "59", 10) * 60);
+
+        res.status(200).json({
+            success: true,
+            message: "Profile picture updated successfully",
+            user
+        })
+
     }
     catch (error: any) {
         return next(new ErrorHandler(error.message, 400))

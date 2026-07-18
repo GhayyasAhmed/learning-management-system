@@ -40,7 +40,7 @@ export const sendToken = async (user: IUser, statusCode: number, res: Response, 
 
 
     // upload session to redis
-    redis.set(user._id.toString(), JSON.stringify(user), "EX", refreshTokenExpiresIn / 1000)
+    await redis.set(user._id.toString(), JSON.stringify(user), "EX", refreshTokenExpiresIn / 1000)
 
 
     res.status(statusCode).cookie("accessToken", accessToken, accessTokenOptions)

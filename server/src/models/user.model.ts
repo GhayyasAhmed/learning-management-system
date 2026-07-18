@@ -97,7 +97,7 @@ userSchema.methods.signRefreshToken = function (){
 
 userSchema.methods.comparePassword = async function(enteredPassword: string): Promise<boolean>{
     const check = await bcrypt.compare(enteredPassword, this.password)
-    return  check
+    return check
 }
 
 
