@@ -10,12 +10,12 @@ export interface IComment {
 }
 
 // Remove "extends Document" here
-interface IReview {
+export interface IReview {
     user: mongoose.Types.ObjectId;
     rating: number;
-    comment: string;
-    commentReplies: IComment[];
-    createdAt: Date;
+    review: string;
+    reviewReplies?: IComment[];
+    // createdAt: Date;
 }
 
 // Remove "extends Document" here
@@ -66,9 +66,10 @@ const reviewSchema: Schema<IReview> = new mongoose.Schema({
         type: Number,
         default: 0,
     },
-    comment: {
+    review: {
         type: String,
-    }
+    },
+    reviewReplies: [Object]
 }, { timestamps: true });
 
 const linkSchema: Schema<ILink> = new mongoose.Schema({

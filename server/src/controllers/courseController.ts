@@ -4,7 +4,7 @@ import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import { redis } from "../config/redis.js";
 import catchAsyncError from "../middlewares/catchAsyncError.js";
-import CourseModel, { ICourse } from "../models/course.model.js";
+import CourseModel, { ICourse, IReview } from "../models/course.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import sendEmail from "../utils/sendEmail.js";
 
@@ -288,7 +288,7 @@ export const addAnswer = catchAsyncError(async (req: Request, res: Response, nex
                 runValidators: true,
                 arrayFilters: [
                     { "c._id": contentId },
-                    { "q._id": questionId } 
+                    { "q._id": questionId }
                 ]
             }
         );
@@ -322,7 +322,7 @@ export const addAnswer = catchAsyncError(async (req: Request, res: Response, nex
                 await sendEmail({
                     email: (question.user as unknown as { email: string }).email,
                     subject: "Question Reply Notification",
-                    template: "question-reply.ejs", 
+                    template: "question-reply.ejs",
                     data
                 });
             } catch (error: any) {
@@ -335,6 +335,117 @@ export const addAnswer = catchAsyncError(async (req: Request, res: Response, nex
             message: "Answer added successfully",
             course: updatedCourse
         });
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
+interface IAddReviewData {
+    review: string;
+    rating: number;
+}
+
+export const addReview = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userCourseList = req.user?.courses
+        const courseId = req.params.id
+
+        const courseExists = userCourseList?.some((course: any) => course._id.toString() === courseId);
+        if (!courseExists) {
+            return next(new ErrorHandler("Invalid course id", 404))
+        }
+
+        const course = await CourseModel.findById(courseId)
+        if (!course) {
+            return next(new ErrorHandler("Course not found", 404));
+        }
+
+        const { review, rating } = req.body as IAddReviewData
+        const reviewData: IReview = {
+            user: req.user?._id as mongoose.Types.ObjectId, // Assert type to match schema expectations
+            review,
+            rating,
+            reviewReplies: [] // Satisfy structural clarity
+        };
+
+        course?.reviews.push(reviewData)
+
+        let totalRating = 0;
+        course.reviews.forEach((rev: any) => {
+            totalRating += rev.rating;
+        });
+
+        if (course.reviews.length > 0) {
+            course.rating = totalRating / course.reviews.length;
+        }
+
+        await course.save();
+
+        // const notification = {
+        //     title: "New Review Received",
+        //     message: `${req.user?.name} has give a review in ${course?.name}`
+        // }
+
+        // create notification
+
+        res.status(200).json({
+            success: true,
+            message: "Review added successfully",
+            course
+        });
+
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+
+})
+
+
+interface IAddReviewReplyData {
+    courseId: string;
+    reviewId: string
+    comment: string;
+}
+
+export const addReviewReply = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try{
+        const { reviewId, courseId, comment } = req.body as IAddReviewReplyData;
+        if (!comment) {
+            return next(new ErrorHandler("Please provide a valid reply text", 400));
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(courseId) || !mongoose.Types.ObjectId.isValid(reviewId)) {
+            return next(new ErrorHandler("Invalid review or content id format", 400));
+        }
+
+        const reply = {
+            user: req.user?._id,
+            comment,            
+        }
+
+        let updatedCourse = await CourseModel.findOneAndUpdate(
+            { _id: courseId, "reviews._id":  reviewId},
+            {
+                $push: { "reviews.$.reviewReplies": reply }
+            },
+            {
+                returnDocument: 'after',
+                runValidators: true
+            }
+        );
+
+        if (!updatedCourse) {
+            return next(new ErrorHandler("Course or reviews module not found", 404));
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Review reply added successfully",
+            course: updatedCourse
+        });
+
     }
     catch (error: any) {
         return next(new ErrorHandler(error.message, 400));

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
     uploadCourse, editCourse, getSingleCourseWithoutPurchase, getAllCourseWithoutPurchase,
-    getCourseByUser, addQuestion, addAnswer
+    getCourseByUser, addQuestion, addAnswer, addReview, addReviewReply
 
 } from "../controllers/courseController.js";
 import { authorizeRoles, isAuthenticated } from "../middlewares/auth.js";
@@ -15,4 +15,6 @@ courseRouter.get("/get/:id", getSingleCourseWithoutPurchase)
 courseRouter.get("/get/user/:id", isAuthenticated, getCourseByUser)
 courseRouter.put("/add-question", isAuthenticated, addQuestion)
 courseRouter.put("/add-answer", isAuthenticated, addAnswer)
+courseRouter.put("/add-review/:id", isAuthenticated, addReview)
+courseRouter.put("/add-review-reply", isAuthenticated, authorizeRoles("admin"), addReviewReply)
 export default courseRouter
