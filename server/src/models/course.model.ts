@@ -1,14 +1,16 @@
 import "dotenv/config";
 import mongoose, { Document, Model, Schema } from "mongoose";
 
-interface IComment extends Document {
+export interface IComment {
+    _id?: mongoose.Types.ObjectId; // Optional if you want to reference it cleanly
     user: mongoose.Types.ObjectId;
-    comment: string;
-    commentReplies?: IComment[];
+    question: string;
+    questionReplies?:[];
     createdAt: Date;
 }
 
-interface IReview extends Document {
+// Remove "extends Document" here
+interface IReview {
     user: mongoose.Types.ObjectId;
     rating: number;
     comment: string;
@@ -16,16 +18,18 @@ interface IReview extends Document {
     createdAt: Date;
 }
 
-interface ILink extends Document {
+// Remove "extends Document" here
+interface ILink {
     title: string;
     url: string;
 }
 
-export interface ICourseData extends Document {
+// Remove "extends Document" here
+interface ICourseData {
+    _id: mongoose.Types.ObjectId; // Keep this so .equals() works smoothly in your controller
     title: string;
     description: string;
     videoUrl: string;
-    // videoThumbnail: object;
     videoSection: string;
     videoLength: number;
     videoPlayer: string;
@@ -85,11 +89,11 @@ const commentSchema: Schema<IComment> = new mongoose.Schema({
         ref: "User",
         required: true
     },
-    comment: {
+    question: {
         type: String,
         required: true
     },
-    commentReplies: [Object]
+    questionReplies: [Object]
 }, { timestamps: true });
 
 const courseDataSchema: Schema<ICourseData> = new mongoose.Schema({

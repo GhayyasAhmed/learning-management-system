@@ -1,10 +1,12 @@
 import cloudinary from "cloudinary";
 import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
+import mongoose from "mongoose";
+import { redis } from "../config/redis.js";
 import catchAsyncError from "../middlewares/catchAsyncError.js";
 import CourseModel, { ICourse } from "../models/course.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
-import { redis } from "../config/redis.js";
+import sendEmail from "../utils/sendEmail.js";
 
 export const createCourse = catchAsyncError(async (data: ICourse, res: Response, next: NextFunction) => {
     try {
@@ -153,7 +155,7 @@ export const getAllCourseWithoutPurchase = catchAsyncError(async (req: Request, 
         }
         const courses = await CourseModel.find({}).select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links")
         await redis.set("allCourses", JSON.stringify(courses))
-        
+
         res.status(200).json({
             success: true,
             courses
@@ -169,18 +171,18 @@ export const getAllCourseWithoutPurchase = catchAsyncError(async (req: Request, 
 
 // get course content -- only for valid user
 export const getCourseByUser = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
-    try{
+    try {
         const userCourseList = req.user?.courses
         const courseId = req.params.id
         const courseExists = userCourseList?.find((course: any) => course._id.toString() === courseId)
 
-        if(!courseExists){
+        if (!courseExists) {
             return next(new ErrorHandler("You are not eligible to access this course", 404))
         }
 
         const course = await CourseModel.findById(courseId)
 
-        if(!course){
+        if (!course) {
             return next(new ErrorHandler("Invalid course id", 404))
         }
 
@@ -195,5 +197,146 @@ export const getCourseByUser = catchAsyncError(async (req: Request, res: Respons
     catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
 
+    }
+})
+
+
+// add  question in course
+interface IAddQuestionData {
+    question: string;
+    courseId: string;
+    contentId: string;
+}
+
+export const addQuestion = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { question, courseId, contentId } = req.body as IAddQuestionData;
+
+        if (!question) {
+            return next(new ErrorHandler("Please provide a question text", 400));
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(courseId) || !mongoose.Types.ObjectId.isValid(contentId)) {
+            return next(new ErrorHandler("Invalid course or content id format", 400));
+        }
+
+        const newQuestion = {
+            user: req.user?._id,
+            question,
+            questionReplies: [],
+            createdAt: new Date()
+        };
+
+        const updatedCourse = await CourseModel.findOneAndUpdate(
+            { _id: courseId, "courseData._id": contentId },
+            {
+                $push: { "courseData.$.questions": newQuestion }
+            },
+            { returnDocument: 'after', runValidators: true }
+        );
+
+        if (!updatedCourse) {
+            return next(new ErrorHandler("Course or content module not found", 404));
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Question added successfully",
+            course: updatedCourse
+        });
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+});
+
+
+interface IAddAnswerData {
+    answer: string;
+    courseId: string;
+    contentId: string;
+    questionId: string
+}
+
+
+export const addAnswer = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { answer, questionId, courseId, contentId } = req.body as IAddAnswerData;
+
+        if (!answer) {
+            return next(new ErrorHandler("Please provide an answer text", 400));
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(questionId) || !mongoose.Types.ObjectId.isValid(courseId) || !mongoose.Types.ObjectId.isValid(contentId)) {
+            return next(new ErrorHandler("Invalid question, course, or content id format", 400));
+        }
+
+
+        const newAnswer = {
+            user: req.user?._id,
+            answer,
+            createdAt: new Date()
+        };
+
+        let updatedCourse = await CourseModel.findOneAndUpdate(
+            { _id: courseId },
+            {
+                $push: { "courseData.$[c].questions.$[q].questionReplies": newAnswer }
+            },
+            {
+                returnDocument: 'after',
+                runValidators: true,
+                arrayFilters: [
+                    { "c._id": contentId },
+                    { "q._id": questionId } 
+                ]
+            }
+        );
+
+        if (!updatedCourse) {
+            return next(new ErrorHandler("Course, content, or question not found", 404));
+        }
+
+        updatedCourse = await updatedCourse.populate({
+            path: "courseData.questions.user",
+            select: "name email"
+        });
+
+        // Locate the specific content and question from the updated document map
+        const courseContent = updatedCourse.courseData.find((item: any) => item._id.equals(contentId));
+        const question = courseContent?.questions.find((q: any) => q._id.equals(questionId));
+
+        if (!courseContent || !question) {
+            return next(new ErrorHandler("Failed to extract updated question data", 500));
+        }
+
+        if (req.user?._id.toString() === question.user._id.toString()) {
+            // Create a notification inside your database for the user
+        } else {
+            const data = {
+                name: (question.user as unknown as { name: string }).name,
+                title: courseContent.title,
+            };
+
+            try {
+                await sendEmail({
+                    email: (question.user as unknown as { email: string }).email,
+                    subject: "Question Reply Notification",
+                    template: "question-reply.ejs", 
+                    data
+                });
+            } catch (error: any) {
+                return next(new ErrorHandler(error.message, 400));
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Answer added successfully",
+            course: updatedCourse
+        });
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
     }
 })
