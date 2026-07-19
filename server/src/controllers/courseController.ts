@@ -165,3 +165,35 @@ export const getAllCourseWithoutPurchase = catchAsyncError(async (req: Request, 
     }
 })
 
+
+
+// get course content -- only for valid user
+export const getCourseByUser = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try{
+        const userCourseList = req.user?.courses
+        const courseId = req.params.id
+        const courseExists = userCourseList?.find((course: any) => course._id.toString() === courseId)
+
+        if(!courseExists){
+            return next(new ErrorHandler("You are not eligible to access this course", 404))
+        }
+
+        const course = await CourseModel.findById(courseId)
+
+        if(!course){
+            return next(new ErrorHandler("Invalid course id", 404))
+        }
+
+        const content = course?.courseData
+
+        res.status(200).json({
+            success: true,
+            data: content
+        })
+
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
+
+    }
+})
