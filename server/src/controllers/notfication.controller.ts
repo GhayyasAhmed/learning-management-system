@@ -7,6 +7,8 @@ import OrderModel, { IOrder } from "../models/order.models.js";
 import UserModel from "../models/user.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import sendEmail from "../utils/sendEmail.js";
+import cron from 'node-cron';
+
 
 
 // only for admin
@@ -54,6 +56,14 @@ export const updateNotificationStatus = catchAsyncError(async (req: Request, res
     }
     catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
-
     }
 })
+
+// delete notification more than 30 days old
+
+cron.schedule('0 0 0 * * *',  async () => {
+    const thirtyDaysAgo = new Date(Date.now() - 30 *24*60*60*1000)
+    await NotificationModel.deleteMany({status: "read", createdAt: {$lt: thirtyDaysAgo}})
+    console.log('Deleted read notifications');
+});
+
