@@ -7,6 +7,7 @@ import catchAsyncError from "../middlewares/catchAsyncError.js";
 import CourseModel, { ICourse, IReview } from "../models/course.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import sendEmail from "../utils/sendEmail.js";
+import NotificationModel from "../models/notification.models.js";
 
 export const createCourse = catchAsyncError(async (data: ICourse, res: Response, next: NextFunction) => {
     try {
@@ -239,6 +240,15 @@ export const addQuestion = catchAsyncError(async (req: Request, res: Response, n
             return next(new ErrorHandler("Course or content module not found", 404));
         }
 
+        const courseContent = updatedCourse?.courseData?.find((item: any) => item._id.equals(contentId))
+
+        await NotificationModel.create({
+            userId: req.user?._id?.toString(),
+            title: "New Question",
+            message: `You have a new question in ${courseContent?.title}`
+        })
+
+
         res.status(200).json({
             success: true,
             message: "Question added successfully",
@@ -312,6 +322,11 @@ export const addAnswer = catchAsyncError(async (req: Request, res: Response, nex
 
         if (req.user?._id.toString() === question.user._id.toString()) {
             // Create a notification inside your database for the user
+            await NotificationModel.create({
+                userId: req.user?._id?.toString(),
+                title: "New Question Reply Received",
+                message: `You have a new question reply in ${courseContent?.title}`
+            })
         } else {
             const data = {
                 name: (question.user as unknown as { name: string }).name,
@@ -410,7 +425,7 @@ interface IAddReviewReplyData {
 }
 
 export const addReviewReply = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
-    try{
+    try {
         const { reviewId, courseId, comment } = req.body as IAddReviewReplyData;
         if (!comment) {
             return next(new ErrorHandler("Please provide a valid reply text", 400));
@@ -422,11 +437,11 @@ export const addReviewReply = catchAsyncError(async (req: Request, res: Response
 
         const reply = {
             user: req.user?._id,
-            comment,            
+            comment,
         }
 
         let updatedCourse = await CourseModel.findOneAndUpdate(
-            { _id: courseId, "reviews._id":  reviewId},
+            { _id: courseId, "reviews._id": reviewId },
             {
                 $push: { "reviews.$.reviewReplies": reply }
             },
