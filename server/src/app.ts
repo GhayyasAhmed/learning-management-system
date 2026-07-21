@@ -7,6 +7,7 @@ import courseRouter from "./routes/courseRoutes.js";
 import notificationRouter from "./routes/notification.routes.js";
 import orderRouter from "./routes/order.routes.js";
 import userRouter from "./routes/userRoutes.js";
+import analyticsRouter from "./routes/analytics.routes.js";
 
 const app = express()
 
@@ -33,6 +34,7 @@ app.use("/api/v1/user", userRouter)
 app.use("/api/v1/course", courseRouter)
 app.use("/api/v1/order", orderRouter)
 app.use("/api/v1/notification", notificationRouter)
+app.use("/api/v1/analytic", analyticsRouter)
 
 
 app.get("/test", (req, res, next)  => {
