@@ -1,14 +1,14 @@
 import "dotenv/config";
-import { NextFunction, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import catchAsyncError from "../middlewares/catchAsyncError.js";
-import CourseModel, { ICourse } from "../models/course.model.js";
+import CourseModel from "../models/course.model.js";
 import OrderModel from "../models/order.models.js";
 import UserModel from "../models/user.model.js";
 import { generateLast12MothsData } from "../utils/analytics.generator.js";
 import ErrorHandler from "../utils/errorhandler.js";
 
 
-export const getUserAnalytics = catchAsyncError(async (data: ICourse, res: Response, next: NextFunction) => {
+export const getUserAnalytics = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const users = await generateLast12MothsData(UserModel)
 
@@ -16,16 +16,14 @@ export const getUserAnalytics = catchAsyncError(async (data: ICourse, res: Respo
             success: true,
             users
         })
-
     }
     catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
-
     }
 })
 
 
-export const getCourseAnalytics = catchAsyncError(async (data: ICourse, res: Response, next: NextFunction) => {
+export const getCourseAnalytics = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const course = await generateLast12MothsData(CourseModel)
 
@@ -33,17 +31,15 @@ export const getCourseAnalytics = catchAsyncError(async (data: ICourse, res: Res
             success: true,
             course
         })
-
     }
     catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
-
     }
 })
 
 
 
-export const getOrderAnalytics = catchAsyncError(async (data: ICourse, res: Response, next: NextFunction) => {
+export const getOrderAnalytics = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const order = await generateLast12MothsData(OrderModel)
 
@@ -51,10 +47,8 @@ export const getOrderAnalytics = catchAsyncError(async (data: ICourse, res: Resp
             success: true,
             order
         })
-
     }
     catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
-
     }
 })

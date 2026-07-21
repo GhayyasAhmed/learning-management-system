@@ -30,11 +30,9 @@ interface Layout extends Document {
 const faqSchema: Schema<FaqItem> = new mongoose.Schema({
     question: {
         type: String,
-        // required: true
     },
     answer: {
         type: String,
-        // required: true
     }
 })
 
@@ -42,7 +40,6 @@ const faqSchema: Schema<FaqItem> = new mongoose.Schema({
 const categorySchema: Schema<Category> = new mongoose.Schema({
     title: {
         type: String,
-        // required: true
     }
 })
 
