@@ -96,3 +96,18 @@ export const createOrder = catchAsyncError(async (req: Request, res: Response, n
 
     }
 })
+
+
+export const getAllOrders = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try{
+        const orders = await OrderModel.find().sort({createdAt: -1})
+
+        res.status(201).json({
+            success:true,
+            orders
+        })
+    }catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
+    }
+
+})

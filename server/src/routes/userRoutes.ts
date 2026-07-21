@@ -1,9 +1,10 @@
 import { Router } from "express";
 import {
     activateUser, getUserInfo, loginUser, logoutUser, registerUser,
-    updateAccessToken, socialAuth, updateUserInfo, updateUserPassword, updateProfilePicture
+    updateAccessToken, socialAuth, updateUserInfo, updateUserPassword, updateProfilePicture,
+    getAllUsers
 } from "../controllers/userController.js";
-import { isAuthenticated } from "../middlewares/auth.js";
+import { authorizeRoles, isAuthenticated } from "../middlewares/auth.js";
 
 
 const userRouter = Router()
@@ -18,5 +19,6 @@ userRouter.post("/social-auth", socialAuth)
 userRouter.patch("/me/update", isAuthenticated, updateUserInfo)
 userRouter.put("/password/update", isAuthenticated, updateUserPassword)
 userRouter.put("/me/update/profile-picture", isAuthenticated, updateProfilePicture)
+userRouter.get("/admin/all", isAuthenticated, authorizeRoles("admin"), getAllUsers)
 
 export default userRouter

@@ -466,3 +466,18 @@ export const addReviewReply = catchAsyncError(async (req: Request, res: Response
         return next(new ErrorHandler(error.message, 400));
     }
 })
+
+
+export const getAllCourses = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try{
+        const courses = await CourseModel.find().sort({createdAt: -1})
+
+        res.status(201).json({
+            success:true,
+            courses
+        })
+    }catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
+    }
+
+})
