@@ -440,3 +440,25 @@ export const updateUserRole = catchAsyncError(async (req: Request, res: Response
         return next(new ErrorHandler(error.message, 400))
     }
 })
+
+
+export const deleteUser = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try{
+        const {userId} = req.body
+        const user = await UserModel.findById(userId)
+        if (!user) {
+            return next(new ErrorHandler("User not found", 404))
+        }
+
+        await user.deleteOne({userId})
+        await redis.del(userId)
+
+        res.status(200).json({
+            success:true,
+            message: "User deleted successfully",
+        })
+
+    }catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
+    }
+})

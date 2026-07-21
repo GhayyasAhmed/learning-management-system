@@ -481,3 +481,25 @@ export const getAllCourses = catchAsyncError(async (req: Request, res: Response,
     }
 
 })
+
+
+export const deleteCourse = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try{
+        const {courseId} = req.body
+        const course = await CourseModel.findById(courseId)
+        if (!course) {
+            return next(new ErrorHandler("Course not found", 404))
+        }
+
+        await course.deleteOne({courseId})
+        await redis.del(courseId)
+
+        res.status(200).json({
+            success:true,
+            message: "Course deleted successfully",
+        })
+
+    }catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
+    }
+})

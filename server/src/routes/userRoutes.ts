@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
     activateUser, getUserInfo, loginUser, logoutUser, registerUser,
     updateAccessToken, socialAuth, updateUserInfo, updateUserPassword, updateProfilePicture,
-    getAllUsers, updateUserRole
+    getAllUsers, updateUserRole, deleteUser
 } from "../controllers/userController.js";
 import { authorizeRoles, isAuthenticated } from "../middlewares/auth.js";
 
@@ -21,5 +21,5 @@ userRouter.put("/password/update", isAuthenticated, updateUserPassword)
 userRouter.put("/me/update/profile-picture", isAuthenticated, updateProfilePicture)
 userRouter.get("/admin/all", isAuthenticated, authorizeRoles("admin"), getAllUsers)
 userRouter.put("/admin/update-role", isAuthenticated, authorizeRoles("admin"), updateUserRole)
-
+userRouter.delete("/admin/delete", isAuthenticated, authorizeRoles("admin"), deleteUser)
 export default userRouter

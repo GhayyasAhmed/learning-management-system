@@ -8,7 +8,8 @@ import {
     getAllCourseWithoutPurchase,
     getCourseByUser,
     getSingleCourseWithoutPurchase,
-    uploadCourse
+    uploadCourse,
+    deleteCourse
 } from "../controllers/courseController.js";
 import { authorizeRoles, isAuthenticated } from "../middlewares/auth.js";
 
@@ -24,4 +25,5 @@ courseRouter.put("/add-answer", isAuthenticated, addAnswer)
 courseRouter.put("/add-review/:id", isAuthenticated, addReview)
 courseRouter.put("/admin/add-review-reply", isAuthenticated, authorizeRoles("admin"), addReviewReply)
 courseRouter.get("/admin/all", isAuthenticated, authorizeRoles("admin"), getAllCourses)
+courseRouter.delete("/admin/delete", isAuthenticated, authorizeRoles("admin"), deleteCourse)
 export default courseRouter
