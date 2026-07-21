@@ -129,7 +129,7 @@ export const getSingleCourseWithoutPurchase = catchAsyncError(async (req: Reques
             return next(new ErrorHandler("Course not found", 404));
         }
 
-        await redis.set(id, JSON.stringify(course))
+        await redis.set(id, JSON.stringify(course), "EX", 604800) // 7 days
 
 
         res.status(200).json({

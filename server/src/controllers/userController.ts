@@ -207,7 +207,7 @@ export const updateAccessToken = catchAsyncError(async (req: Request, res: Respo
 
         const newRefreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN as string, { expiresIn: "59m" });
 
-        req.user = user; // Update the user in the request object
+        req.user = user;
 
         res.cookie("accessToken", accessToken, accessTokenOptions);
         res.cookie("refreshToken", newRefreshToken, refreshTokenOptions);
