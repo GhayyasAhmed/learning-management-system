@@ -38,7 +38,7 @@ export const createLayout = catchAsyncError(async (req: Request, res: Response, 
         }
 
         if (type?.toLowerCase() === "categories") {
-            const { categories } = req.body; // 👈 Fixed spelling mistake here
+            const { categories } = req.body;
             await LayoutModel.create({ type: "categories", categories });
         }
 
@@ -52,3 +52,91 @@ export const createLayout = catchAsyncError(async (req: Request, res: Response, 
         return next(new ErrorHandler(error.message, 400));
     }
 });
+
+
+export const editLayout = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const type = req.body?.type?.toLowerCase();
+        if (!type) {
+            return next(new ErrorHandler("Layout type is required", 400));
+        }
+        const oldLayout: any = await LayoutModel.findOne({
+            type: { $regex: new RegExp(`^${type}$`, "i") }
+        });
+        if (!oldLayout) {
+            return next(new ErrorHandler(`Layout for ${type} does not exists`, 404));
+        }
+
+        if (type?.toLowerCase() === "banner") {
+            const { image, title, subTitle } = req.body;
+
+            await cloudinary.v2.uploader.destroy(oldLayout.banner.image.public_id);
+
+
+            const myCloud = await cloudinary.v2.uploader.upload(image, {
+                folder: "layout"
+            });
+
+            const banner = {
+                image: {
+                    public_id: myCloud?.public_id,
+                    url: myCloud?.secure_url
+                } as any,
+                title: title || oldLayout.banner?.title,
+                subTitle: subTitle || oldLayout.banner?.subTitle
+            };
+
+            await LayoutModel.findByIdAndUpdate(
+                oldLayout._id,
+                { banner },
+                { returnDocument: 'after', runValidators: true }
+            );
+        }
+
+        if (type?.toLowerCase() === "faq") {
+            const { faq } = req.body;
+            await LayoutModel.findByIdAndUpdate(
+                oldLayout._id,
+                { faq },
+                { returnDocument: 'after', runValidators: true }
+            );
+        }
+
+        if (type?.toLowerCase() === "categories") {
+            const { categories } = req.body;
+            await LayoutModel.findByIdAndUpdate(
+                oldLayout._id,
+                { categories },
+                { returnDocument: 'after', runValidators: true }
+            );
+        }
+
+        res.status(201).json({
+            success: true,
+            message: "Layout updated successfully"
+        });
+
+    } catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+
+})
+
+
+export const getLayoutByType = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { type } = req?.params
+        const layout = await LayoutModel.findOne({
+            type: { $regex: new RegExp(`^${type}$`, "i") }
+        });
+
+        res.status(200).json({
+            success: true,
+            layout
+        })
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400));
+    }
+})
+
