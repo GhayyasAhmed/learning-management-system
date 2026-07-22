@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FC } from "react";
 
 export const navItemsData = [
   {
@@ -28,7 +29,7 @@ type Props = {
   isMobile: boolean;
 };
 
-const NavItems = ({ activeItem, isMobile } :Props) => {
+const NavItems = ({ activeItem, isMobile }: Props) => {
   return (
     <>
       {/* Desktop Navigation */}

@@ -3,18 +3,16 @@ import { Josefin_Sans, Poppins } from "next/font/google";
 import { ThemeProvider } from "@/app/utils/theme-provide";
 import "./globals.css";
 
-
-
 const poppinsSans = Poppins({
   variable: "--font-poppins-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"]
+  weight: ["400", "500", "600", "700"],
 });
 
 const josefinSans = Josefin_Sans({
   variable: "--font-josefin-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"]
+  weight: ["400", "500", "600", "700"],
 });
 
 // const geistSans = Geist({
@@ -29,7 +27,8 @@ const josefinSans = Josefin_Sans({
 
 export const metadata: Metadata = {
   title: "ELearing",
-  description: "ELearing is a platform for students to learn and get help from teachers",
+  description:
+    "ELearing is a platform for students to learn and get help from teachers",
   keywords: ["Programming", "MERN", "Redux", "Machine Learning"],
 };
 export default function RootLayout({
@@ -40,11 +39,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${poppinsSans.variable} ${josefinSans.variable} `}
+      // className={`${poppinsSans.variable} ${josefinSans.variable} `}
+      suppressHydrationWarning
       // h-full antialiased
     >
-      <body className="min-h-full flex flex-col bg-white! bg-no-repeat dark:bg-linear-to-b dark:from-gray-900 dark:to-black duration-300">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <body
+        className={`${poppinsSans.variable} ${josefinSans.variable} bg-white! dark:bg-linear-to-b dark:from-gray-900 dark:to-black duration-300 bg-no-repeat`}
+      >
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           {children}
         </ThemeProvider>
       </body>
