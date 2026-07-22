@@ -26,9 +26,9 @@ const josefinSans = Josefin_Sans({
 // });
 
 export const metadata: Metadata = {
-  title: "ELearing",
+  title: "Elearing",
   description:
-    "ELearing is a platform for students to learn and get help from teachers",
+    "Elearing is a platform for students to learn and get help from teachers",
   keywords: ["Programming", "MERN", "Redux", "Machine Learning"],
 };
 export default function RootLayout({

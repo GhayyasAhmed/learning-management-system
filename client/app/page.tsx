@@ -3,6 +3,7 @@
 // interface Props {}
 import { useState } from "react";
 import Header from "./components/Header"
+import Hero from "./components/Route/Hero";
 
 export default function Page() {
   const [open, setOpen] = useState(false)
@@ -14,6 +15,7 @@ export default function Page() {
         setOpen={setOpen}
         activeItem={activeItem}
       />
+      <Hero />
     </div>
   );
 }

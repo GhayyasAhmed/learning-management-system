@@ -46,7 +46,7 @@ const Header = ({ activeItem, open, setOpen }: Props) => {
                 href="/"
                 className="text-[25px] font-poppins font-medium text-black dark:text-white"
               >
-                ELearning
+                Elearning
               </Link>
             </div>
             <div className="flex items-center">
