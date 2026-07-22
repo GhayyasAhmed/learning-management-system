@@ -1,6 +1,7 @@
+import { ThemeProvider } from "@/app/utils/theme-provide";
 import type { Metadata } from "next";
 import { Josefin_Sans, Poppins } from "next/font/google";
-import { ThemeProvider } from "@/app/utils/theme-provide";
+import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
 const poppinsSans = Poppins({
@@ -48,6 +49,7 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           {children}
+          <Toaster position="top-right" reverseOrder={false} />
         </ThemeProvider>
       </body>
     </html>

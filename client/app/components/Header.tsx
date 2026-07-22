@@ -4,16 +4,20 @@ import { useState } from "react";
 import NavItems from "../utils/NavItems";
 import ThemeSwitcher from "../utils/ThemeSwitcher";
 import { HiOutlineMenuAlt3, HiOutlineUserCircle } from "react-icons/hi";
+import CustomModal from "../utils/CustomModal";
+import Login from "./Auth/Login";
+import SignUp from "./Auth/SignUp"
+import Verification from "./Auth/Verification"
 
 type Props = {
   open: boolean;
   setOpen: (open: boolean) => void;
   activeItem: number;
-  //   route: string;
-  //   setRoute: (route: string) => void;
+  route: string;
+  setRoute: (route: string) => void;
 };
 
-const Header = ({ activeItem, open, setOpen }: Props) => {
+const Header = ({ activeItem, open, setOpen, route, setRoute  }: Props) => {
   const [active, setActive] = useState(false);
   const [openSidebar, setOpenSidebar] = useState(false);
   if (typeof window !== "undefined") {
@@ -105,6 +109,49 @@ const Header = ({ activeItem, open, setOpen }: Props) => {
               </p>
             </div>
           </div>
+        )}
+      </div>
+       <div>
+        {route === "Login" && (
+          <>
+            {open && (
+              <CustomModal
+                open={open}
+                setOpen={setOpen}
+                setRoute={setRoute}
+                activeItem={activeItem}
+                LoginComponent={Login}
+              />
+            )}
+          </>
+        )}
+
+        {route === "Sign-Up" && (
+          <>
+            {open && (
+              <CustomModal
+                open={open}
+                setOpen={setOpen}
+                setRoute={setRoute}
+                activeItem={activeItem}
+                LoginComponent={SignUp}
+              />
+            )}
+          </>
+        )}
+
+        {route === "Verification" && (
+          <>
+            {open && (
+              <CustomModal
+                open={open}
+                setOpen={setOpen}
+                setRoute={setRoute}
+                activeItem={activeItem}
+                LoginComponent={Verification}
+              />
+            )}
+          </>
         )}
       </div>
     </div>
