@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import NavItems from "../utils/NavItems";
 import ThemeSwitcher from "../utils/ThemeSwitcher";
+import { HiOutlineMenuAlt3, HiOutlineUserCircle } from "react-icons/hi";
 
 type Props = {
   open: boolean;
@@ -24,6 +25,11 @@ const Header = ({ activeItem, open, setOpen }: Props) => {
       }
     });
   }
+
+  const handleClose = () => {
+    setOpenSidebar(false);
+  };
+
   return (
     <div className="w-full relative">
       <div
@@ -46,9 +52,60 @@ const Header = ({ activeItem, open, setOpen }: Props) => {
             <div className="flex items-center">
               <NavItems activeItem={activeItem} isMobile={false} />
               <ThemeSwitcher />
+              <div className="800px:hidden">
+                <HiOutlineMenuAlt3
+                  className="cursor-pointer dark:text-white text-black"
+                  onClick={() => setOpenSidebar(true)}
+                />
+              </div>
+              <HiOutlineUserCircle
+                size={25}
+                className="cursor-pointer hidden 800px:block dark:text-white text-black"
+                onClick={() => setOpen(true)}
+              />
             </div>
           </div>
         </div>
+
+        {/* Mobile sidebar menu */}
+        {openSidebar && (
+          <div
+            className="fixed w-full h-screen top-0 left-0 z-99999 dark:bg-[unset] bg-[#00000024]"
+            onClick={handleClose}
+            id="screen"
+          >
+            <div className="w-[70%] fixed z-999999999 h-screen bg-white top-0 right-0 dark:bg-slate-900 dark:bg-opacity-90">
+              <NavItems activeItem={activeItem} isMobile={true} />
+
+              {/* {user ? (
+                <Link href={"/profile"}>
+                  <Image
+                    src={user.avatar ? user.avatar.url : avatar}
+                    alt=""
+                    width={30}
+                    height={30}
+                    className="cursor-pointer ml-5 my-2 dark:text-white text-black w-[30px] h-[30px] rounded-full"
+                    style={{
+                      border: activeItem === 5 ? "2px solid #37a39a" : "",
+                    }}
+                  />
+                </Link>
+              ) : ( */}
+                <HiOutlineUserCircle
+                  size={25}
+                  className="cursor-pointer ml-5 my-2 dark:text-white text-black w-7.5 h-7.5 rounded-full"
+                  onClick={() => setOpen(true)}
+                />
+            {/* //   )} */}
+
+              <br />
+              <br />
+              <p className="text-[16px] px-2 pl-5 text-black dark:text-white">
+                Copyright ©️ {new Date().getFullYear()} E-Learning
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
