@@ -52,7 +52,7 @@ const ProfileInfo = ({ user, avatar }: ProfileInfoProps) => {
     e.preventDefault();
     if (name !== "") {
       try {
-        await editProfile({ name, email: user.email }).unwrap();
+        await editProfile({ name }).unwrap();
         toast.success("Profile updated successfully!");
         refetch();
       } catch (err) {
