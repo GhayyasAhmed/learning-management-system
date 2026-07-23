@@ -1,17 +1,21 @@
 "use client";
+import { RootState } from "@/redux/store";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import toast from "react-hot-toast";
 import { HiOutlineMenuAlt3, HiOutlineUserCircle } from "react-icons/hi";
 import { useSelector } from "react-redux";
+import avatar from "../../public/assets/avatardefault.jpg";
+import { useSocialAuthMutation } from "../../redux/features/auth/authApi";
 import CustomModal from "../utils/CustomModal";
-import { RootState } from "@/redux/store";
+import { getErrorMessage } from "../utils/getErrorMessage";
 import NavItems from "../utils/NavItems";
 import ThemeSwitcher from "../utils/ThemeSwitcher";
 import Login from "./Auth/Login";
 import SignUp from "./Auth/SignUp";
 import Verification from "./Auth/Verification";
-import avatar from "../../public/assets/avatardefault.jpg";
 
 type Props = {
   open: boolean;
@@ -35,6 +39,28 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
   const [openSidebar, setOpenSidebar] = useState(false);
   const mounted = useIsMounted();
   const { user } = useSelector((state: RootState) => state.auth);
+  const { data } = useSession();
+  const [socialAuth, { isSuccess, error }] = useSocialAuthMutation();
+
+  useEffect(() => {
+    if (!user) {
+      if (data) {
+        socialAuth({
+          email: data?.user?.email,
+          name: data?.user?.name,
+          avatar: data?.user?.image,
+        });
+      }
+    }
+    if (isSuccess) {
+      toast.success("Logged in successfully!");
+      setOpen(false);
+    }
+    if (error) {
+      toast.error(getErrorMessage(error, "Social login failed. Please try again."));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, user, isSuccess, error]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -116,11 +142,28 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
             <div className="w-[70%] fixed z-999999999 h-screen bg-white top-0 right-0 dark:bg-slate-900 dark:bg-opacity-90">
               <NavItems activeItem={activeItem} isMobile={true} />
 
-              <HiOutlineUserCircle
-                size={25}
-                className="cursor-pointer ml-5 my-2 dark:text-white text-black w-7.5 h-7.5 rounded-full"
-                onClick={() => setOpen(true)}
-              />
+              {user ? (
+                <Link href={"/profile"}>
+                  <Image
+                    src={
+                      user.avatar ? user.avatar.url : avatar
+                    }
+                    alt=""
+                    width={30}
+                    height={30}
+                    className="cursor-pointer ml-5 my-2 dark:text-white text-black w-7.5 h-7.5 rounded-full"
+                    style={{
+                      border: activeItem === 5 ? "2px solid #37a39a" : "",
+                    }}
+                  />
+                </Link>
+              ) : (
+                <HiOutlineUserCircle
+                  size={25}
+                  className="cursor-pointer ml-5 my-2 dark:text-white text-black w-7.5 h-7.5 rounded-full"
+                  onClick={() => setOpen(true)}
+                />
+              )}
 
               <br />
               <br />

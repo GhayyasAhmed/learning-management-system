@@ -1,6 +1,6 @@
 "use client";
 import { useFormik } from "formik";
-// import { signIn } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import {
@@ -128,12 +128,12 @@ const Login = (props: Props) => {
           <FcGoogle
             className="cursor-pointer mr-2"
             size={30}
-            // onClick={() => signIn("google")}
+            onClick={() => signIn("google")}
           />
           <AiFillGithub
             className="cursor-pointer mr-2"
             size={30}
-            // onClick={() => signIn("github")}
+            onClick={() => signIn("github")}
           />
         </div>
         <h5 className="text-center pt-4 font-Poppins text-[14px]">
