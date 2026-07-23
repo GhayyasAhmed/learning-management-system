@@ -9,7 +9,7 @@ import SideBarProfile from "./SideBarProfile";
 import ProfileInfo from "./ProfileInfo";
 
 // import CourseCard from "../Courses/CourseCard";
-// import ChangePassword from "./ChangePassword";
+import ChangePassword from "./ChangePassword";
 
 type Props = {
   user: IUser;
@@ -82,7 +82,8 @@ const Profile = ({ user }: Props) => {
       </div>
       <div className="w-full h-full bg-transparent mt-20">
         {active === 1 && <ProfileInfo user={user} avatar={avatar} />}
-        {/* {active === 2 && <ChangePassword />}
+        {active === 2 && <ChangePassword />}
+        {/* 
         {active === 3 && (
           <div className="w-full pl-7 px-2 800px:px-10 800px:pl-8 ">
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6.25 xl:grid-cols-3 xl:gap-8.75">
