@@ -6,9 +6,10 @@ import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import toast from "react-hot-toast";
 import { HiOutlineMenuAlt3, HiOutlineUserCircle } from "react-icons/hi";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import avatar from "../../public/assets/avatardefault.jpg";
-import { useSocialAuthMutation } from "../../redux/features/auth/authApi";
+import { useLogoutUserQuery, useSocialAuthMutation } from "../../redux/features/auth/authApi";
+import { userLoggedOut } from "../../redux/features/auth/authSlice";
 import CustomModal from "../utils/CustomModal";
 import { getErrorMessage } from "../utils/getErrorMessage";
 import NavItems from "../utils/NavItems";
@@ -25,42 +26,59 @@ type Props = {
   setRoute: (route: string) => void;
 };
 
-// Helper for client-side hydration detection without extra render cycles
 const emptySubscribe = () => () => {};
 const useIsMounted = () =>
   useSyncExternalStore(
     emptySubscribe,
-    () => true,  // Client snapshot
-    () => false  // Server snapshot
+    () => true,
+    () => false
   );
 
 const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
   const [active, setActive] = useState(false);
   const [openSidebar, setOpenSidebar] = useState(false);
   const mounted = useIsMounted();
-  const { user } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch();
+  
+  // Extract isSocial flag from state
+  const { user, isSocial } = useSelector((state: RootState) => state.auth);
   const { data } = useSession();
+  const [logout, setLogout] = useState(false)
   const [socialAuth, { isSuccess, error }] = useSocialAuthMutation();
+  const shouldLogout = data === null && isSocial && !!user;
+  console.log("shouldLogout", shouldLogout)
+  const {} = useLogoutUserQuery(undefined, { skip: !shouldLogout });
+  // const {} = useLogoutUserQuery(undefined, {skip: !logout ? true: false});
+  // const [logoutUser] = useLogoutUserMutation();
 
   useEffect(() => {
-    if (!user) {
-      if (data) {
-        socialAuth({
-          email: data?.user?.email,
-          name: data?.user?.name,
-          avatar: data?.user?.image,
-        });
-      }
+    console.log("user", user)
+    console.log("data", data)
+    console.log("isSocial", isSocial)
+    // 1. Social Login Trigger
+    if (!user && data?.user) {
+      socialAuth({
+        email: data.user.email,
+        name: data.user.name,
+        avatar: data.user.image,
+      });
     }
-    if (isSuccess) {
+
+    if (data === null && isSuccess) {
       toast.success("Logged in successfully!");
       setOpen(false);
     }
+
     if (error) {
-      toast.error(getErrorMessage(error, "Social login failed. Please try again."));
+      toast.error(
+        getErrorMessage(error, "Social login failed. Please try again.")
+      );
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, user, isSuccess, error]);
+
+    // if(data === null && isSocial && user){
+    //   setLogout(true)
+    // }
+  }, [data, user, isSocial, isSuccess, error, socialAuth, setOpen, dispatch]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -111,7 +129,11 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
               {mounted && user ? (
                 <Link href={"/profile"}>
                   <Image
-                    src={user.avatar ? user.avatar.url : avatar}
+                    src={
+                      typeof user === "object" && user?.avatar?.url
+                        ? user.avatar.url
+                        : avatar
+                    }
                     alt=""
                     width={30}
                     height={30}
@@ -132,7 +154,6 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
           </div>
         </div>
 
-        {/* Mobile sidebar menu */}
         {openSidebar && (
           <div
             className="fixed w-full h-screen top-0 left-0 z-99999 dark:bg-[unset] bg-[#00000024]"
@@ -142,11 +163,13 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
             <div className="w-[70%] fixed z-999999999 h-screen bg-white top-0 right-0 dark:bg-slate-900 dark:bg-opacity-90">
               <NavItems activeItem={activeItem} isMobile={true} />
 
-              {user ? (
+              {mounted && user ? (
                 <Link href={"/profile"}>
                   <Image
                     src={
-                      user.avatar ? user.avatar.url : avatar
+                      typeof user === "object" && user?.avatar?.url
+                        ? user.avatar.url
+                        : avatar
                     }
                     alt=""
                     width={30}

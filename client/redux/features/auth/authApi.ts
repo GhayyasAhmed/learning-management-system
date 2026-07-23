@@ -9,12 +9,11 @@ type RegistrationResponse = {
 type RegistrationData = {
   name: string;
   email: string;
-  password: string
+  password: string;
 };
 
 export const authApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    //endpoints here
     register: builder.mutation<RegistrationResponse, RegistrationData>({
       query: (data) => ({
         url: "/user/register",
@@ -22,13 +21,12 @@ export const authApi = apiSlice.injectEndpoints({
         body: data,
         credentials: "include",
       }),
-
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         try {
           const result = await queryFulfilled;
           dispatch(userRegistration({ token: result.data.activationToken }));
         } catch (error) {
-          console.log("Error occured in registration api", error);
+          console.log("Error occurred in registration API", error);
         }
       },
     }),
@@ -48,7 +46,6 @@ export const authApi = apiSlice.injectEndpoints({
         body: { email, password },
         credentials: "include",
       }),
-
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         try {
           const result = await queryFulfilled;
@@ -56,10 +53,11 @@ export const authApi = apiSlice.injectEndpoints({
             userLogin({
               accessToken: result.data.accessToken,
               user: result.data.user,
+              isSocial: false, // Standard email/pass login
             })
           );
         } catch (error) {
-          console.log("Error occured in registration api", error);
+          console.log("Error occurred in login API", error);
         }
       },
     }),
@@ -71,7 +69,6 @@ export const authApi = apiSlice.injectEndpoints({
         body: { email, name, avatar },
         credentials: "include",
       }),
-
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         try {
           const result = await queryFulfilled;
@@ -79,33 +76,39 @@ export const authApi = apiSlice.injectEndpoints({
             userLogin({
               accessToken: result.data.accessToken,
               user: result.data.user,
+              isSocial: true, // Social OAuth login
             })
           );
         } catch (error) {
-          console.log("Error occured in registration api", error);
+          console.log("Error occurred in socialAuth API", error);
         }
       },
     }),
 
-
-    logoutUser: builder.mutation({
+    logoutUser: builder.query({
       query: () => ({
-        url: "logout",
+        url: "/user/logout",
         method: "GET",
         credentials: "include",
       }),
-
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         try {
           await queryFulfilled;
           dispatch(userLoggedOut());
         } catch (error) {
-          console.log("Error occured in logoutUser api", error);
+          console.log("Error occurred in logoutUser API", error);
+          dispatch(userLoggedOut());
         }
       },
     }),
   }),
 });
 
-export const { useRegisterMutation, useActivationMutation, useLoginMutation, useSocialAuthMutation, useLogoutUserMutation } =
-  authApi;
+export const {
+  useRegisterMutation,
+  useActivationMutation,
+  useLoginMutation,
+  useSocialAuthMutation,
+  useLogoutUserQuery,
+  useLazyLogoutUserQuery
+} = authApi;

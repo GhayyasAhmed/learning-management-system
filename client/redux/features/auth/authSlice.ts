@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 const STORAGE_KEY = "lms_auth";
 
@@ -8,37 +8,43 @@ export interface IUser {
   email?: string;
   avatar?: { url: string };
   role?: string;
-  [key: string]: unknown; // Handles extra user fields cleanly without 'any'
+  [key: string]: unknown;
 }
 
 export interface AuthState {
   token: string;
   user: IUser | string;
+  isSocial?: boolean;
 }
 
-const initialState = (() => {
+const initialState: AuthState = (() => {
   if (typeof window === "undefined") {
-    return { token: "", user: "" };
+    return { token: "", user: "", isSocial: false };
   }
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { token: "", user: "" };
+    if (!raw) return { token: "", user: "", isSocial: false };
     const parsed = JSON.parse(raw);
     return {
       token: parsed?.token ?? "",
       user: parsed?.user ?? "",
+      isSocial: parsed?.isSocial ?? false,
     };
   } catch {
-    return { token: "", user: "" };
+    return { token: "", user: "", isSocial: false };
   }
 })();
 
-function persistAuthState(state: { token: string; user: IUser }) {
+function persistAuthState(state: { token: string; user: IUser | string; isSocial?: boolean }) {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ token: state.token, user: state.user })
+      JSON.stringify({
+        token: state.token,
+        user: state.user,
+        isSocial: state.isSocial ?? false,
+      })
     );
   } catch {
     // ignore
@@ -58,19 +64,29 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    userRegistration: (state, action) => {
+    userRegistration: (state, action: PayloadAction<{ token: string }>) => {
       state.token = action.payload.token;
+      state.isSocial = false;
       persistAuthState(state);
     },
-    userLogin: (state, action) => {
+    userLogin: (
+      state,
+      action: PayloadAction<{
+        user: IUser;
+        token?: string;
+        accessToken?: string;
+        isSocial?: boolean;
+      }>
+    ) => {
       state.user = action.payload.user;
-      // Support both payload shapes (some callers used `token`, others used `accessToken`)
       state.token = action.payload.accessToken ?? action.payload.token ?? "";
+      state.isSocial = action.payload.isSocial ?? false;
       persistAuthState(state);
     },
     userLoggedOut: (state) => {
       state.user = "";
       state.token = "";
+      state.isSocial = false;
       clearAuthState();
     },
   },
