@@ -2,6 +2,20 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const STORAGE_KEY = "lms_auth";
 
+export interface IUser {
+  _id?: string;
+  name?: string;
+  email?: string;
+  avatar?: { url: string };
+  role?: string;
+  [key: string]: unknown; // Handles extra user fields cleanly without 'any'
+}
+
+export interface AuthState {
+  token: string;
+  user: IUser | string;
+}
+
 const initialState = (() => {
   if (typeof window === "undefined") {
     return { token: "", user: "" };
@@ -19,7 +33,7 @@ const initialState = (() => {
   }
 })();
 
-function persistAuthState(state: { token: string; user: any }) {
+function persistAuthState(state: { token: string; user: IUser }) {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(
@@ -46,13 +60,13 @@ const authSlice = createSlice({
   reducers: {
     userRegistration: (state, action) => {
       state.token = action.payload.token;
-      persistAuthState(state as any);
+      persistAuthState(state);
     },
     userLogin: (state, action) => {
       state.user = action.payload.user;
       // Support both payload shapes (some callers used `token`, others used `accessToken`)
       state.token = action.payload.accessToken ?? action.payload.token ?? "";
-      persistAuthState(state as any);
+      persistAuthState(state);
     },
     userLoggedOut: (state) => {
       state.user = "";

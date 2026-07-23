@@ -1,13 +1,17 @@
 "use client";
+import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
+import { HiOutlineMenuAlt3, HiOutlineUserCircle } from "react-icons/hi";
+import { useSelector } from "react-redux";
+import CustomModal from "../utils/CustomModal";
+import { RootState } from "@/redux/store";
 import NavItems from "../utils/NavItems";
 import ThemeSwitcher from "../utils/ThemeSwitcher";
-import { HiOutlineMenuAlt3, HiOutlineUserCircle } from "react-icons/hi";
-import CustomModal from "../utils/CustomModal";
 import Login from "./Auth/Login";
-import SignUp from "./Auth/SignUp"
-import Verification from "./Auth/Verification"
+import SignUp from "./Auth/SignUp";
+import Verification from "./Auth/Verification";
+import avatar from "../../public/assets/avatardefault.jpg";
 
 type Props = {
   open: boolean;
@@ -17,18 +21,33 @@ type Props = {
   setRoute: (route: string) => void;
 };
 
-const Header = ({ activeItem, open, setOpen, route, setRoute  }: Props) => {
+// Helper for client-side hydration detection without extra render cycles
+const emptySubscribe = () => () => {};
+const useIsMounted = () =>
+  useSyncExternalStore(
+    emptySubscribe,
+    () => true,  // Client snapshot
+    () => false  // Server snapshot
+  );
+
+const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
   const [active, setActive] = useState(false);
   const [openSidebar, setOpenSidebar] = useState(false);
-  if (typeof window !== "undefined") {
-    window.addEventListener("scroll", () => {
+  const mounted = useIsMounted();
+  const { user } = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    const handleScroll = () => {
       if (window.scrollY > 80) {
         setActive(true);
       } else {
         setActive(false);
       }
-    });
-  }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleClose = () => {
     setOpenSidebar(false);
@@ -62,11 +81,27 @@ const Header = ({ activeItem, open, setOpen, route, setRoute  }: Props) => {
                   onClick={() => setOpenSidebar(true)}
                 />
               </div>
-              <HiOutlineUserCircle
-                size={25}
-                className="cursor-pointer hidden 800px:block dark:text-white text-black"
-                onClick={() => setOpen(true)}
-              />
+
+              {mounted && user ? (
+                <Link href={"/profile"}>
+                  <Image
+                    src={user.avatar ? user.avatar.url : avatar}
+                    alt=""
+                    width={30}
+                    height={30}
+                    className="w-7.5 h-7.5 rounded-full cursor-pointer hidden 800px:block"
+                    style={{
+                      border: activeItem === 5 ? "2px solid #37a39a" : "",
+                    }}
+                  />
+                </Link>
+              ) : (
+                <HiOutlineUserCircle
+                  size={25}
+                  className="cursor-pointer hidden 800px:block dark:text-white text-black"
+                  onClick={() => setOpen(true)}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -81,26 +116,11 @@ const Header = ({ activeItem, open, setOpen, route, setRoute  }: Props) => {
             <div className="w-[70%] fixed z-999999999 h-screen bg-white top-0 right-0 dark:bg-slate-900 dark:bg-opacity-90">
               <NavItems activeItem={activeItem} isMobile={true} />
 
-              {/* {user ? (
-                <Link href={"/profile"}>
-                  <Image
-                    src={user.avatar ? user.avatar.url : avatar}
-                    alt=""
-                    width={30}
-                    height={30}
-                    className="cursor-pointer ml-5 my-2 dark:text-white text-black w-[30px] h-[30px] rounded-full"
-                    style={{
-                      border: activeItem === 5 ? "2px solid #37a39a" : "",
-                    }}
-                  />
-                </Link>
-              ) : ( */}
-                <HiOutlineUserCircle
-                  size={25}
-                  className="cursor-pointer ml-5 my-2 dark:text-white text-black w-7.5 h-7.5 rounded-full"
-                  onClick={() => setOpen(true)}
-                />
-            {/* //   )} */}
+              <HiOutlineUserCircle
+                size={25}
+                className="cursor-pointer ml-5 my-2 dark:text-white text-black w-7.5 h-7.5 rounded-full"
+                onClick={() => setOpen(true)}
+              />
 
               <br />
               <br />
@@ -111,47 +131,36 @@ const Header = ({ activeItem, open, setOpen, route, setRoute  }: Props) => {
           </div>
         )}
       </div>
-       <div>
-        {route === "Login" && (
-          <>
-            {open && (
-              <CustomModal
-                open={open}
-                setOpen={setOpen}
-                setRoute={setRoute}
-                activeItem={activeItem}
-                LoginComponent={Login}
-              />
-            )}
-          </>
+
+      <div>
+        {route === "Login" && open && (
+          <CustomModal
+            open={open}
+            setOpen={setOpen}
+            setRoute={setRoute}
+            activeItem={activeItem}
+            LoginComponent={Login}
+          />
         )}
 
-        {route === "Sign-Up" && (
-          <>
-            {open && (
-              <CustomModal
-                open={open}
-                setOpen={setOpen}
-                setRoute={setRoute}
-                activeItem={activeItem}
-                LoginComponent={SignUp}
-              />
-            )}
-          </>
+        {route === "Sign-Up" && open && (
+          <CustomModal
+            open={open}
+            setOpen={setOpen}
+            setRoute={setRoute}
+            activeItem={activeItem}
+            LoginComponent={SignUp}
+          />
         )}
 
-        {route === "Verification" && (
-          <>
-            {open && (
-              <CustomModal
-                open={open}
-                setOpen={setOpen}
-                setRoute={setRoute}
-                activeItem={activeItem}
-                LoginComponent={Verification}
-              />
-            )}
-          </>
+        {route === "Verification" && open && (
+          <CustomModal
+            open={open}
+            setOpen={setOpen}
+            setRoute={setRoute}
+            activeItem={activeItem}
+            LoginComponent={Verification}
+          />
         )}
       </div>
     </div>

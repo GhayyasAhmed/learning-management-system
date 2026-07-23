@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useFormik } from "formik";
 // import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
@@ -12,8 +11,8 @@ import {
 import { FcGoogle } from "react-icons/fc";
 import * as Yup from "yup";
 import { styles } from "../../../app/styles/styles";
-// import { useLoginMutation } from "../../../redux/features/auth/authApi";
-// import { getErrorMessage } from "../../utils/getErrorMessage";
+import { useLoginMutation } from "../../../redux/features/auth/authApi";
+import { getErrorMessage } from "../../utils/getErrorMessage";
 
 type Props = {
   setRoute: (route: string) => void;
@@ -30,7 +29,7 @@ const schema = Yup.object().shape({
 const Login = (props: Props) => {
   const { setOpen, setRoute } = props;
   const [show, setShow] = useState(false);
-//   const [login, {isSuccess, data, error, isLoading}] = useLoginMutation();
+  const [login, {isSuccess, data, error, isLoading}] = useLoginMutation();
 
   const formik = useFormik({
     initialValues: {
@@ -39,21 +38,20 @@ const Login = (props: Props) => {
     },
     validationSchema: schema,
     onSubmit: async (values) => {
-        console.log(values.email, values.password)
-    //   login({ email: values.email, password: values.password });
+      login({ email: values.email, password: values.password });
     },
   });
 
 
-//   useEffect(() => {
-//     if (isSuccess) {
-//       toast.success(data?.message || "Logged in successfully!");
-//       setOpen(false);
-//     }
-//     if (error) {
-//       toast.error(getErrorMessage(error, "Login failed. Please try again."));
-//     }
-//   }, [isSuccess, error]);
+  useEffect(() => {
+    if (isSuccess) {
+      toast.success(data?.message || "Logged in successfully!");
+      setOpen(false);
+    }
+    if (error) {
+      toast.error(getErrorMessage(error, "Login failed. Please try again."));
+    }
+  }, [isSuccess, error, data?.message, setOpen]);
 
 
   const { errors, touched, values, handleSubmit, handleChange } = formik;
@@ -114,11 +112,11 @@ const Login = (props: Props) => {
         <div className="w-full mt-5">
           <input
             type="submit"
-            value="Login"
-            // value={isLoading ? "Logging in..." : "Login"}
-            // disabled={isLoading}
-            // className={`${styles.button} ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`}
-            className={`${styles.button}`}
+            // value="Login"
+            value={isLoading ? "Logging in..." : "Login"}
+            disabled={isLoading}
+            className={`${styles.button} ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`}
+            // className={`${styles.button}`}
           />
         </div>
         <br />
