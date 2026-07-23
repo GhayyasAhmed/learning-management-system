@@ -43,11 +43,11 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
   // Extract isSocial flag from state
   const { user, isSocial } = useSelector((state: RootState) => state.auth);
   const { data } = useSession();
-  const [logout, setLogout] = useState(false)
+  // const [logout, setLogout] = useState(false)
   const [socialAuth, { isSuccess, error }] = useSocialAuthMutation();
   const shouldLogout = data === null && isSocial && !!user;
   console.log("shouldLogout", shouldLogout)
-  const {} = useLogoutUserQuery(undefined, { skip: !shouldLogout });
+  const {isSuccess: isLogoutSuccess} = useLogoutUserQuery(undefined, { skip: !shouldLogout });
   // const {} = useLogoutUserQuery(undefined, {skip: !logout ? true: false});
   // const [logoutUser] = useLogoutUserMutation();
 
@@ -79,6 +79,15 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
     //   setLogout(true)
     // }
   }, [data, user, isSocial, isSuccess, error, socialAuth, setOpen, dispatch]);
+
+
+  useEffect(() => {
+    if (isLogoutSuccess) {
+      dispatch(userLoggedOut());
+      toast.success("Logged out successfully!");
+    }
+  }, [isLogoutSuccess, dispatch]);
+
 
   useEffect(() => {
     const handleScroll = () => {
