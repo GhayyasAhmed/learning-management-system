@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { VscWorkspaceTrusted } from "react-icons/vsc";
-// import { useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { styles } from "../../../app/styles/styles";
-// import { useActivationMutation } from "../../../redux/features/auth/authApi";
-// import { getErrorMessage } from "../../utils/getErrorMessage";
+import { useActivationMutation } from "../../../redux/features/auth/authApi";
+import { getErrorMessage } from "../../utils/getErrorMessage";
 
 
 type Props = {
@@ -18,26 +18,26 @@ type verifyNumberType = {
   "1": string;
   "2": string;
   "3": string;
-  "4": string;
-  "5": string;
+//   "4": string;
+//   "5": string;
 };
 
 const Verification = ({ setRoute }: Props) => {
   const [invalidError, setInvalidError] = useState(false);
-//   const {token}= useSelector((state:any) => state.auth);
-//   const [activation, {isSuccess,error, isLoading}]= useActivationMutation();
+  const {token}= useSelector((state:any) => state.auth);
+  const [activation, {isSuccess,error, isLoading, isError}]= useActivationMutation();
 
   //Handling the API response
-//   useEffect(() => {
-//     if (isSuccess) {
-//       toast.success("Account activated successfully! You can now log in.");
-//       setRoute("Login");
-//     }
-//     if (error) {
-//       toast.error(getErrorMessage(error, "Verification failed. Please check the code and try again."));
-//       setInvalidError(true);
-//     }
-//   }, [isSuccess, error, setRoute]);
+  useEffect(() => {
+    if (isSuccess) {
+      toast.success("Account activated successfully! You can now log in.");
+      setRoute("Login");
+    }
+    if (isError) {
+      toast.error(getErrorMessage(error, "Verification failed. Please check the code and try again."));
+    //   setInvalidError(true);
+    }
+  }, [isSuccess, isError, error, setRoute]);
  
 
   const inputRefs = [
@@ -45,28 +45,27 @@ const Verification = ({ setRoute }: Props) => {
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
+    // useRef<HTMLInputElement>(null),
+    // useRef<HTMLInputElement>(null),
   ];
 
   const [verifyNumber, setVerifyNumber] = useState<verifyNumberType>({
     0: "",
     1: "",
     2: "",
-    3: "",
-    4: "",
-    5: "",
+    3: ""
   });
 
   // Handle OTP verification
   const verificationHandler = async () => {
     const verificationNumber = Object.values(verifyNumber).join("");
-    if (verificationNumber.length !== 6) {
+    if (verificationNumber.length !== 4) {
       setInvalidError(true);
-      toast.error("Please enter all 6 digits of the code.");
+      toast.error("Please enter all 4 digits of the code.");
       return;
     }
-    // await activation({ activation_token: token, activation_code: verificationNumber });
+    setInvalidError(false);
+    await activation({ activationToken: token, activationCode: verificationNumber });
   };
 
   // Handle input change Focus Next box
@@ -76,7 +75,7 @@ const Verification = ({ setRoute }: Props) => {
     setVerifyNumber(newVerifyNumber);
     if (value === "" && index > 0) { 
       inputRefs[index - 1].current?.focus();
-    } else if (value.length === 1 && index < 5) {
+    } else if (value.length === 1 && index < 3) {
       inputRefs[index + 1].current?.focus();
     }
   };
@@ -94,7 +93,7 @@ const Verification = ({ setRoute }: Props) => {
       <br />
       <br />
 
-      {/* Six OTP inputs */}
+      {/* Four OTP inputs */}
       <div className="m-auto flex items-center justify-around">
         {Object.keys(verifyNumber).map((key, index) => (
           <input
@@ -102,7 +101,7 @@ const Verification = ({ setRoute }: Props) => {
             key={key}
             ref={inputRefs[index]}
             className={`w-16.25 h-16.25 bg-transparent border-[3px] rounded-[10px] flex items-center text-black dark:text-white justify-center text-[18px] font-Poppins outline-none text-center ${
-              invalidError
+              (invalidError || isError)
                 ? "shake border-red-500"
                 : "dark:border-white border-[#0000004a]"
             }`}
@@ -118,13 +117,13 @@ const Verification = ({ setRoute }: Props) => {
       {/* Verify button */}
       <div className="w-full flex justify-center">
         <button
-        //   className={`${styles.button} ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`}
-          className={`${styles.button}`}
+          className={`${styles.button} ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`}
+        //   className={`${styles.button}`}
           onClick={verificationHandler}
-        //   disabled={isLoading}
+          disabled={isLoading}
         >
-            Verify OTP
-          {/* {isLoading ? "Verifying..." : "Verify OTP"} */}
+            {/* Verify OTP */}
+          {isLoading ? "Verifying..." : "Verify OTP"}
         </button>
       </div>
       <br />

@@ -1,18 +1,18 @@
 "use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, {useEffect, useState } from "react";
 import { useFormik } from "formik";
-import * as Yup from "yup";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import {
-  AiOutlineEyeInvisible,
-  AiOutlineEye,
-  AiFillGithub,
+    AiFillGithub,
+    AiOutlineEye,
+    AiOutlineEyeInvisible,
 } from "react-icons/ai";
 import { FcGoogle } from "react-icons/fc";
+import * as Yup from "yup";
 import { styles } from "../../../app/styles/styles";
-// import toast from "react-hot-toast";
-// import { useRegisterMutation } from "../../../redux/features/auth/authApi";
-// import { getErrorMessage } from "../../utils/getErrorMessage";
+import { useRegisterMutation } from "../../../redux/features/auth/authApi";
+import { getErrorMessage } from "../../utils/getErrorMessage";
 
 type Props = {
   setRoute: (route: string) => void;
@@ -29,20 +29,22 @@ const schema = Yup.object().shape({
 
 
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const SignUp = ({ setRoute, setOpen }: Props) => {
   const [show, setShow] = useState(false);
-//   const [register, {isSuccess, data, error, isLoading}] = useRegisterMutation();
+  const [register, {isSuccess, data, error, isLoading}] = useRegisterMutation();
 
-//   useEffect(() => {
-//     if (isSuccess) {
-//       const message = data?.message || "Registration successful! Please verify your account.";
-//       toast.success(message);
-//       setRoute("Verification");
-//     }
-//     if (error) {
-//       toast.error(getErrorMessage(error, "Registration failed. Please try again."));
-//     }
-//   }, [isSuccess, error]);
+  useEffect(() => {
+    if (isSuccess) {
+      const message = data?.message || "Registration successful! Please verify your account.";
+      toast.success(message);
+      setRoute("Verification");
+    }
+    if (error) {
+      toast.error(getErrorMessage(error, "Registration failed. Please try again."));
+
+    }
+  }, [isSuccess, error, data?.message, setRoute]);
 
 
   const formik = useFormik({
@@ -50,9 +52,8 @@ const SignUp = ({ setRoute, setOpen }: Props) => {
     validationSchema: schema,
     onSubmit: async ({name, email, password}) => {
         const data= {name, email, password};
-        console.log("data", data)
-        setRoute("Verification");
-        // await register(data);
+        // console.log("data", data)
+        await register(data);
     },
   });
   const { errors, handleChange, touched, values, handleSubmit } = formik;
@@ -132,11 +133,11 @@ const SignUp = ({ setRoute, setOpen }: Props) => {
         <div className="w-full mt-5">
           <input
             type="submit"
-            // value={isLoading ? "Creating account..." : "Sign Up"}
-            value={"Sign Up"}
-            // disabled={isLoading}
-            // className={`${styles.button} ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`}
-            className={`${styles.button}`}
+            value={isLoading ? "Creating account..." : "Sign Up"}
+            // value={"Sign Up"}
+            disabled={isLoading}
+            className={`${styles.button} ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`}
+            // className={`${styles.button}`}
           />
         </div>
         <br />
