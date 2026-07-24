@@ -81,7 +81,6 @@ export const DashboardWidgetsPresenter = ({
   if (isLoading) {
     return <Loader />;
   }
-
   return (
     <div className="mt-7.5 min-h-screen">
       <div className="grid 800px:grid-cols-[75%,25%]">
@@ -151,6 +150,7 @@ export const DashboardWidgetsPresenter = ({
         <div className="dark:bg-[#111c43] w-[95%] 800px:w-[94%] mt-0 h-[30vh] 800px:h-[40vh] shadow-sm m-auto">
           <OrdersAnalytics isDashboard={true} />
         </div>
+        <br/>
         <div className="p-5">
           <h5 className="dark:text-white text-black text-[20px] font-normal font-Poppins pb-3">
             Recent Transactions
@@ -180,6 +180,7 @@ const DashboardWidgets = ({ open }: DashboardWidgetsProps) => {
     const calculatePercentage = (
       monthsList: IMonthData[]
     ): IComparePercentage => {
+
       const currentMonth = monthsList?.[0]?.count ?? 0;
       const previousMonth = monthsList?.[1]?.count ?? 0;
 
@@ -210,8 +211,8 @@ const DashboardWidgets = ({ open }: DashboardWidgetsProps) => {
       [];
 
     return {
-      userComparePercentage: calculatePercentage(usersMonths),
-      ordersComparePercentage: calculatePercentage(ordersMonths),
+      userComparePercentage: calculatePercentage(usersMonths.toReversed()),
+      ordersComparePercentage: calculatePercentage(ordersMonths.toReversed()),
     };
   }, [usersData, ordersData]);
 

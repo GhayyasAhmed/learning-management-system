@@ -25,11 +25,11 @@ export const getUserAnalytics = catchAsyncError(async (req: Request, res: Respon
 
 export const getCourseAnalytics = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const course = await generateLast12MothsData(CourseModel)
+        const courses = await generateLast12MothsData(CourseModel)
 
         res.status(200).json({
             success: true,
-            course
+            courses
         })
     }
     catch (error: any) {
@@ -41,11 +41,11 @@ export const getCourseAnalytics = catchAsyncError(async (req: Request, res: Resp
 
 export const getOrderAnalytics = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const order = await generateLast12MothsData(OrderModel)
+        const orders = await generateLast12MothsData(OrderModel)
 
         res.status(200).json({
             success: true,
-            order
+            orders
         })
     }
     catch (error: any) {

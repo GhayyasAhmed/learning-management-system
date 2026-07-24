@@ -1,6 +1,11 @@
 import formatTimeAgo from "@/app/utils/formatTimeAgo";
 import { Box } from "@mui/material";
-import { DataGrid, GridColDef, GridRenderCellParams, GridToolbar } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridColDef,
+  GridRenderCellParams,
+  GridToolbar,
+} from "@mui/x-data-grid";
 import { useTheme } from "next-themes";
 import { useMemo } from "react";
 import { AiOutlineMail } from "react-icons/ai";
@@ -42,9 +47,13 @@ type Props = {
 
 const AllInvoices = ({ isDashboard }: Props) => {
   const { theme } = useTheme();
-  const { isLoading: ordersLoading, data: OrdersData } = useGetAllOrdersQuery({});
+  const { isLoading: ordersLoading, data: OrdersData } = useGetAllOrdersQuery(
+    {},
+  );
   const { isLoading: usersLoading, data: UsersData } = useGetAllUsersQuery({});
-  const { isLoading: coursesLoading, data: CoursesData } = useGetAllCourseQuery({});
+  const { isLoading: coursesLoading, data: CoursesData } = useGetAllCourseQuery(
+    {},
+  );
 
   const isLoading = ordersLoading || usersLoading || coursesLoading;
 
@@ -56,7 +65,9 @@ const AllInvoices = ({ isDashboard }: Props) => {
 
     return OrdersData.orders.map((order: IOrder) => {
       const user = UsersData.users.find((u: IUser) => u._id === order.userId);
-      const course = CoursesData.courses.find((c: ICourse) => c._id === order.courseId);
+      const course = CoursesData.courses.find(
+        (c: ICourse) => c._id === order.courseId,
+      );
 
       return {
         id: order._id,
@@ -98,7 +109,7 @@ const AllInvoices = ({ isDashboard }: Props) => {
             },
           ]),
     ],
-    [isDashboard]
+    [isDashboard],
   );
 
   return (
@@ -112,6 +123,31 @@ const AllInvoices = ({ isDashboard }: Props) => {
               margin: isDashboard ? "0" : "40px 0 0 0",
               height: isDashboard ? "35vh" : "82.49vh",
               overflow: "hidden",
+              "& .MuiDataGrid-menuIcon": {
+                // Ensure the menu icon button container stays visible and styled correctly
+                "& .MuiIconButton-root": {
+                  color:
+                    theme === "dark" ? "#fff !important" : "#000 !important",
+                  "&:hover": {
+                    backgroundColor:
+                      theme === "dark"
+                        ? "rgba(255, 255, 255, 0.15) !important"
+                        : "rgba(0, 0, 0, 0.04) !important",
+                  },
+                },
+              },
+              "& .MuiDataGrid-iconButtonContainer": {
+                "& .MuiIconButton-root": {
+                  color:
+                    theme === "dark" ? "#fff !important" : "#000 !important",
+                  "&:hover": {
+                    backgroundColor:
+                      theme === "dark"
+                        ? "rgba(255, 255, 255, 0.15) !important"
+                        : "rgba(0, 0, 0, 0.04) !important",
+                  },
+                },
+              },
               "& .MuiDataGrid-root": { border: "none", outline: "none" },
               "& .css-pqjvzy-MuiSvgIcon-root-MuiSelect-icon": {
                 color: theme === "dark" ? "#fff" : "#000",
@@ -125,6 +161,12 @@ const AllInvoices = ({ isDashboard }: Props) => {
                   theme === "dark"
                     ? "1px solid #ffffff30!important"
                     : "1px solid #ccc!important",
+                "&:hover": {
+                  backgroundColor:
+                    theme === "dark"
+                      ? "#2a3752 !important"
+                      : "#e0e0e0 !important",
+                },
               },
               "& .MuiTablePagination-root": {
                 color: theme === "dark" ? "#fff" : "#000",
@@ -135,10 +177,25 @@ const AllInvoices = ({ isDashboard }: Props) => {
               "& .name-column--cell": {
                 color: theme === "dark" ? "#fff" : "#000",
               },
-              "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: theme === "dark" ? "#3e4396" : "#A4A9FC",
-                borderBottom: "none",
-                color: "#000",
+              "& .MuiDataGrid-columnHeaders, & .MuiDataGrid-columnHeader, & .MuiDataGrid-columnHeaderRow":
+                {
+                  backgroundColor:
+                    theme === "dark"
+                      ? "#3e4396 !important"
+                      : "#A4A9FC !important",
+                  color:
+                    theme === "dark" ? "#fff !important" : "#000 !important",
+                  borderBottom: "none",
+                },
+              "& .MuiDataGrid-columnHeaderTitle": {
+                color: theme === "dark" ? "#fff !important" : "#000 !important",
+                fontWeight: "600",
+              },
+              "& .MuiDataGrid-columnSeparator": {
+                color:
+                  theme === "dark"
+                    ? "#ffffff50 !important"
+                    : "#00000050 !important",
               },
               "& .MuiDataGrid-virtualScroller": {
                 backgroundColor: theme === "dark" ? "#1F2A40" : "#F2F0F0",

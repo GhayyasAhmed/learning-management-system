@@ -25,7 +25,7 @@ const CourseAnalytics = () => {
   const { data, isLoading, error } = useGetCoursesAnalyticsQuery({});
 
   const last12Months: IAnalyticsItem[] =
-    data?.course?.last12Months ??
+    data?.courses?.last12Months ??
     data?.last12Months ??
     data?.coursesLast12Months ??
     [];

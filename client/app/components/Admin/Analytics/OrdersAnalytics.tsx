@@ -30,7 +30,7 @@ const OrdersAnalytics= ({ isDashboard }: Props) => {
   const { data, isLoading, error } = useGetOrdersAnalyticsQuery({});
 
   const last12Months: MonthData[] =
-    data?.order?.last12Months ??
+    data?.orders?.last12Months ??
     data?.last12Months ??
     data?.ordersLast12Months ??
     [];
