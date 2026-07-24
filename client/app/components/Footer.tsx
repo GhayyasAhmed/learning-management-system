@@ -119,7 +119,7 @@ const Footer = () => {
         </div>
         <br />
         <p className="text-center text-black dark:text-white">
-          Copyright &copy; 2025 ELearning | All Rights Reserved
+          Copyright &copy; {new Date().getFullYear()} ELearning | All Rights Reserved
         </p>
       </div>
       <br />
