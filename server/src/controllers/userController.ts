@@ -208,12 +208,17 @@ export const updateAccessToken = catchAsyncError(async (req: Request, res: Respo
         const newRefreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN as string, { expiresIn: "59m" });
 
         req.user = user;
+        
+        res.locals.user = user;
+        res.locals.accessToken = accessToken;
 
         res.cookie("accessToken", accessToken, accessTokenOptions);
         res.cookie("refreshToken", newRefreshToken, refreshTokenOptions);
 
         await redis.set(user._id.toString(), JSON.stringify(user), "EX", parseInt(process.env.REFRESH_TOKEN_EXPIRE || "59", 10) * 60);
-        res.status(200).json({ success: true, message: "Access token updated successfully", accessToken });
+
+        next();
+        // res.status(200).json({ success: true, message: "Access token updated successfully", accessToken });
     }
     catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
@@ -407,14 +412,14 @@ export const updateProfilePicture = catchAsyncError(async (req: Request, res: Re
 
 
 export const getAllUsers = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
-    try{
-        const users = await UserModel.find().sort({createdAt: -1})
+    try {
+        const users = await UserModel.find().sort({ createdAt: -1 })
 
         res.status(201).json({
-            success:true,
+            success: true,
             users
         })
-    }catch (error: any) {
+    } catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
     }
 
@@ -422,8 +427,8 @@ export const getAllUsers = catchAsyncError(async (req: Request, res: Response, n
 
 
 export const updateUserRole = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
-    try{
-        const {role, userId} = req.body;
+    try {
+        const { role, userId } = req.body;
         const user = await UserModel.findById(userId)
         if (!user) {
             return next(new ErrorHandler("User not found", 404))
@@ -432,33 +437,33 @@ export const updateUserRole = catchAsyncError(async (req: Request, res: Response
         await user.save()
 
         res.status(200).json({
-            success:true,
+            success: true,
             message: "User role updated successfully",
             user
         })
-    }catch (error: any) {
+    } catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
     }
 })
 
 
 export const deleteUser = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
-    try{
-        const {userId} = req.body
+    try {
+        const { userId } = req.body
         const user = await UserModel.findById(userId)
         if (!user) {
             return next(new ErrorHandler("User not found", 404))
         }
 
-        await user.deleteOne({userId})
+        await user.deleteOne({ userId })
         await redis.del(userId)
 
         res.status(200).json({
-            success:true,
+            success: true,
             message: "User deleted successfully",
         })
 
-    }catch (error: any) {
+    } catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
     }
 })

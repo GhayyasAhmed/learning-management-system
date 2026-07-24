@@ -124,12 +124,12 @@ const courseDataSchema: Schema<ICourseData> = new mongoose.Schema({
     },
     videoPlayer: {
         type: String,
-        required: true
+        // required: true
     },
     links: [linkSchema],
     suggestion: {
         type: String,
-        required: true
+        // required: true
     },
     questions: [commentSchema]
 }, { timestamps: true });

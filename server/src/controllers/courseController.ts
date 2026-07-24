@@ -1,3 +1,4 @@
+import axios from "axios";
 import cloudinary from "cloudinary";
 import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
@@ -5,9 +6,9 @@ import mongoose from "mongoose";
 import { redis } from "../config/redis.js";
 import catchAsyncError from "../middlewares/catchAsyncError.js";
 import CourseModel, { ICourse, IReview } from "../models/course.model.js";
+import NotificationModel from "../models/notification.models.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import sendEmail from "../utils/sendEmail.js";
-import NotificationModel from "../models/notification.models.js";
 
 export const createCourse = catchAsyncError(async (data: ICourse, res: Response, next: NextFunction) => {
     try {
@@ -146,16 +147,16 @@ export const getSingleCourseWithoutPurchase = catchAsyncError(async (req: Reques
 
 export const getAllCourseWithoutPurchase = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const isCacheExist = await redis.get("allCourses")
-        if (isCacheExist) {
-            const courses = JSON.parse(isCacheExist)
-            return res.status(200).json({
-                success: true,
-                courses
-            });
-        }
+        // const isCacheExist = await redis.get("allCourses")
+        // if (isCacheExist) {
+        //     const courses = JSON.parse(isCacheExist)
+        //     return res.status(200).json({
+        //         success: true,
+        //         courses
+        //     });
+        // }
         const courses = await CourseModel.find({}).select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links")
-        await redis.set("allCourses", JSON.stringify(courses))
+        // await redis.set("allCourses", JSON.stringify(courses))
 
         res.status(200).json({
             success: true,
@@ -502,4 +503,26 @@ export const deleteCourse = catchAsyncError(async (req: Request, res: Response, 
     }catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
     }
+})
+
+// generate video url
+export const generateVideoUrl = catchAsyncError(async(req:Request,res:Response,next:NextFunction)=>{
+  try {
+    const {videoId} = req.body;
+    const response = await axios.post(
+      `https://dev.vdocipher.com/api/videos/${videoId}/otp`,
+      { ttl: 300 },
+      {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Apisecret ${process.env.VDOCIPHER_API_SECRET}`,
+        },
+      }
+    );
+
+    res.json(response.data);
+  } catch (error:any) {
+    return next(new ErrorHandler(error.message,400))
+  }
 })
