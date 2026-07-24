@@ -97,7 +97,7 @@ export const authApi = apiSlice.injectEndpoints({
           dispatch(userLoggedOut());
         } catch (error) {
           console.log("Error occurred in logoutUser API", error);
-          dispatch(userLoggedOut());
+          // dispatch(userLoggedOut());
         }
       },
     }),

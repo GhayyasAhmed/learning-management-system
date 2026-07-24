@@ -21,7 +21,7 @@ const Profile = ({ user }: Props) => {
   const { data: session } = useSession();
   const [avatar] = useState(null);
   const [logout, setLogout] = useState(false);
-  const [courses, setCourses] = useState<unknown[]>([]);
+  // const [courses, setCourses] = useState<unknown[]>([]);
   const { isSuccess: isLogoutSuccess } = useLogoutUserQuery(undefined, {
     skip: !logout ? true : false,
   });
@@ -32,18 +32,6 @@ const Profile = ({ user }: Props) => {
     if (session) {
       await signOut();
     }
-    // try {
-    //   await logoutUser().unwrap();
-    // } catch (err) {
-    //   console.log("Logout backend request failed (clearing client state):", err);
-    // } finally {
-    //   dispatch(userLoggedOut());
-    //   if (session) {
-    //     await signOut({ callbackUrl: "/" });
-    //   } else {
-    //     toast.success("Logged out successfully!");
-    //   }
-    // }
   };
 
   useEffect(() => {
