@@ -29,8 +29,8 @@ export const courseApi = apiSlice.injectEndpoints({
     
     editCourse: builder.mutation({
       query: ({ id, data }) => ({
-        url: `/course/edit/${id}`,
-        method: "PUT",
+        url: `/course/admin/edit/${id}`,
+        method: "PATCH",
         body: data,
         credentials: "include" as const,
       }),
@@ -93,7 +93,7 @@ export const courseApi = apiSlice.injectEndpoints({
     addReplyInReview: builder.mutation({
       query: ({ comment, courseId, reviewId }) => ({
         // server route is "/add-reply/:id" (admin only); controller reads courseId from body
-        url: `/course/add-review-reply`,
+        url: `/course/admin/add-review-reply`,
         method: "PUT",
         body: { comment, courseId, reviewId },
         credentials: "include" as const,
