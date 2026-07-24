@@ -70,18 +70,28 @@ export const editLayout = catchAsyncError(async (req: Request, res: Response, ne
         if (type?.toLowerCase() === "banner") {
             const { image, title, subTitle } = req.body;
 
-            await cloudinary.v2.uploader.destroy(oldLayout.banner.image.public_id);
+            let bannerDataImage = oldLayout.banner?.image;
 
+            // Only upload to Cloudinary if a NEW image (base64 string) is provided
+            if (image && !image.startsWith("http")) {
+                // 1. Destroy old image from Cloudinary if public_id exists
+                if (oldLayout.banner?.image?.public_id) {
+                    await cloudinary.v2.uploader.destroy(oldLayout.banner.image.public_id);
+                }
 
-            const myCloud = await cloudinary.v2.uploader.upload(image, {
-                folder: "layout"
-            });
+                // 2. Upload new base64 image
+                const myCloud = await cloudinary.v2.uploader.upload(image, {
+                    folder: "layout"
+                });
 
-            const banner = {
-                image: {
+                bannerDataImage = {
                     public_id: myCloud?.public_id,
                     url: myCloud?.secure_url
-                } as any,
+                };
+            }
+
+            const banner = {
+                image: bannerDataImage,
                 title: title || oldLayout.banner?.title,
                 subTitle: subTitle || oldLayout.banner?.subTitle
             };
@@ -93,7 +103,7 @@ export const editLayout = catchAsyncError(async (req: Request, res: Response, ne
             );
         }
 
-        if (type?.toLowerCase() === "faq") {
+        if (type === "faq") {
             const { faq } = req.body;
             await LayoutModel.findByIdAndUpdate(
                 oldLayout._id,
@@ -102,7 +112,7 @@ export const editLayout = catchAsyncError(async (req: Request, res: Response, ne
             );
         }
 
-        if (type?.toLowerCase() === "categories") {
+        if (type === "categories") {
             const { categories } = req.body;
             await LayoutModel.findByIdAndUpdate(
                 oldLayout._id,
@@ -119,8 +129,7 @@ export const editLayout = catchAsyncError(async (req: Request, res: Response, ne
     } catch (error: any) {
         return next(new ErrorHandler(error.message, 400));
     }
-
-})
+});
 
 
 export const getLayoutByType = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {

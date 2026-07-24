@@ -1,6 +1,6 @@
 import { useState } from "react";
 import DashboardHeader from "../Admin/DashboardHeader";
-// import DashboardWigets from "../Admin/Widgets/DashboardWidgets";
+import DashboardWigets from "../Admin/Widgets/DashboardWidgets";
 
 
 type DashboardHeroProps = {
@@ -12,7 +12,7 @@ const DashboardHero = ({ isDashboard }: DashboardHeroProps) => {
   return (
     <div>
       <DashboardHeader open={open} setOpen={setOpen} />
-      {/* {isDashboard && <DashboardWigets open={open} />} */}
+      {isDashboard && <DashboardWigets open={open} />}
     </div>
   );
 };
