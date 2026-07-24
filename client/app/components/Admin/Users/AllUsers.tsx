@@ -327,7 +327,7 @@ const AllUsers = ({ isTeam }: Props) => {
 
   const usersList: IUser[] = data?.users || [];
   const filteredUsers = isTeam
-    ? usersList.filter((user: IUser) => user.role === "admin")
+    ? usersList.filter((user: IUser) => user.role?.toLowerCase() === "admin")
     : usersList;
 
   const rows: IRow[] = filteredUsers.map((user: IUser) => ({
