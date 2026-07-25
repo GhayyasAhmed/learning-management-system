@@ -151,7 +151,7 @@ export const getSingleCourseWithoutPurchase = catchAsyncError(
                     path: "reviews.reviewReplies.user",
                     select: "name avatar role",
                 });
-                console.log("course", course)
+            console.log("course", course)
             if (!course) {
                 return next(new ErrorHandler("Course not found", 404));
             }
@@ -186,36 +186,48 @@ export const getAllCourseWithoutPurchase = catchAsyncError(
 );
 
 export const getCourseByUser = catchAsyncError(
-    async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            const userCourseList = req.user?.courses;
-            const courseId = req.params.id;
-            const courseExists = userCourseList?.find(
-                (course: any) => course.courseId === courseId
-            );
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userCourseList = req.user?.courses;
+      const courseId = req.params.id;
 
-            if (!courseExists) {
-                return next(
-                    new ErrorHandler("You are not eligible to access this course", 404)
-                );
-            }
+      // Check enrollment matching either _id or courseId safely
+      const isEnrolled = userCourseList?.some(
+        (item: any) => item._id === courseId || item.courseId === courseId
+      );
 
-            const course = await CourseModel.findById(courseId);
+      if (!isEnrolled && req.user?.role !== "admin") {
+        return next(
+          new ErrorHandler("You are not eligible to access this course", 404)
+        );
+      }
 
-            if (!course) {
-                return next(new ErrorHandler("Invalid course id", 404));
-            }
+      // Find course and deep populate questions & replies user data
+      const course = await CourseModel.findById(courseId).populate([
+        {
+          path: "courseData.questions.user",
+          select: "name avatar role email",
+        },
+        {
+          path: "courseData.questions.questionReplies.user",
+          select: "name avatar role email",
+        },
+      ]);
 
-            const content = course?.courseData;
+      if (!course) {
+        return next(new ErrorHandler("Invalid course id", 404));
+      }
 
-            res.status(200).json({
-                success: true,
-                content,
-            });
-        } catch (error: any) {
-            return next(new ErrorHandler(error.message, 400));
-        }
+      const content = course.courseData;
+
+      res.status(200).json({
+        success: true,
+        content,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 400));
     }
+  }
 );
 
 interface IAddQuestionData {
@@ -253,7 +265,15 @@ export const addQuestion = catchAsyncError(
                     $push: { "courseData.$.questions": newQuestion },
                 },
                 { returnDocument: "after", runValidators: true }
-            );
+            )
+                .populate({
+                    path: "courseData.questions.user",
+                    select: "name avatar role email",
+                })
+                .populate({
+                    path: "courseData.questions.questionReplies.user",
+                    select: "name avatar role email",
+                });
 
             if (!updatedCourse) {
                 return next(new ErrorHandler("Course or content module not found", 404));
@@ -325,7 +345,15 @@ export const addAnswer = catchAsyncError(
                     runValidators: true,
                     arrayFilters: [{ "c._id": contentId }, { "q._id": questionId }],
                 }
-            );
+            )
+                .populate({
+                    path: "courseData.questions.user",
+                    select: "name email avatar role",
+                })
+                .populate({
+                    path: "courseData.questions.questionReplies.user",
+                    select: "name email avatar role",
+                });
 
             if (!updatedCourse) {
                 return next(new ErrorHandler("Course, content, or question not found", 404));
@@ -333,11 +361,6 @@ export const addAnswer = catchAsyncError(
 
             // Update Redis Cache
             await updatePublicCourseCache(courseId);
-
-            updatedCourse = await updatedCourse.populate({
-                path: "courseData.questions.user",
-                select: "name email",
-            });
 
             const courseContent = updatedCourse.courseData.find((item: any) =>
                 item._id.equals(contentId)
@@ -502,7 +525,15 @@ export const addReviewReply = catchAsyncError(
                     returnDocument: "after",
                     runValidators: true,
                 }
-            );
+            )
+                .populate({
+                    path: "reviews.user",
+                    select: "name avatar role",
+                })
+                .populate({
+                    path: "reviews.reviewReplies.user",
+                    select: "name avatar role",
+                });
 
             if (!updatedCourse) {
                 return next(new ErrorHandler("Course or reviews module not found", 404));
@@ -521,6 +552,7 @@ export const addReviewReply = catchAsyncError(
         }
     }
 );
+
 
 export const getAllCourses = catchAsyncError(
     async (req: Request, res: Response, next: NextFunction) => {

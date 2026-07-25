@@ -107,7 +107,7 @@ const CourseContent = ({ id, user }: Props) => {
                   id={id}
                   user={user}
                   activeVideo={activeVideo}
-                  setActiveVideo={setActiveVideo}
+                  // setActiveVideo={setActiveVideo}
                   refetch={refetch}
                 />
               </div>

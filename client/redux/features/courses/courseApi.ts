@@ -69,7 +69,7 @@ export const courseApi = apiSlice.injectEndpoints({
     }),
 
     // 8. Protected: Add Question to Video Content
-    addnewQuestion: builder.mutation({
+    addNewQuestion: builder.mutation({
       query: ({
         question,
         courseId,
@@ -152,7 +152,7 @@ export const {
   useGetUsersAllCoursesQuery,
   useGetCourseDetailsQuery,
   useGetCourseContentQuery,
-  useAddnewQuestionMutation,
+  useAddNewQuestionMutation,
   useAddAnswerInQuestionMutation,
   useAddReviewInCourseMutation,
   useAddReplyInReviewMutation,
