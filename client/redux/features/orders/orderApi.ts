@@ -13,7 +13,7 @@ export const orderApi = apiSlice.injectEndpoints({
     // remaining
     getStripePublishAbleKey: builder.query({
       query: () => ({
-        url: "payment/stripePublishAbleKey",
+        url: "/order/payment/stripePublishAbleKey",
         method: "GET",
         credentials: "include" as const,
       }),
@@ -22,7 +22,7 @@ export const orderApi = apiSlice.injectEndpoints({
     createPaymentIntent: builder.mutation({
       // The server derives the amount from the course price, so we only send the id.
       query: (courseId) => ({
-        url: "payment/process",
+        url: "/order/payment/process",
         method: "POST",
         body: { courseId },
         credentials: "include" as const,

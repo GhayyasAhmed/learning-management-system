@@ -99,7 +99,7 @@ const CourseDetails: FC<Props> = ({
   createPaymentIntentFn,
 }) => {
   const reduxUser = useSelector((state: RootState) => state.auth.user);
-  const allowBuying = stripePromise && clientSecret;
+  const isStripeReady = !!stripePromise;
   const {
     data: userData,
     isLoading: isLoadingUser,
@@ -359,7 +359,7 @@ const CourseDetails: FC<Props> = ({
                   >
                     Enter to Course
                   </Link>
-                ) : allowBuying ? (
+                ) : isStripeReady ? (
                   <div
                     className={`${styles.button} w-45! my-3 font-Poppins cursor-pointer bg-[crimson]!`}
                     onClick={handleOrder}
@@ -399,7 +399,7 @@ const CourseDetails: FC<Props> = ({
               />
             </div>
             <div className="w-full">
-              {allowBuying && (
+              {stripePromise && clientSecret && (
                 <Elements stripe={stripePromise} options={{ clientSecret }}>
                   <CheckOutForm
                     setOpen={setOpen}

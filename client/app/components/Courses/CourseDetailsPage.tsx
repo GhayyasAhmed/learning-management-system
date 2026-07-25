@@ -24,7 +24,7 @@ const CourseDetailsPage: FC<Props> = ({ id }: Props) => {
   const { data: config } = useGetStripePublishAbleKeyQuery({});
   
   // 1. Extract the string primitive beforehand to satisfy the React Compiler
-  const publishableKey = config?.publishableKey;
+  const publishableKey = config?.publishableKey; //publishableKey
 
   // Receive client secret by passing amount/id
   const [
@@ -39,10 +39,10 @@ const CourseDetailsPage: FC<Props> = ({ id }: Props) => {
     }
     return null;
   }, [publishableKey]);
-
+  
   // Derive clientSecret directly from query response
   const clientSecret = paymentIntentdata?.client_secret || "";
-
+ 
   useEffect(() => {
     if (paymentIntentError) {
       console.error("Error while creating payment intent:", paymentIntentError);
