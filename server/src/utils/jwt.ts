@@ -21,7 +21,7 @@ export const accessTokenOptions: ITokenOptions = {
     expires: new Date(Date.now() + accessTokenExpiresIn),
     maxAge: accessTokenExpiresIn,
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: "lax",
     secure: process.env.NODE_ENV === "production"
 };
 
@@ -29,7 +29,7 @@ export const refreshTokenOptions: ITokenOptions = {
     expires: new Date(Date.now() + refreshTokenExpiresIn),
     maxAge: refreshTokenExpiresIn,
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: "lax",
     secure: process.env.NODE_ENV === "production"
 };
 
