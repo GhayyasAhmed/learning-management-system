@@ -2,6 +2,12 @@ import app from "./app.js";
 import { connectDatabase } from "./config/database.js";
 import { env } from "./config/env.js";
 import connectCloudinary from "./config/cloudinary.js";
+import { initSocketServer } from './socketServer.js';
+import http from 'http';
+
+const server = http.createServer(app);
+initSocketServer(server);
+
 
 connectCloudinary();
 
@@ -10,7 +16,7 @@ async function startServer() {
     await connectDatabase();
     console.log(`Connected to MongoDB`);
 
-    app.listen(env.port, () => {
+    server.listen(env.port, () => {
       console.log(`Server is running on port ${env.port}`);
     });
   } catch (error) {
