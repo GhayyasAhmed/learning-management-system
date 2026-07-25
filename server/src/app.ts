@@ -2,6 +2,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import mongoose from "mongoose";
+import { rateLimit } from "express-rate-limit";
 import { env } from "./config/env.js";
 import errorMiddleware from "./middlewares/error.js";
 import courseRouter from "./routes/courseRoutes.js";
@@ -30,10 +31,21 @@ app.use(
   }),
 );
 
-// body parser
+// Body parser
 app.use(express.json({ limit: "50mb" }));
-
 app.use(cookieParser());
+
+// Rate Limiter Configuration
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes in milliseconds
+  limit: 100, // Limit each IP to 100 requests per 15-minute window
+  standardHeaders: "draft-8", // Return rate limit info in `RateLimit-*` headers
+  legacyHeaders: false, // Disable `X-RateLimit-*` headers
+  ipv6Subnet: 56,
+});
+
+// Apply Rate Limiter globally to all requests
+app.use(limiter);
 
 // Database Connection Middleware
 app.use(async (req, res, next) => {
@@ -48,18 +60,17 @@ app.use(async (req, res, next) => {
   }
 });
 
-// Production-Ready Health Check Endpoint
+// Production Health Check
 app.get("/api/v1/health-check", (req, res) => {
   const isDbConnected = mongoose.connection.readyState === 1;
 
-  // System status is "ok" if DB is healthy, otherwise "degraded"
   const systemStatus = isDbConnected ? "ok" : "degraded";
   const statusCode = isDbConnected ? 200 : 503;
 
   res.status(statusCode).json({
     status: systemStatus,
     timestamp: new Date().toISOString(),
-    uptime: Math.floor(process.uptime()), // Server uptime in seconds
+    uptime: Math.floor(process.uptime()),
     services: {
       database: {
         status: isDbConnected ? "up" : "down",
