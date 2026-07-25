@@ -48,43 +48,21 @@ app.use(async (req, res, next) => {
   }
 });
 
-// Temporary Health Check & DB/ENV Diagnostic Route
+// Production-Ready Health Check Endpoint
 app.get("/api/v1/health-check", (req, res) => {
-  const dbStateMap: Record<number, string> = {
-    0: "Disconnected",
-    1: "Connected",
-    2: "Connecting",
-    3: "Disconnecting",
-    99: "Uninitialized",
-  };
+  const isDbConnected = mongoose.connection.readyState === 1;
 
-  const currentDbState = mongoose.connection.readyState;
+  // System status is "ok" if DB is healthy, otherwise "degraded"
+  const systemStatus = isDbConnected ? "ok" : "degraded";
+  const statusCode = isDbConnected ? 200 : 503;
 
-  // Safely mask MongoDB credentials for display
-  const maskedMongoUri = env.mongoUri
-    ? env.mongoUri.replace(/\/\/(.*):(.*)@/, "//***:***@")
-    : "NOT_SET";
-
-  res.status(200).json({
-    success: true,
+  res.status(statusCode).json({
+    status: systemStatus,
     timestamp: new Date().toISOString(),
-    database: {
-      status: dbStateMap[currentDbState] || "Unknown",
-      readyStateCode: currentDbState,
-      host: mongoose.connection.host || "N/A",
-      dbName: mongoose.connection.name || "N/A",
-    },
-    environment: {
-      nodeEnv: env.nodeEnv,
-      port: env.port,
-      mongoUriConfigured: Boolean(env.mongoUri),
-      maskedMongoUri: maskedMongoUri,
-      allowedOrigins: env.allowedOrigins,
-      processEnvChecks: {
-        NODE_ENV: process.env.NODE_ENV || "NOT_SET",
-        MONGO_URI_EXISTS: Boolean(process.env.MONGO_URI),
-        PORT_EXISTS: Boolean(process.env.PORT),
-        CLOUD_NAME_EXISTS: Boolean(process.env.CLOUD_NAME),
+    uptime: Math.floor(process.uptime()), // Server uptime in seconds
+    services: {
+      database: {
+        status: isDbConnected ? "up" : "down",
       },
     },
   });
