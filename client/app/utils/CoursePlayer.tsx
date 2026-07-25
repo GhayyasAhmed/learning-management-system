@@ -1,6 +1,7 @@
 "use client";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 type Props = {
   videoUrl: string;
   title: string;
@@ -17,25 +18,24 @@ const CoursePlayer = ({ videoUrl }: Props) => {
   useEffect(() => {
     const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL;
     if (!baseUrl) {
-      console.error(
-        "NEXT_PUBLIC_SERVER_URL is not set. Cannot request VdoCipher OTP."
-      );
+      toast.error("Failed to upload video. Try again");
       return;
     }
 
-    const url = baseUrl.endsWith("/")
-      ? `${baseUrl}getVdoCipherOTP`
-      : `${baseUrl}/getVdoCipherOTP`;
+    // const url = baseUrl.endsWith("/")
+    //   ? `${baseUrl}getVdoCipherOTP`
+    //   : `${baseUrl}/getVdoCipherOTP`;
 
     axios
-      .post(url, {
+      .post(`${baseUrl}/course/getVdoCipherOTP`, {
         videoId: videoUrl,
       })
       .then((res) => {
         setVideoData(res.data);
       })
-      .catch((err) => {
-        console.error("VdoCipher OTP API Error:", err?.response?.data || err);
+      .catch(() => {
+        toast.error("Failed to upload video. Try again");
+        // console.error("VdoCipher OTP API Error:", err?.response?.data || err);
       });
   }, [videoUrl]);
 
@@ -45,7 +45,7 @@ const CoursePlayer = ({ videoUrl }: Props) => {
     >
       {videoData.otp && videoData.playbackInfo !== "" && (
         <iframe
-          src={`https://player.vdocipher.com/v2/?otp=${videoData.otp}&playbackInfo=${videoData.playbackInfo}&player=cDzWaw5pK6ptF60G`}
+          src={`https://player.vdocipher.com/v2/?otp=${videoData.otp}&playbackInfo=${videoData.playbackInfo}&player=GzBf2RAWMqlXmTij`}
           style={{
             border: 0,
             maxWidth: "100%",

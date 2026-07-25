@@ -48,7 +48,7 @@ export interface ICourse extends Document {
     level: string;
     demoUrl: string;
     benefits: { title: string }[];
-    preqeuisites: { title: string }[];
+    prerequisites: { title: string }[];
     reviews: IReview[];
     courseData: ICourseData[];
     rating?: number;
@@ -188,7 +188,7 @@ const courseSchema: Schema<ICourse> = new mongoose.Schema({
             }
         }
     ],
-    preqeuisites: [
+    prerequisites: [
         {
             title: {
                 type: String,
