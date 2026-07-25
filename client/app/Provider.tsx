@@ -50,7 +50,7 @@ const Custom = ({ children }: { children: React.ReactNode }) => {
     socketRef.current = socket;
 
     const onConnect = () => {
-      console.log("Connected to socket", socket.id);
+      console.log("Connected to socket");
     };
 
     const onDisconnect = (reason: unknown) => {

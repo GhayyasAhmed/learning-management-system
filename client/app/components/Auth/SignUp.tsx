@@ -71,7 +71,7 @@ const SignUp = ({ setRoute, setOpen }: Props) => {
             value={values.name}
             onChange={handleChange}
             id="name"
-            placeholder="Ali Shair"
+            placeholder="User Name"
             className={`${errors.name && touched.name && "border-red-500"} ${
               styles.input
             }`}
