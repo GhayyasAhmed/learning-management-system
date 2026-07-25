@@ -5,8 +5,8 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { IoMdNotificationsOutline } from "react-icons/io";
 import socketIO from "socket.io-client";
 import {
-    useGetAllNotificationsQuery,
-    useUpdateNotificationStatusMutation,
+  useGetAllNotificationsQuery,
+  useUpdateNotificationStatusMutation,
 } from "../../../redux/features/notifications/notificationsApi";
 import ThemeSwitcher from "../../utils/ThemeSwitcher";
 
@@ -113,7 +113,10 @@ type ContainerProps = {
   setOpen?: (open: boolean) => void;
 };
 
-const DashboardHeader = ({ open = false, setOpen = () => {} }: ContainerProps) => {
+const DashboardHeader = ({
+  open = false,
+  setOpen = () => {},
+}: ContainerProps) => {
   const { data, refetch } = useGetAllNotificationsQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
@@ -126,7 +129,7 @@ const DashboardHeader = ({ open = false, setOpen = () => {} }: ContainerProps) =
   useEffect(() => {
     if (typeof window !== "undefined") {
       audioRef.current = new Audio(
-        "https://res.cloudinary.com/dasdrngo1/video/upload/v1715355770/notifications/mixkit-bubble-pop-up-alert-notification-2357_wbwviv.wav"
+        "https://res.cloudinary.com/dasdrngo1/video/upload/v1715355770/notifications/mixkit-bubble-pop-up-alert-notification-2357_wbwviv.wav",
       );
     }
   }, []);
@@ -144,7 +147,7 @@ const DashboardHeader = ({ open = false, setOpen = () => {} }: ContainerProps) =
       .sort(
         (a: INotification, b: INotification) =>
           new Date(b?.createdAt || 0).getTime() -
-          new Date(a?.createdAt || 0).getTime()
+          new Date(a?.createdAt || 0).getTime(),
       );
   }, [data]);
 
@@ -169,7 +172,10 @@ const DashboardHeader = ({ open = false, setOpen = () => {} }: ContainerProps) =
   }, [refetch, playNotificationSound]);
 
   const handleNotificationStatusChange = async (id: string) => {
-    await updateNotificationStatus(id);
+    if (!id) return;
+
+    // Pass object matching { id, status } required by your mutation definition
+    await updateNotificationStatus({ id, status: "read" });
   };
 
   return (
