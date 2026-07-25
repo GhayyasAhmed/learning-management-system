@@ -41,7 +41,7 @@ const Profile = ({ user }: Props) => {
     try {
       setLogout(true);
     } catch (err) {
-      console.log("Logout request failed (continuing local logout):", err);
+      toast.error(`Logout request failed (continuing local logout):, ${err}`);
     } finally {
       dispatch(userLoggedOut());
       toast.success("Logged out successfully!");

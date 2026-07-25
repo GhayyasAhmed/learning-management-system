@@ -132,7 +132,6 @@ export const getSingleCourseWithoutPurchase = catchAsyncError(
             }
 
             const isCacheExist = await redis.get(id);
-            console.log("isCacheExist", isCacheExist)
             if (isCacheExist) {
                 const course = JSON.parse(isCacheExist);
                 return res.status(200).json({
@@ -151,7 +150,7 @@ export const getSingleCourseWithoutPurchase = catchAsyncError(
                     path: "reviews.reviewReplies.user",
                     select: "name avatar role",
                 });
-            console.log("course", course)
+
             if (!course) {
                 return next(new ErrorHandler("Course not found", 404));
             }

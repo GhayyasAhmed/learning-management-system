@@ -186,8 +186,6 @@ export const newPayment = catchAsyncError(async (req: Request, res: Response, ne
             }
         });
 
-        console.log("myPayment", myPayment);
-
         res.status(201).json({
             client_secret: myPayment.client_secret,
             success: true

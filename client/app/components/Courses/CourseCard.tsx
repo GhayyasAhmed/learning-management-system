@@ -30,7 +30,6 @@ export const CourseCardPresenter = ({
   isProfile,
   thumbnailUrl,
 }: CourseCardPresenterProps) => {
-  console.log("item", item)
   return (
     <Link
       href={!isProfile ? `/course/${item._id}` : `course-access/${item._id}`}
