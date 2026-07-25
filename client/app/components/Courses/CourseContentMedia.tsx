@@ -69,7 +69,7 @@ interface Review {
   _id: string;
   user: User;
   rating: number;
-  comment: string;
+  review: string;
   createdAt: string;
   commentReplies?: ReviewReply[];
 }
@@ -116,13 +116,20 @@ const CourseContentMedia: FC<Props> = ({
     id,
     {
       refetchOnMountOrArgChange: true,
-    }
+    },
   );
   const course = courseData?.course;
-  const isReviewsExist = course?.reviews?.find(
-    (item: Review) => item.user._id === user._id
-  );
+  // const isReviewsExist = course?.reviews?.find(
+  //   (item: Review) => item.user === user._id
+  // );
 
+  const isReviewsExist = course?.reviews?.some((item: Review) => {
+    const reviewUserId =
+      typeof item.user === "object" ? item.user?._id : item.user;
+    return String(reviewUserId) === String(user?._id);
+  });
+  console.log("course?.reviews", course?.reviews);
+  console.log("isReviewsExist", isReviewsExist);
   const [
     addAnswerInQuestion,
     {
@@ -182,8 +189,8 @@ const CourseContentMedia: FC<Props> = ({
       toast.error(
         getErrorMessage(
           error,
-          "Could not post your question. Please try again."
-        )
+          "Could not post your question. Please try again.",
+        ),
       );
     }
     // Answer Response
@@ -202,8 +209,8 @@ const CourseContentMedia: FC<Props> = ({
       toast.error(
         getErrorMessage(
           answerError,
-          "Could not post your answer. Please try again."
-        )
+          "Could not post your answer. Please try again.",
+        ),
       );
     }
     // Review Response
@@ -220,8 +227,8 @@ const CourseContentMedia: FC<Props> = ({
       toast.error(
         getErrorMessage(
           reviewError,
-          "Could not post your review. Please try again."
-        )
+          "Could not post your review. Please try again.",
+        ),
       );
     }
     // Reply response
@@ -233,8 +240,8 @@ const CourseContentMedia: FC<Props> = ({
       toast.error(
         getErrorMessage(
           replyError,
-          "Could not post your reply. Please try again."
-        )
+          "Could not post your reply. Please try again.",
+        ),
       );
     }
   }, [
@@ -292,6 +299,8 @@ const CourseContentMedia: FC<Props> = ({
     setQuestion("");
   };
 
+  console.log("user", user);
+
   return (
     <div className="w-[95%] 800px:w-[86%] py-4 m-auto">
       {/* Video Player */}
@@ -319,7 +328,7 @@ const CourseContentMedia: FC<Props> = ({
             setActiveVideo(
               data && data.length - 1 === activeVideo
                 ? activeVideo
-                : activeVideo + 1
+                : activeVideo + 1,
             )
           }
         >
@@ -346,7 +355,7 @@ const CourseContentMedia: FC<Props> = ({
             >
               {item}
             </h5>
-          )
+          ),
         )}
       </div>
       <br />
@@ -471,7 +480,7 @@ const CourseContentMedia: FC<Props> = ({
                             size={25}
                             onClick={() => setRating(i)}
                           />
-                        )
+                        ),
                       )}
                     </div>
                     <textarea
@@ -532,7 +541,7 @@ const CourseContentMedia: FC<Props> = ({
                         <div className="ml-2">
                           <h1 className="text-[18px]">{item?.user.name}</h1>
                           <Ratings rating={item.rating} />
-                          <p>{item.comment}</p>
+                          <p>{item.review}</p>
                           <small className="text-[#0000009e] dark:text-[#ffffff83]">
                             {formatTimeAgo(item.createdAt)} •
                           </small>
@@ -601,7 +610,7 @@ const CourseContentMedia: FC<Props> = ({
                               </small>
                             </div>
                           </div>
-                        )
+                        ),
                       )}
                     </div>
                   ))}
@@ -758,7 +767,7 @@ const CommentItem: FC<CommentItemProps> = ({
                   </small>
                 </div>
               </div>
-            )
+            ),
           )}
           <>
             <div className="w-full flex relative dark:text-white text-black">

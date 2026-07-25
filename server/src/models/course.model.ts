@@ -15,6 +15,8 @@ export interface IReview {
     rating: number;
     review: string;
     reviewReplies?: IComment[];
+    createdAt?: Date; // 👈 Add this
+    updatedAt?: Date;
     // createdAt: Date;
 }
 
