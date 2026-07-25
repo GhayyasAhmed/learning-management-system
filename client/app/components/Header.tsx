@@ -46,7 +46,6 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
   // const [logout, setLogout] = useState(false)
   const [socialAuth, { isSuccess, error }] = useSocialAuthMutation();
   const shouldLogout = data === null && isSocial && !!user;
-  console.log("shouldLogout", shouldLogout)
   const {isSuccess: isLogoutSuccess} = useLogoutUserQuery(undefined, { skip: !shouldLogout });
   // const {} = useLogoutUserQuery(undefined, {skip: !logout ? true: false});
   // const [logoutUser] = useLogoutUserMutation();

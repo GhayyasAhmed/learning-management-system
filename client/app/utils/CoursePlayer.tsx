@@ -13,8 +13,6 @@ const CoursePlayer = ({ videoUrl }: Props) => {
     playbackInfo: "",
   });
 
-  console.log("videoUrl", videoUrl);
-
   useEffect(() => {
     const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL;
     if (!baseUrl) {

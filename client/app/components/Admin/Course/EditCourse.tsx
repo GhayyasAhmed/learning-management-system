@@ -143,7 +143,10 @@ const EditCourseForm = ({ initialData, id }: CourseFormProps) => {
   // Submits the payload to backend
   const handleCourseCreate = async () => {
     if (!isLoading && courseData && id) {
-      await editCourse({ id, data: courseData });
+      await editCourse({
+        id,
+        data: courseData as unknown as Record<string, unknown>,
+      });
     }
   };
 

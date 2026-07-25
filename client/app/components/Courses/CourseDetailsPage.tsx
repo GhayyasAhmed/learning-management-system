@@ -82,7 +82,7 @@ const CourseDetailsPage: FC<Props> = ({ id }: Props) => {
             setOpen={setOpen}
             activeItem={1}
           />
-          {stripePromise && (
+          {/* {stripePromise && ( */}
             <CourseDetails
               setRoute={setRoute}
               setOpen={setOpen}
@@ -91,7 +91,7 @@ const CourseDetailsPage: FC<Props> = ({ id }: Props) => {
               clientSecret={clientSecret}
               createPaymentIntentFn={handleCreatePaymentIntent}
             />
-          )}
+          {/* )} */}
           <Footer />
         </>
       )}

@@ -13,7 +13,6 @@ import CoursePlayer from "../../utils/CoursePlayer";
 import Ratings from "../../utils/Ratings";
 import CheckOutForm from "../Payment/CheckOutForm";
 import CourseContentList from "./CourseContentList";
-// Import the actual canonical interface from CourseContent
 import { ICourseContent } from "./CourseContent";
 
 export interface ICourseBenefit {
@@ -55,7 +54,8 @@ export interface ICourseDetailsData {
   description: string;
   price: number;
   estimatedPrice: number;
-  ratings: number;
+  ratings?: number;
+  rating?: number;
   purchased: number;
   demoUrl: string;
   benefits?: ICourseBenefit[];
@@ -99,7 +99,7 @@ const CourseDetails: FC<Props> = ({
   createPaymentIntentFn,
 }) => {
   const reduxUser = useSelector((state: RootState) => state.auth.user);
-  // Prefer Redux user (loaded in app/layout.tsx); fall back to API if needed.
+  const allowBuying = stripePromise && clientSecret;
   const {
     data: userData,
     isLoading: isLoadingUser,
@@ -110,12 +110,19 @@ const CourseDetails: FC<Props> = ({
 
   const user = reduxUser || userData?.user;
   const isLoggedIn = !!user && typeof user === "object" && !!user._id;
-  // Percentage logic
+
+  // Extract ratings handling both backend singular `rating` and plural `ratings`
+  const courseRating = data?.ratings ?? data?.rating ?? 0;
+
+  // Safe Percentage calculation
   const discountPercentage =
-    ((data?.estimatedPrice - data?.price) / data?.estimatedPrice) * 100;
-  // Getting only 2-digits after decimal
-  const discountPercentagePrice = discountPercentage.toFixed(0);
-  // Checking whether the user has purchased this course or not
+    data?.estimatedPrice && data?.estimatedPrice > 0
+      ? ((data.estimatedPrice - data.price) / data.estimatedPrice) * 100
+      : 0;
+
+  const discountPercentagePrice = Math.max(0, discountPercentage).toFixed(0);
+
+  // Checking purchase status
   const isPurchased =
     isLoggedIn &&
     user.courses?.find((item: IUserCourse) => {
@@ -124,7 +131,6 @@ const CourseDetails: FC<Props> = ({
     });
 
   const handleOrder = async () => {
-    // If auth is still resolving, try one refetch before deciding.
     if (!user && (isLoadingUser || isFetchingUser)) {
       const res = await refetch();
       const refreshedUser = res?.data?.user;
@@ -156,17 +162,18 @@ const CourseDetails: FC<Props> = ({
             </h1>
             <div className="flex items-center justify-between pt-3">
               <div className="flex items-center">
-                <Ratings rating={data.ratings} />
+                <Ratings rating={courseRating} />
                 <h5 className="text-black dark:text-white">
-                  {data.reviews?.length} Reviews
+                  {data.reviews?.length || 0} Reviews
                 </h5>
               </div>
               <h5 className="text-black dark:text-white">
-                {data.purchased} Students
+                {data.purchased || 0} Students
               </h5>
             </div>
             <br />
-            {/* Each benefits */}
+
+            {/* Benefits */}
             <h1 className="text-[25px] font-Poppins font-semibold text-black dark:text-white">
               What you will learn from this course?
             </h1>
@@ -192,7 +199,8 @@ const CourseDetails: FC<Props> = ({
             </div>
             <br />
             <br />
-            {/* Each prerequisite */}
+
+            {/* Prerequisites */}
             <h1 className="text-[25px] font-Poppins font-semibold text-black dark:text-white">
               What are the prerequisites for starting this course?
             </h1>
@@ -212,10 +220,11 @@ const CourseDetails: FC<Props> = ({
                     {item.title}
                   </p>
                 </div>
-              )
+              ),
             )}
             <br />
             <br />
+
             <div>
               <h1 className="text-[25px] font-Poppins font-semibold text-black dark:text-white">
                 Course Overview
@@ -224,6 +233,7 @@ const CourseDetails: FC<Props> = ({
             </div>
             <br />
             <br />
+
             {/* Course Description */}
             <div className="w-full">
               <h1 className="text-[25px] font-Poppins font-semibold text-black dark:text-white">
@@ -235,16 +245,17 @@ const CourseDetails: FC<Props> = ({
             </div>
             <br />
             <br />
+
             {/* REVIEWS */}
             <div className="w-full">
               <div className="800px:flex items-center">
-                <Ratings rating={data.ratings} />
+                <Ratings rating={courseRating} />
                 <div className="mb-2 800px:mb-[unset]" />
                 <h5 className="text-[25px] font-Poppins text-black dark:text-white">
-                  {Number.isInteger(data?.ratings)
-                    ? data?.ratings.toFixed(1)
-                    : data?.ratings.toFixed(2)}
-                  Course Rating • {data?.reviews?.length} Reviews
+                  {Number.isInteger(courseRating)
+                    ? courseRating.toFixed(1)
+                    : courseRating.toFixed(2)}{" "}
+                  Course Rating • {data?.reviews?.length || 0} Reviews
                 </h5>
               </div>
               <br />
@@ -253,7 +264,6 @@ const CourseDetails: FC<Props> = ({
                   .reverse()
                   .map((item: ICourseReview, index: number) => (
                     <div className="w-full pb-4" key={index}>
-                      {/* Review item */}
                       <div className="flex">
                         <div className="w-12.5 h-12.5">
                           <Image
@@ -283,7 +293,7 @@ const CourseDetails: FC<Props> = ({
                           </small>
                         </div>
                       </div>
-                      {/* Comment Replies */}
+
                       {item.commentReplies?.map(
                         (i: ICourseReviewReply, replyIndex: number) => (
                           <div
@@ -314,15 +324,15 @@ const CourseDetails: FC<Props> = ({
                               </small>
                             </div>
                           </div>
-                        )
+                        ),
                       )}
                     </div>
                   ))}
             </div>
           </div>
-          {/* Right Side */}
+
+          {/* RIGHT SIDE */}
           <div className="w-full 800px:w-[35%] relative">
-            {/* Fixed position on scroll stays in view */}
             <div className="sticky top-25 left-0 z-50 w-full">
               <CoursePlayer
                 videoUrl={data.demoUrl}
@@ -340,7 +350,7 @@ const CourseDetails: FC<Props> = ({
                   {discountPercentagePrice}% Off
                 </h4>
               </div>
-              {/* Buy or enter button depending on purchase */}
+
               <div className="flex items-center">
                 {isPurchased ? (
                   <Link
@@ -349,16 +359,18 @@ const CourseDetails: FC<Props> = ({
                   >
                     Enter to Course
                   </Link>
-                ) : (
+                ) : allowBuying ? (
                   <div
                     className={`${styles.button} w-45! my-3 font-Poppins cursor-pointer bg-[crimson]!`}
                     onClick={handleOrder}
                   >
                     Buy Now {data.price}$
                   </div>
+                ) : (
+                  <></>
                 )}
               </div>
-              {/* Course features */}
+
               <p className="pb-1 text-black dark:text-white">
                 • Source code included
               </p>
@@ -375,36 +387,32 @@ const CourseDetails: FC<Props> = ({
           </div>
         </div>
       </div>
-      <>
-        {open && (
-          <div className="w-full h-screen bg-[#00000036] fixed top-0 left-0 z-50 flex items-center justify-center">
-            <div className="w-125 max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow p-3">
-              <div className="w-full flex justify-end">
-                <IoCloseOutline
-                  size={40}
-                  className="text-black cursor-pointer"
-                  onClick={() => setOpen(false)}
-                />
-              </div>
-              <div className="w-full">
-                {stripePromise && clientSecret && (
-                  <Elements
-                    stripe={stripePromise}
-                    options={{ clientSecret }}
-                  >
-                    <CheckOutForm
-                      setOpen={setOpen}
-                      refetch={refetch}
-                      data={data}
-                      user={user}
-                    />
-                  </Elements>
-                )}
-              </div>
+
+      {open && (
+        <div className="w-full h-screen bg-[#00000036] fixed top-0 left-0 z-50 flex items-center justify-center">
+          <div className="w-125 max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow p-3">
+            <div className="w-full flex justify-end">
+              <IoCloseOutline
+                size={40}
+                className="text-black cursor-pointer"
+                onClick={() => setOpen(false)}
+              />
+            </div>
+            <div className="w-full">
+              {allowBuying && (
+                <Elements stripe={stripePromise} options={{ clientSecret }}>
+                  <CheckOutForm
+                    setOpen={setOpen}
+                    refetch={refetch}
+                    data={data}
+                    user={user}
+                  />
+                </Elements>
+              )}
             </div>
           </div>
-        )}
-      </>
+        </div>
+      )}
     </>
   );
 };
