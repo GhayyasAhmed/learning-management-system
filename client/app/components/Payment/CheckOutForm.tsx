@@ -1,5 +1,3 @@
-import { styles } from "../../styles/styles";
-import { useCreateOrderMutation } from "../../../redux/features/orders/orderApi";
 import {
   LinkAuthenticationElement,
   PaymentElement,
@@ -7,11 +5,13 @@ import {
   useStripe,
 } from "@stripe/react-stripe-js";
 import { useRouter } from "next/navigation";
-import React, { FC, FormEvent, useEffect, useRef, useState } from "react";
+import { FC, FormEvent, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import socketIO, { Socket } from "socket.io-client";
 import { useDispatch, useSelector } from "react-redux";
+import socketIO, { Socket } from "socket.io-client";
 import { userLogin } from "../../../redux/features/auth/authSlice";
+import { useCreateOrderMutation } from "../../../redux/features/orders/orderApi";
+import { styles } from "../../styles/styles";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 import { ICourseDetailsData, IRootUser, IUserCourse } from "../Courses/CourseDetails";
 

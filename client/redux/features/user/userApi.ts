@@ -42,7 +42,7 @@ export const userApi = apiSlice.injectEndpoints({
             query: ({ id, role }) => ({
                 url: "/user/admin/update-role",
                 method: "PUT",
-                body: { userId:id, role },
+                body: { userId: id, role },
                 credentials: "include" as const,
             }),
         }),
@@ -50,7 +50,7 @@ export const userApi = apiSlice.injectEndpoints({
         deleteUser: builder.mutation({
             query: (id) => ({
                 url: `/user/admin/delete`,
-                body: {userId: id},
+                body: { userId: id },
                 method: "DELETE",
                 credentials: "include" as const,
             }),

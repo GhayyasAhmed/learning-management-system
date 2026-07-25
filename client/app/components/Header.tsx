@@ -52,9 +52,6 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
   // const [logoutUser] = useLogoutUserMutation();
 
   useEffect(() => {
-    console.log("user", user)
-    console.log("data", data)
-    console.log("isSocial", isSocial)
     // 1. Social Login Trigger
     if (!user && data?.user) {
       socialAuth({
