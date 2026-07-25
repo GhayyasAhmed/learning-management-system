@@ -1,31 +1,39 @@
 import mongoose from "mongoose";
 import { env } from "./env.js";
 
-let cachedConnection: typeof mongoose | null = null;
-let connectionPromise: Promise<typeof mongoose> | null = null;
+// Disable buffering globally so Mongoose immediately fails if not connected,
+// rather than hanging for 10 seconds.
+mongoose.set("bufferCommands", false);
+
+let isConnected = false;
 
 export async function connectDatabase() {
-  if (cachedConnection || mongoose.connection.readyState === 1) {
-    return cachedConnection || mongoose;
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
   }
 
-  if (connectionPromise) {
-    cachedConnection = await connectionPromise;
-    return cachedConnection;
-  }
-
-  connectionPromise = mongoose
-    .connect(env.mongoUri, {
-      serverSelectionTimeoutMS: 10000
-    })
-    .then((connection) => {
-      cachedConnection = connection;
-      return connection;
-    })
-    .finally(() => {
-      connectionPromise = null;
+  try {
+    const db = await mongoose.connect(env.mongoUri, {
+      serverSelectionTimeoutMS: 5000, // Timeout faster in production (5s)
+      autoIndex: false, // Prevent performance hit on free tier Atlas
     });
 
-  cachedConnection = await connectionPromise;
-  return cachedConnection;
+    isConnected = true;
+    console.log("MongoDB connected successfully");
+
+    mongoose.connection.on("error", (err) => {
+      console.error("MongoDB connection error:", err);
+      isConnected = false;
+    });
+
+    mongoose.connection.on("disconnected", () => {
+      console.warn("MongoDB disconnected. Reconnecting...");
+      isConnected = false;
+    });
+
+    return db;
+  } catch (error) {
+    console.error("Failed to connect to MongoDB:", error);
+    throw error;
+  }
 }

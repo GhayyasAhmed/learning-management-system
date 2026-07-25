@@ -8,6 +8,7 @@ import http from 'http';
 const server = http.createServer(app);
 initSocketServer(server);
 
+console.log("Connecting to Mongo URI:", env.mongoUri.replace(/:([^@]+)@/, ":****@"));
 
 connectCloudinary();
 
@@ -18,6 +19,7 @@ async function startServer() {
 
     server.listen(env.port, () => {
       console.log(`Server is running on port ${env.port}`);
+      console.log(`DB is running on port ${env.mongoUri}`);
     });
   } catch (error) {
     console.error("Failed to start server", error);
