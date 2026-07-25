@@ -6,7 +6,7 @@ import Ratings from "../../utils/Ratings";
 export interface ICourseItem {
   _id: string;
   name: string;
-  ratings?: number;
+  rating?: number;
   purchased?: number;
   price?: number;
   estimatedPrice?: number;
@@ -30,6 +30,7 @@ export const CourseCardPresenter = ({
   isProfile,
   thumbnailUrl,
 }: CourseCardPresenterProps) => {
+  console.log("item", item)
   return (
     <Link
       href={!isProfile ? `/course/${item._id}` : `course-access/${item._id}`}
@@ -48,7 +49,7 @@ export const CourseCardPresenter = ({
           {item.name}
         </h1>
         <div className="w-full flex items-center justify-between pt-2">
-          <Ratings rating={item.ratings || 0} />
+          <Ratings rating={item.rating || 0} />
           <h5
             className={`text-black dark:text-white ${
               isProfile ? "hidden 800px:inline" : ""

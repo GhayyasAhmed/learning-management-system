@@ -43,6 +43,7 @@ interface ICourseData {
 export interface ICourse extends Document {
     name: string;
     description?: string;
+    categories: string;
     price: number;
     estimatedPrice?: number;
     thumbnail: { public_id: string; url: string } | string;
@@ -150,6 +151,10 @@ const courseSchema: Schema<ICourse> = new mongoose.Schema({
         required: [true, "Please enter the course description"],
         minLength: [20, "Description must be at least 20 characters"],
         maxLength: [2000, "Description cannot exceed 2000 characters"]
+    },
+    categories: {
+        type: String,
+        required: [true, "Please enter the course category"]
     },
     price: {
         type: Number,

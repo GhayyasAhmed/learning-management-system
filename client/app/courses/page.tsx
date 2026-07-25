@@ -59,6 +59,8 @@ const CoursesContent = () => {
     );
   }, [category, data, searchTerm]);
 
+  console.log("category", category)
+  console.log("courses", courses)
   return (
     <>
       {isLoading ? (
