@@ -9,6 +9,8 @@ export const orderApi = apiSlice.injectEndpoints({
       }),
     }),
 
+
+    // remaining
     getStripePublishAbleKey: builder.query({
       query: () => ({
         url: "payment/stripePublishAbleKey",

@@ -1,6 +1,8 @@
 import { apiSlice } from "../api/apiSlice";
+
 export const courseApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
+    // 1. Admin: Create Course
     createCourse: builder.mutation({
       query: (data) => ({
         url: "/course/admin/create",
@@ -9,7 +11,8 @@ export const courseApi = apiSlice.injectEndpoints({
         credentials: "include" as const,
       }),
     }),
-    
+
+    // 2. Admin: Get All Courses
     getAllCourse: builder.query({
       query: () => ({
         url: `/course/admin/all`,
@@ -18,17 +21,19 @@ export const courseApi = apiSlice.injectEndpoints({
       }),
     }),
 
+    // 3. Admin: Delete Course
     deleteCourse: builder.mutation({
-      query: (id) => ({
+      query: (id: string) => ({
         url: `/course/admin/delete`,
         method: "DELETE",
-        body: {courseId: id},
+        body: { courseId: id },
         credentials: "include" as const,
       }),
     }),
-    
+
+    // 4. Admin: Edit Course
     editCourse: builder.mutation({
-      query: ({ id, data }) => ({
+      query: ({ id, data }: { id: string; data: Record<string, unknown> }) => ({
         url: `/course/admin/edit/${id}`,
         method: "PATCH",
         body: data,
@@ -36,63 +41,100 @@ export const courseApi = apiSlice.injectEndpoints({
       }),
     }),
 
+    // 5. Public: Get All Courses (Without Purchase/Auth)
     getUsersAllCourses: builder.query({
       query: () => ({
-        url: "/course/get/all",
+        url: "/course/all",
         method: "GET",
         credentials: "include" as const,
       }),
     }),
-    
+
+    // 6. Public: Get Single Course Details (For Preview Page)
     getCourseDetails: builder.query({
-      query: (id) => ({
+      query: (id: string) => ({
+        url: `/course/get/${id}`,
+        method: "GET",
+        credentials: "include" as const,
+      }),
+    }),
+
+    // 7. Protected: Get Enrolled Course Full Content (Videos, QA, Links)
+    getCourseContent: builder.query({
+      query: (id: string) => ({
         url: `/course/get/user/${id}`,
         method: "GET",
         credentials: "include" as const,
       }),
     }),
 
-    getCourseContent: builder.query({
-      query: (arg) => {
-        // Backwards compatible: allow calling with just `id` (string)
-        const id = typeof arg === "string" ? arg : arg?.id;
-        const userId = typeof arg === "string" ? undefined : arg?.userId;
-        const qs = userId ? `?userId=${encodeURIComponent(userId)}` : "";
-        return {
-          url: `/course/get/${id}${qs}`,
-          method: "GET",
-          credentials: "include" as const,
-        };
-      },
-    }),
-    
+    // 8. Protected: Add Question to Video Content
     addnewQuestion: builder.mutation({
-      query: ({ question, courseId, contentId }) => ({
+      query: ({
+        question,
+        courseId,
+        contentId,
+      }: {
+        question: string;
+        courseId: string;
+        contentId: string;
+      }) => ({
         url: `/course/add-question`,
         method: "PUT",
         body: { question, courseId, contentId },
         credentials: "include" as const,
       }),
     }),
+
+    // 9. Protected: Add Answer to Question
     addAnswerInQuestion: builder.mutation({
-      query: ({ answer, courseId, contentId, questionId }) => ({
+      query: ({
+        answer,
+        courseId,
+        contentId,
+        questionId,
+      }: {
+        answer: string;
+        courseId: string;
+        contentId: string;
+        questionId: string;
+      }) => ({
         url: `/course/add-answer`,
         method: "PUT",
         body: { answer, courseId, contentId, questionId },
         credentials: "include" as const,
       }),
     }),
+
+    // 10. Protected: Add Review to Course
     addReviewInCourse: builder.mutation({
-      query: ({ review, rating, courseId }) => ({
+      query: ({
+        review,
+        rating,
+        courseId,
+      }: {
+        review: string;
+        rating: number;
+        courseId: string;
+      }) => ({
         url: `/course/add-review/${courseId}`,
-        method: `PUT`,
+        method: "PUT",
         body: { review, rating },
         credentials: "include" as const,
       }),
     }),
+
+    // 11. Admin: Reply to Review
     addReplyInReview: builder.mutation({
-      query: ({ comment, courseId, reviewId }) => ({
-        // server route is "/add-reply/:id" (admin only); controller reads courseId from body
+      query: ({
+        comment,
+        courseId,
+        reviewId,
+      }: {
+        comment: string;
+        courseId: string;
+        reviewId: string;
+      }) => ({
         url: `/course/admin/add-review-reply`,
         method: "PUT",
         body: { comment, courseId, reviewId },
@@ -101,6 +143,7 @@ export const courseApi = apiSlice.injectEndpoints({
     }),
   }),
 });
+
 export const {
   useCreateCourseMutation,
   useGetAllCourseQuery,

@@ -59,14 +59,14 @@ const Footer = () => {
                   My Account
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link
                   className="text-base text-black dark:text-gray-300 dark:hover:text-white pb-2"
                   href="/course-dashboard"
                 >
                   Course Dashboard
                 </Link>
-              </li>
+              </li> */}
             </ul>
           </div>
           <div className="space-y-3">
@@ -111,7 +111,7 @@ const Footer = () => {
             </p>
             <Link
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded inline-block"
-              href={`mailto:alishair7071@gmail.com`}
+              href={`mailto:osdbfall2020@gmail.com`}
             >
               Connect
             </Link>
