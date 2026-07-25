@@ -21,7 +21,7 @@ const sendEmail = async (options: EmailOptions): Promise<void> => {
         }
     })
 
-    const templatePath = path.join(import.meta.dirname, "../mails", options.template)
+    const templatePath = path.join(process.cwd(), "../mails", options.template)
 
     const html:string = await ejs.renderFile(templatePath, options.data)
 
