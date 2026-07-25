@@ -37,8 +37,8 @@ export const registerUser = catchAsyncError(async (req: Request, res: Response, 
 
         const activationToken = createActiviationToken(user);
         const { activationCode } = activationToken
-
-        const data = { user: { name: user.name }, activationCode }
+        const expirationTime = process.env.JWT_EXPIRE || "5";
+        const data = { user: { name: user.name }, activationCode, expirationTime }
         // const html = await ejs.renderFile(path.join(import.meta.dirname, "../mails/activation-mail.ejs"), data)
 
         try {
@@ -193,9 +193,11 @@ export const updateAccessToken = catchAsyncError(async (req: Request, res: Respo
     try {
         const refreshToken = req.cookies.refreshToken as string;
         const decodedRefreshToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN as string) as JwtPayload;
+        
         if (!decodedRefreshToken) {
             return next(new ErrorHandler("Invalid refresh token", 401));
         }
+        
         const session = await redis.get(decodedRefreshToken.id as string);
         if (!session) {
             return next(new ErrorHandler("Session expired. Please log in again.", 401));
@@ -203,9 +205,9 @@ export const updateAccessToken = catchAsyncError(async (req: Request, res: Respo
 
         const user = JSON.parse(session) as IUser;
 
-        const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN as string, { expiresIn: "5m" });
-
-        const newRefreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN as string, { expiresIn: "59m" });
+        // Updated lifetimes: 2 hours for Access Token, 24 hours for Refresh Token
+        const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN as string, { expiresIn: "2h" });
+        const newRefreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN as string, { expiresIn: "24h" });
 
         req.user = user;
         
@@ -215,15 +217,16 @@ export const updateAccessToken = catchAsyncError(async (req: Request, res: Respo
         res.cookie("accessToken", accessToken, accessTokenOptions);
         res.cookie("refreshToken", newRefreshToken, refreshTokenOptions);
 
-        await redis.set(user._id.toString(), JSON.stringify(user), "EX", parseInt(process.env.REFRESH_TOKEN_EXPIRE || "59", 10) * 60);
+        // Update Redis TTL to match 24 hours in seconds (24 * 60 * 60)
+        const refreshTokenExpireInSeconds = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "24", 10) * 60 * 60;
+        await redis.set(user._id.toString(), JSON.stringify(user), "EX", refreshTokenExpireInSeconds);
 
         next();
-        // res.status(200).json({ success: true, message: "Access token updated successfully", accessToken });
     }
     catch (error: any) {
-        return next(new ErrorHandler(error.message, 400))
+        return next(new ErrorHandler(error.message, 400));
     }
-})
+});
 
 
 export const getUserInfo = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {

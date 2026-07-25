@@ -13,9 +13,8 @@ interface ITokenOptions {
 }
 
 // parse env variables to integrate with fallback values
-const accessTokenExpiresIn = parseInt(process.env.ACCESS_TOKEN_EXPIRE || "5", 10) * 60 * 1000;
-const refreshTokenExpiresIn = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "59", 10) * 60 * 1000;
-
+const accessTokenExpiresIn = parseInt(process.env.ACCESS_TOKEN_EXPIRE || "2", 10) * 60 * 60 * 1000;
+const refreshTokenExpiresIn = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "24", 10) * 60 * 60 * 1000;
 
 // options for cookies
 export const accessTokenOptions: ITokenOptions = {
