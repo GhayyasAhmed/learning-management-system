@@ -63,17 +63,13 @@ const CourseContent = ({ id, user }: Props) => {
     isLoading,
     error,
     refetch,
-  } = useGetCourseContentQuery(
-    { id, userId: user?._id },
-    { refetchOnMountOrArgChange: true }
-  );
+  } = useGetCourseContentQuery(id, { refetchOnMountOrArgChange: true });
 
   const [activeVideo, setActiveVideo] = useState(0);
   const [open, setOpen] = useState(false);
   const [route, setRoute] = useState("Login");
 
   const data: ICourseContent[] | undefined = contentData?.content;
-
   return (
     <>
       {isLoading ? (
