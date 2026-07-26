@@ -224,7 +224,7 @@ export const updateAccessToken = catchAsyncError(async (req: Request, res: Respo
         next();
     }
     catch (error: any) {
-        return next(new ErrorHandler(error.message, 400));
+        return next(new ErrorHandler(error.message, 401));
     }
 });
 

@@ -1,11 +1,36 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
 import { userLoggedOut, userLogin } from "../auth/authSlice";
+import toast from "react-hot-toast";
+
+const rawBaseQuery = fetchBaseQuery({
+    baseUrl: process.env.NEXT_PUBLIC_SERVER_URL,
+});
+
+// Added missing '<' before string
+const baseQueryWithAuthHandling: BaseQueryFn<
+    string | FetchArgs,
+    unknown,
+    FetchBaseQueryError
+> = async (args, api, extraOptions) => {
+    const result = await rawBaseQuery(args, api, extraOptions);
+
+    if (result.error && result.error.status === 401) {
+        const state = api.getState() as { auth?: { user?: unknown } };
+        // Only notify if a session actually existed — avoids toasting on
+        // routine guest 401s (e.g. unauthenticated pages hitting protected data).
+        if (state?.auth?.user) {
+            toast.error("Session expired. Please login again.");
+        }
+        api.dispatch(userLoggedOut());
+    }
+
+    return result;
+};
 
 export const apiSlice = createApi({
     reducerPath: "api",
-    baseQuery: fetchBaseQuery({
-        baseUrl: process.env.NEXT_PUBLIC_SERVER_URL,
-    }),
+    baseQuery: baseQueryWithAuthHandling,
     endpoints: (builder) => ({
         refreshToken: builder.query({
             query: () => ({
@@ -37,12 +62,13 @@ export const apiSlice = createApi({
                     } else {
                         dispatch(userLoggedOut());
                     }
-                } catch (error) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } catch (error: any) {
                     console.log("Error occured in loadUser api", error);
                 }
             },
         }),
-    })
-})
+    }),
+});
 
 export const { useRefreshTokenQuery, useLoadUserQuery } = apiSlice;
