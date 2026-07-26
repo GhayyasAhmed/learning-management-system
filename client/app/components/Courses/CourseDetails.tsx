@@ -352,23 +352,35 @@ const CourseDetails: FC<Props> = ({
                 </h4>
               </div>
 
-              <div className="flex items-center">
-                {isPurchased ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center">
+                  {isPurchased || user?.role === "admin" ? (
+                    <Link
+                      className={`${styles.button} w-45! my-3 font-Poppins cursor-pointer bg-[crimson]!`}
+                      href={`/course-access/${data._id}`}
+                    >
+                      Enter to Course
+                    </Link>
+                  ) : isStripeReady ? (
+                    <div
+                      className={`${styles.button} w-45! my-3 font-Poppins cursor-pointer bg-[crimson]!`}
+                      onClick={handleOrder}
+                    >
+                      Buy Now {data.price}$
+                    </div>
+                  ) : (
+                    <></>
+                  )}
+                </div>
+
+                {/* Admin-only Edit Course Action Button */}
+                {user?.role === "admin" && (
                   <Link
-                    className={`${styles.button} w-45! my-3 font-Poppins cursor-pointer bg-[crimson]!`}
-                    href={`/course-access/${data._id}`}
+                    href={`/admin/edit-course/${data._id}`}
+                    className={`${styles.button} w-45! mb-3 font-Poppins cursor-pointer bg-[#37a39a]! text-white flex items-center justify-center`}
                   >
-                    Enter to Course
+                    Edit Course
                   </Link>
-                ) : isStripeReady ? (
-                  <div
-                    className={`${styles.button} w-45! my-3 font-Poppins cursor-pointer bg-[crimson]!`}
-                    onClick={handleOrder}
-                  >
-                    Buy Now {data.price}$
-                  </div>
-                ) : (
-                  <></>
                 )}
               </div>
 
