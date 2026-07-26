@@ -3,15 +3,15 @@ import { useEffect, useState } from "react";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import SideBarProfile from "./SideBarProfile";
 // Make sure this mutation or lazy query exists in authApi.ts
-import { useLogoutUserQuery } from "../../../redux/features/auth/authApi";
-import { signOut } from "next-auth/react";
-import ProfileInfo from "./ProfileInfo";
+import { signOut, useSession } from "next-auth/react";
 import toast from "react-hot-toast";
-import ChangePassword from "./ChangePassword";
-import CourseCard from "../Courses/CourseCard";
-import { useGetUsersAllCoursesQuery } from "../../../redux/features/courses/courseApi";
 import { useDispatch } from "react-redux";
+import { useLogoutUserQuery } from "../../../redux/features/auth/authApi";
 import { userLoggedOut } from "../../../redux/features/auth/authSlice";
+import { useGetUsersAllCoursesQuery } from "../../../redux/features/courses/courseApi";
+import CourseCard from "../Courses/CourseCard";
+import ChangePassword from "./ChangePassword";
+import ProfileInfo from "./ProfileInfo";
 
 type Props = {
   user: any;
@@ -21,17 +21,19 @@ const Profile = ({ user }: Props) => {
   const [scroll, setScroll] = useState(false);
   const [active, setActive] = useState(1);
   const [avatar] = useState(null);
+  const { data: session } = useSession();
   const [logout, setLogout] = useState(false);
   const dispatch = useDispatch();
 
-  // Lazy trigger logout query when user clicks logout button
-  useLogoutUserQuery(undefined, { skip: !logout });
+  const { isSuccess: isLogoutSuccess } = useLogoutUserQuery(undefined, {
+    skip: !logout,
+  });
 
   const { data } = useGetUsersAllCoursesQuery(undefined, {});
 
   // Derive user courses directly from RTK Query data instead of using useEffect/setState
   const userCourseIds = new Set(
-    user?.courses?.map((item: any) => item.courseId) || []
+    user?.courses?.map((item: any) => item.courseId) || [],
   );
 
   const courses =
@@ -40,14 +42,25 @@ const Profile = ({ user }: Props) => {
   const logOutHandler = async () => {
     try {
       setLogout(true);
+      if(session){
+        await signOut();
+      }
+      // dispatch(userLoggedOut());
+      // toast.error("Logged out successfully!");
+      // if (session) {
+      //   await signOut();
+      // }
     } catch (err) {
       toast.error(`Logout request failed (continuing local logout):, ${err}`);
-    } finally {
-      dispatch(userLoggedOut());
-      toast.success("Logged out successfully!");
-      await signOut({ redirect: true, callbackUrl: "/" });
     }
   };
+
+  useEffect(() => {
+    if (isLogoutSuccess) {
+      dispatch(userLoggedOut());
+      toast.success("Logged out successfully!");
+    }
+  }, [isLogoutSuccess, dispatch]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -84,7 +97,11 @@ const Profile = ({ user }: Props) => {
           <div className="w-full pl-7 px-2 800px:px-10 800px:pl-8">
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6.25 xl:grid-cols-3 xl:gap-8.75">
               {courses.map((item: any, index: number) => (
-                <CourseCard item={item} key={item._id || index} isProfile={true} />
+                <CourseCard
+                  item={item}
+                  key={item._id || index}
+                  isProfile={true}
+                />
               ))}
             </div>
             {courses.length === 0 && (

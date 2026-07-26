@@ -9,7 +9,7 @@ import { signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import avatarDefault from "../../../../public/assets/avatardefault.jpg";
@@ -73,7 +73,7 @@ const AdminSideBar = () => {
 
   const { theme } = useTheme();
   const [logout, setLogout] = useState(false);
-  const { } = useLogoutUserQuery(undefined, { skip: !logout });
+  const {isSuccess: isLogoutSuccess } = useLogoutUserQuery(undefined, { skip: !logout });
   const dispatch = useDispatch();
 
   const logoutHandler = async () => {
@@ -81,8 +81,8 @@ const AdminSideBar = () => {
     if (session) {
       await signOut();
     }
-    dispatch(userLoggedOut());
-    toast.success("Logged out successfuldasdly!");
+    // dispatch(userLoggedOut());
+    // toast.success("Logged out successfully!");
     // toast.success("Logged out successfully!");
     // try {
     //   await logoutUser(undefined).unwrap();
@@ -96,12 +96,12 @@ const AdminSideBar = () => {
     // }
   };
 
-//   useEffect(() => {
-//     if (isLogoutSuccess) {
-//       dispatch(userLoggedOut());
-//       toast.success("Logged out successfuldasdly!");
-//     }
-//   }, [isLogoutSuccess, dispatch]);
+  useEffect(() => {
+    if (isLogoutSuccess) {
+      dispatch(userLoggedOut());
+      toast.success("Logged out successfuldasdly!");
+    }
+  }, [isLogoutSuccess, dispatch]);
 
   if (!mounted) {
     return null;
