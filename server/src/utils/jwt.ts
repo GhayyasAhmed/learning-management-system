@@ -22,7 +22,7 @@ export const accessTokenOptions: ITokenOptions = {
     maxAge: accessTokenExpiresIn,
     httpOnly: true,
     sameSite: "none",
-    secure: process.env.NODE_ENV === "production"
+    secure: true
 };
 
 export const refreshTokenOptions: ITokenOptions = {
@@ -30,13 +30,12 @@ export const refreshTokenOptions: ITokenOptions = {
     maxAge: refreshTokenExpiresIn,
     httpOnly: true,
     sameSite: "none",
-    secure: process.env.NODE_ENV === "production"
+    secure: true
 };
 
 export const sendToken = async (user: IUser, statusCode: number, res: Response, message: string) => {
     const accessToken = user.signAccessToken()
     const refreshToken = user.signRefreshToken()
-
 
     // upload session to redis
     await redis.set(user._id.toString(), JSON.stringify(user), "EX", refreshTokenExpiresIn / 1000)

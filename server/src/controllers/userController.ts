@@ -193,11 +193,11 @@ export const updateAccessToken = catchAsyncError(async (req: Request, res: Respo
     try {
         const refreshToken = req.cookies.refreshToken as string;
         const decodedRefreshToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN as string) as JwtPayload;
-        
+
         if (!decodedRefreshToken) {
             return next(new ErrorHandler("Invalid refresh token", 401));
         }
-        
+
         const session = await redis.get(decodedRefreshToken.id as string);
         if (!session) {
             return next(new ErrorHandler("Session expired. Please log in again.", 401));
@@ -210,7 +210,7 @@ export const updateAccessToken = catchAsyncError(async (req: Request, res: Respo
         const newRefreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN as string, { expiresIn: "24h" });
 
         req.user = user;
-        
+
         res.locals.user = user;
         res.locals.accessToken = accessToken;
 
@@ -253,10 +253,7 @@ export const getUserInfo = catchAsyncError(async (req: Request, res: Response, n
 interface ISocialAuthRequest {
     name: string;
     email: string;
-    avatar: {
-        public_id: string;
-        url: string;
-    };
+    avatar: string
 }
 
 export const socialAuth = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
@@ -264,12 +261,29 @@ export const socialAuth = catchAsyncError(async (req: Request, res: Response, ne
         const { name, email, avatar } = req.body as ISocialAuthRequest;
         const user = await UserModel.findOne({ email });
         if (!user) {
+            let avatarData = { public_id: "", url: "" };
+
+            // If a social avatar URL exists, upload it directly to Cloudinary
+            if (avatar) {
+                const cloudResult = await cloudinary.v2.uploader.upload(avatar, {
+                    folder: "profile_pictures",
+                    width: 150,
+                });
+
+                avatarData = {
+                    public_id: cloudResult.public_id,
+                    url: cloudResult.secure_url,
+                };
+            }
+
             const newUser = await UserModel.create({
                 name,
                 email,
-                avatar
-            })
-            sendToken(newUser, 201, res, "User registered successfully")
+                avatar: avatarData,
+                isVerified: true,
+            });
+
+            sendToken(newUser, 201, res, "User registered successfully");
         }
         else {
             sendToken(user, 200, res, "Login successful")
