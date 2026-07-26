@@ -60,6 +60,57 @@ app.use(async (req, res, next) => {
   }
 });
 
+// GET /api/v1/env-check
+app.get("/api/v1/env-check", (req, res) => {
+  // Define all key environment variables your application depends on
+  const requiredEnvKeys = [
+    "FRONTEND_URLS",
+    "MONGO_URI",
+    "REDIS_URL",
+    "ACCESS_TOKEN",
+    "REFRESH_TOKEN",
+    "ACCESS_TOKEN_EXPIRE",
+    "REFRESH_TOKEN_EXPIRE",
+    "ACTIVATION_SECRET",
+    "JWT_EXPIRE",
+    "CLOUDINARY_CLOUD_NAME",
+    "CLOUDINARY_API_KEY",
+    "CLOUDINARY_API_SECRET",
+    "STRIPE_PUBLISHABLE_KEY",
+    "STRIPE_SECRET_KEY",
+    "VDOCIPHER_API_SECRET",
+    "SMPT_HOST",
+    "SMPT_PORT",
+    "SMTP_SERVICE",
+    "SMTP_MAIL",
+    "SMTP_PASSWORD",
+  ];
+
+  const envStatus: Record<string, boolean> = {};
+  const missingKeys: string[] = [];
+
+  requiredEnvKeys.forEach((key) => {
+    const isPresent = Boolean(process.env[key] && process.env[key]?.trim() !== "");
+    envStatus[key] = isPresent;
+    
+    if (!isPresent) {
+      missingKeys.push(key);
+    }
+  });
+
+  const allPresent = missingKeys.length === 0;
+
+  res.status(allPresent ? 200 : 500).json({
+    success: allPresent,
+    message: allPresent 
+      ? "All required environment variables are set." 
+      : `Missing ${missingKeys.length} environment variable(s).`,
+    missingKeys,
+    environment: process.env.NODE_ENV || "development",
+    variables: envStatus, // Returns true/false for each key (never the raw values!)
+  });
+});
+
 // Production Health Check
 app.get("/api/v1/health-check", (req, res) => {
   const isDbConnected = mongoose.connection.readyState === 1;
