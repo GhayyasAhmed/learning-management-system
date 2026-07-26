@@ -12,9 +12,14 @@ import userRouter from "./routes/userRoutes.js";
 import analyticsRouter from "./routes/analytics.routes.js";
 import layoutRouter from "./routes/layout.routes.js";
 import { connectDatabase } from "./config/database.js";
+import connectCloudinary from "./config/cloudinary.js";
 
 const app = express();
 
+// Initialize Cloudinary SDK at application level (Required for Vercel Serverless)
+connectCloudinary();
+
+// CORS Configuration
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -31,21 +36,21 @@ app.use(
   }),
 );
 
-// Body parser
+// Body parser & Cookie Parser
 app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 
 // Rate Limiter Configuration
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes in milliseconds
-  limit: 100, // Limit each IP to 100 requests per 15-minute window
-  standardHeaders: "draft-8", // Return rate limit info in `RateLimit-*` headers
-  legacyHeaders: false, // Disable `X-RateLimit-*` headers
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 100, // 100 requests per IP per window
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
   ipv6Subnet: 56,
 });
 
-// Apply Rate Limiter globally to all requests
-app.use(limiter);
+// Apply Rate Limiter globally
+// app.use(limiter);
 
 // Database Connection Middleware
 app.use(async (req, res, next) => {
@@ -62,7 +67,6 @@ app.use(async (req, res, next) => {
 
 // GET /api/v1/env-check
 app.get("/api/v1/env-check", (req, res) => {
-  // Define all key environment variables your application depends on
   const requiredEnvKeys = [
     "FRONTEND_URLS",
     "MONGO_URI",
@@ -92,7 +96,7 @@ app.get("/api/v1/env-check", (req, res) => {
   requiredEnvKeys.forEach((key) => {
     const isPresent = Boolean(process.env[key] && process.env[key]?.trim() !== "");
     envStatus[key] = isPresent;
-    
+
     if (!isPresent) {
       missingKeys.push(key);
     }
@@ -102,12 +106,12 @@ app.get("/api/v1/env-check", (req, res) => {
 
   res.status(allPresent ? 200 : 500).json({
     success: allPresent,
-    message: allPresent 
-      ? "All required environment variables are set." 
+    message: allPresent
+      ? "All required environment variables are set."
       : `Missing ${missingKeys.length} environment variable(s).`,
     missingKeys,
     environment: process.env.NODE_ENV || "development",
-    variables: envStatus, // Returns true/false for each key (never the raw values!)
+    variables: envStatus,
   });
 });
 
@@ -138,10 +142,10 @@ app.use("/api/v1/notification", notificationRouter);
 app.use("/api/v1/analytic", analyticsRouter);
 app.use("/api/v1/layout", layoutRouter);
 
-app.get("/test", (req, res, next) => {
+app.get("/test", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "Backend in running",
+    message: "Backend is running",
   });
 });
 
