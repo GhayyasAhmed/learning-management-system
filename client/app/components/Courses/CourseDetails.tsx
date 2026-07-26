@@ -72,6 +72,7 @@ export interface IUserCourse {
 export interface IRootUser {
   _id: string;
   name: string;
+  role?: string;
   courses?: IUserCourse[];
 }
 
@@ -281,7 +282,7 @@ const CourseDetails: FC<Props> = ({
                         <div className="hidden 800px:block pl-2">
                           <div className="flex items-center">
                             <h5 className="text-[18px] pr-2 text-black dark:text-white">
-                              {item.user.name}
+                              {item.user?.name || "Anonymous User"}
                             </h5>
                             <Ratings rating={item.rating} />
                           </div>

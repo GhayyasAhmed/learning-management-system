@@ -15,21 +15,25 @@ interface IStoredThumbnail {
     url: string;
 }
 
-// Helper function to update the sanitized course cache in Redis
+// Helper function to update the sanitized course cache in Redis for public preview
 export const updatePublicCourseCache = async (courseId: string) => {
-    const course = await CourseModel.findById(courseId)
-        .select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links")
-        .populate({
-            path: "reviews.user",
-            select: "name avatar role",
-        })
-        .populate({
-            path: "reviews.reviewReplies.user",
-            select: "name avatar role",
-        });
+    try {
+        const course = await CourseModel.findById(courseId)
+            .select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links")
+            .populate({
+                path: "reviews.user",
+                select: "name avatar role",
+            })
+            .populate({
+                path: "reviews.reviewReplies.user",
+                select: "name avatar role",
+            });
 
-    if (course) {
-        await redis.set(courseId, JSON.stringify(course), "EX", 604800);
+        if (course) {
+            await redis.set(courseId, JSON.stringify(course), "EX", 604800);
+        }
+    } catch (error) {
+        console.error("Failed to update public course Redis cache:", error);
     }
 };
 
@@ -108,7 +112,6 @@ export const editCourse = catchAsyncError(
             course.set(data);
             await course.save();
 
-
             await updatePublicCourseCache(id as string);
 
             res.status(200).json({
@@ -140,12 +143,12 @@ export const getSingleCourseWithoutPurchase = catchAsyncError(
                 });
             }
 
-            const course = await CourseModel.findById(id).select(
-                "-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links"
-            ).populate({
-                path: "reviews.user",
-                select: "name avatar role",
-            })
+            const course = await CourseModel.findById(id)
+                .select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links")
+                .populate({
+                    path: "reviews.user",
+                    select: "name avatar role",
+                })
                 .populate({
                     path: "reviews.reviewReplies.user",
                     select: "name avatar role",
@@ -185,48 +188,47 @@ export const getAllCourseWithoutPurchase = catchAsyncError(
 );
 
 export const getCourseByUser = catchAsyncError(
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userCourseList = req.user?.courses;
-      const courseId = req.params.id;
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userCourseList = req.user?.courses;
+            const courseId = req.params.id;
 
-      // Check enrollment matching either _id or courseId safely
-      const isEnrolled = userCourseList?.some(
-        (item: any) => item._id === courseId || item.courseId === courseId
-      );
+            const isEnrolled = userCourseList?.some(
+                (item: any) => item._id === courseId || item.courseId === courseId
+            );
 
-      if (!isEnrolled && req.user?.role !== "admin") {
-        return next(
-          new ErrorHandler("You are not eligible to access this course", 404)
-        );
-      }
+            if (!isEnrolled && req.user?.role !== "admin") {
+                return next(
+                    new ErrorHandler("You are not eligible to access this course", 404)
+                );
+            }
 
-      // Find course and deep populate questions & replies user data
-      const course = await CourseModel.findById(courseId).populate([
-        {
-          path: "courseData.questions.user",
-          select: "name avatar role email",
-        },
-        {
-          path: "courseData.questions.questionReplies.user",
-          select: "name avatar role email",
-        },
-      ]);
+            // Deep populate questions & questionReplies user details
+            const course = await CourseModel.findById(courseId).populate([
+                {
+                    path: "courseData.questions.user",
+                    select: "name avatar role email",
+                },
+                {
+                    path: "courseData.questions.questionReplies.user",
+                    select: "name avatar role email",
+                },
+            ]);
 
-      if (!course) {
-        return next(new ErrorHandler("Invalid course id", 404));
-      }
+            if (!course) {
+                return next(new ErrorHandler("Invalid course id", 404));
+            }
 
-      const content = course.courseData;
+            const content = course.courseData;
 
-      res.status(200).json({
-        success: true,
-        content,
-      });
-    } catch (error: any) {
-      return next(new ErrorHandler(error.message, 400));
+            res.status(200).json({
+                success: true,
+                content,
+            });
+        } catch (error: any) {
+            return next(new ErrorHandler(error.message, 400));
+        }
     }
-  }
 );
 
 interface IAddQuestionData {
@@ -278,7 +280,6 @@ export const addQuestion = catchAsyncError(
                 return next(new ErrorHandler("Course or content module not found", 404));
             }
 
-            // Update Redis Cache
             await updatePublicCourseCache(courseId);
 
             const courseContent = updatedCourse?.courseData?.find((item: any) =>
@@ -294,7 +295,7 @@ export const addQuestion = catchAsyncError(
             res.status(200).json({
                 success: true,
                 message: "Question added successfully",
-                course: updatedCourse,
+                content: updatedCourse.courseData,
             });
         } catch (error: any) {
             return next(new ErrorHandler(error.message, 400));
@@ -328,6 +329,13 @@ export const addAnswer = catchAsyncError(
                 );
             }
 
+            const isEnrolled = req.user?.courses?.some(
+                (item: any) => item._id === courseId || item.courseId === courseId
+            );
+            if (!isEnrolled && req.user?.role !== "admin") {
+                return next(new ErrorHandler("You are not eligible to access this course", 403));
+            }
+
             const newAnswer = {
                 user: req.user?._id,
                 answer,
@@ -358,7 +366,6 @@ export const addAnswer = catchAsyncError(
                 return next(new ErrorHandler("Course, content, or question not found", 404));
             }
 
-            // Update Redis Cache
             await updatePublicCourseCache(courseId);
 
             const courseContent = updatedCourse.courseData.find((item: any) =>
@@ -401,7 +408,7 @@ export const addAnswer = catchAsyncError(
             res.status(200).json({
                 success: true,
                 message: "Answer added successfully",
-                course: updatedCourse,
+                content: updatedCourse.courseData, // Returns populated content matching getCourseByUser
             });
         } catch (error: any) {
             return next(new ErrorHandler(error.message, 400));
@@ -427,13 +434,20 @@ export const addReview = catchAsyncError(
             const courseExists = userCourseList?.some(
                 (course: any) => course.courseId === courseId
             );
-            if (!courseExists) {
+            if (!courseExists && req.user?.role !== "admin") {
                 return next(new ErrorHandler("Invalid course id", 404));
             }
 
             const course = await CourseModel.findById(courseId);
             if (!course) {
                 return next(new ErrorHandler("Course not found", 404));
+            }
+
+            const alreadyReviewed = course.reviews.some(
+                (rev: any) => rev.user?.toString() === req.user?._id?.toString()
+            );
+            if (alreadyReviewed) {
+                return next(new ErrorHandler("You have already reviewed this course", 400));
             }
 
             const { review, rating } = req.body as IAddReviewData;
@@ -457,10 +471,8 @@ export const addReview = catchAsyncError(
 
             await course.save();
 
-            // ✅ Update Redis cache with populated course data
             await updatePublicCourseCache(courseId);
 
-            // ✅ Fetch fully populated course for frontend state update
             const updatedCourse = await CourseModel.findById(courseId)
                 .select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links")
                 .populate({
@@ -481,7 +493,7 @@ export const addReview = catchAsyncError(
             res.status(200).json({
                 success: true,
                 message: "Review added successfully",
-                course: updatedCourse, // 👈 Now returns populated user object!
+                course: updatedCourse,
             });
         } catch (error: any) {
             return next(new ErrorHandler(error.message, 400));
@@ -538,7 +550,8 @@ export const addReviewReply = catchAsyncError(
                 return next(new ErrorHandler("Course or reviews module not found", 404));
             }
 
-            // Directly update Redis cache
+            // Flush Redis cache for this course ID to ensure fresh data fetch
+            await redis.del(courseId);
             await updatePublicCourseCache(courseId);
 
             res.status(200).json({
@@ -551,7 +564,6 @@ export const addReviewReply = catchAsyncError(
         }
     }
 );
-
 
 export const getAllCourses = catchAsyncError(
     async (req: Request, res: Response, next: NextFunction) => {
@@ -578,7 +590,6 @@ export const deleteCourse = catchAsyncError(
             }
 
             await course.deleteOne();
-            // Deleting key from Redis makes sense here since document is removed entirely
             await redis.del(courseId);
 
             res.status(200).json({

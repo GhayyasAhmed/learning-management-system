@@ -25,11 +25,12 @@ const Page = () => {
       router.replace("/");
       return;
     }
+    const isAdmin = user?.role === "admin";
     const isPurchased = user?.courses?.find((item: IUserCourse) => {
       const courseId = item?.courseId ?? item?._id ?? item;
       return courseId?.toString?.() === id?.toString?.();
     });
-    if (!isPurchased) {
+    if (!isPurchased && !isAdmin) {
       router.replace("/");
     }
   }, [user, id, router]);

@@ -44,7 +44,7 @@ export interface Review {
   rating: number;
   review: string;
   createdAt: string;
-  commentReplies?: ReviewReply[];
+  reviewReplies?: ReviewReply[];
 }
 
 export interface QuestionReply {
@@ -82,7 +82,6 @@ export interface Props {
   id: string;
   user: User;
   activeVideo: number;
-  // setActiveVideo: (activeVideo: number) => void;
   data: CourseContentItem[];
   refetch: () => void;
 }
@@ -93,6 +92,33 @@ export interface CustomError {
   };
 }
 
+// --- Helper Component to Render User Name ---
+
+interface UserNameBadgeProps {
+  userObj?: User | null;
+  currentUserRole?: string;
+}
+
+const UserNameBadge: FC<UserNameBadgeProps> = ({ userObj, currentUserRole }) => {
+  const isDeleted = !userObj || !userObj.name;
+
+  if (isDeleted) {
+    if (currentUserRole === "admin") {
+      return (
+        <span className="inline-flex items-center gap-1.5 font-medium italic text-red-500 dark:text-red-400">
+          Deleted User
+          <span className="text-[10px] font-sans font-normal not-italic px-1.5 py-0.5 rounded bg-red-500/10 dark:bg-red-500/20 border border-red-500/20 uppercase tracking-wider">
+            Deleted
+          </span>
+        </span>
+      );
+    }
+    return <span className="text-gray-500 dark:text-gray-400 italic">Anonymous User</span>;
+  }
+
+  return <span>{userObj.name}</span>;
+};
+
 // --- Main Component ---
 
 const CourseContentMedia: FC<Props> = ({
@@ -102,7 +128,6 @@ const CourseContentMedia: FC<Props> = ({
   data,
   refetch,
 }) => {
-  console.log("data", data);
   const [active, setActive] = useState<number>(0);
   const [question, setQuestion] = useState<string>("");
   const [rating, setRating] = useState<number>(1);
@@ -154,7 +179,6 @@ const CourseContentMedia: FC<Props> = ({
         contentId: data[activeVideo]?._id,
       }).unwrap();
 
-      // Reset state directly upon success
       setQuestion("");
       refetch();
       toast.success("Question added successfully!");
@@ -184,7 +208,6 @@ const CourseContentMedia: FC<Props> = ({
         questionId,
       }).unwrap();
 
-      // Reset state directly upon success
       setAnswer("");
       setQuestionId("");
       refetch();
@@ -203,7 +226,7 @@ const CourseContentMedia: FC<Props> = ({
     }
   };
 
-  // 3. Handle Review Submission
+  // Handle Review Submission
   const handleReviewSubmit = async () => {
     if (review.trim().length === 0) {
       toast.error("Review cannot be empty!");
@@ -232,7 +255,7 @@ const CourseContentMedia: FC<Props> = ({
     }
   };
 
-  // 4. Handle Review Reply Submission
+  // Handle Review Reply Submission
   const handleReviewReplySubmit = async () => {
     if (reply.trim().length === 0) {
       toast.error("Reply cannot be empty!");
@@ -259,10 +282,9 @@ const CourseContentMedia: FC<Props> = ({
 
   return (
     <div className="w-[95%] 800px:w-[92%] m-auto py-5">
-      {/* Navigation Tabs */}
       <CoursePlayer
         title={data[activeVideo]?.title}
-        videoUrl={data[activeVideo].videoUrl}
+        videoUrl={data[activeVideo]?.videoUrl}
       />
       <div className="w-full flex items-center justify-between bg-[#1e1e2d] p-4 rounded-md shadow">
         {["Overview", "Resources", "Q&A", "Reviews"].map((text, index) => (
@@ -353,6 +375,11 @@ const CourseContentMedia: FC<Props> = ({
           <br />
           <br />
           <div className="w-full h-px bg-[#ffffff3b]"></div>
+          {data[activeVideo]?.questions?.length === 0 && (
+            <p className="text-black dark:text-white opacity-70 py-4 font-Poppins">
+              No questions yet. Be the first to ask!
+            </p>
+          )}
           <div>
             <CommentReply
               data={data}
@@ -363,6 +390,7 @@ const CourseContentMedia: FC<Props> = ({
               questionId={questionId}
               setQuestionId={setQuestionId}
               answerLoading={answerLoading}
+              user={user}
             />
           </div>
         </>
@@ -443,16 +471,17 @@ const CourseContentMedia: FC<Props> = ({
 
           {/* Render Course Reviews */}
           <div className="w-full">
+            {(!course?.reviews || course.reviews.length === 0) && (
+              <p className="text-black dark:text-white opacity-70 py-4 font-Poppins">
+                No reviews yet.
+              </p>
+            )}
             {(course?.reviews && [...course.reviews].reverse())?.map(
               (item: Review, index: number) => {
                 const isUserObj =
                   typeof item.user === "object" && item.user !== null;
-                const userName = isUserObj
-                  ? (item.user as User).name
-                  : "Anonymous User";
-                const userAvatar = isUserObj
-                  ? (item.user as User).avatar?.url
-                  : undefined;
+                const reviewUser = isUserObj ? (item.user as User) : null;
+                const userAvatar = reviewUser?.avatar?.url;
 
                 return (
                   <div
@@ -468,11 +497,16 @@ const CourseContentMedia: FC<Props> = ({
                         }
                         width={50}
                         height={50}
-                        alt={userName}
+                        alt="User Avatar"
                         className="w-12.5 h-12.5 rounded-full object-cover"
                       />
                       <div className="ml-3">
-                        <h1 className="text-[18px]">{userName}</h1>
+                        <h1 className="text-[18px] flex items-center">
+                          <UserNameBadge
+                            userObj={reviewUser}
+                            currentUserRole={user?.role}
+                          />
+                        </h1>
                         <Ratings rating={item.rating} />
                         <p className="mt-1">{item.review}</p>
                         <small className="text-[#000000b8] dark:text-[#ffffff83]">
@@ -522,7 +556,7 @@ const CourseContentMedia: FC<Props> = ({
                     )}
 
                     {/* Render Comment Replies */}
-                    {item.commentReplies?.map(
+                    {item.reviewReplies?.map(
                       (replyItem: ReviewReply, rIndex: number) => (
                         <div
                           className="w-full flex md:ml-12 ml-6 my-4 border-l-2 border-[#37a39a] pl-3"
@@ -536,12 +570,15 @@ const CourseContentMedia: FC<Props> = ({
                             }
                             width={40}
                             height={40}
-                            alt={replyItem.user?.name || "User"}
+                            alt="User Avatar"
                             className="w-10 h-10 rounded-full object-cover"
                           />
                           <div className="ml-3">
                             <h5 className="text-[16px] flex items-center">
-                              {replyItem.user?.name || "Admin"}
+                              <UserNameBadge
+                                userObj={replyItem.user}
+                                currentUserRole={user?.role}
+                              />
                               <VscVerifiedFilled className="text-[#0095f6] ml-1 text-[16px]" />
                             </h5>
                             <p>{replyItem.comment}</p>
@@ -576,6 +613,7 @@ interface CommentReplyProps {
   questionId: string;
   setQuestionId: (id: string) => void;
   answerLoading: boolean;
+  user: User;
 }
 
 const CommentReply: FC<CommentReplyProps> = ({
@@ -587,6 +625,7 @@ const CommentReply: FC<CommentReplyProps> = ({
   questionId,
   setQuestionId,
   answerLoading,
+  user,
 }) => {
   return (
     <div className="w-full my-3">
@@ -600,6 +639,7 @@ const CommentReply: FC<CommentReplyProps> = ({
           questionId={questionId}
           setQuestionId={setQuestionId}
           answerLoading={answerLoading}
+          user={user}
         />
       ))}
     </div>
@@ -614,6 +654,7 @@ interface CommentItemProps {
   questionId: string;
   setQuestionId: (id: string) => void;
   answerLoading: boolean;
+  user: User;
 }
 
 const CommentItem: FC<CommentItemProps> = ({
@@ -624,9 +665,9 @@ const CommentItem: FC<CommentItemProps> = ({
   questionId,
   setQuestionId,
   answerLoading,
+  user,
 }) => {
   const [replyActive, setReplyActive] = useState<boolean>(false);
-
   const repliesCount = (item.questionReplies || []).length;
 
   return (
@@ -640,12 +681,12 @@ const CommentItem: FC<CommentItemProps> = ({
           }
           width={50}
           height={50}
-          alt={item.user?.name || "User Avatar"}
+          alt="User Avatar"
           className="w-12.5 h-12.5 rounded-full object-cover"
         />
         <div className="pl-3 dark:text-white text-black">
-          <h5 className="text-[20px] font-Poppins">
-            {item.user?.name || "Anonymous User"}
+          <h5 className="text-[20px] font-Poppins flex items-center">
+            <UserNameBadge userObj={item.user} currentUserRole={user?.role} />
           </h5>
           <p>{item.question}</p>
           <small className="text-[#000000b8] dark:text-[#ffffff83]">
@@ -695,13 +736,16 @@ const CommentItem: FC<CommentItemProps> = ({
                   }
                   width={40}
                   height={40}
-                  alt={replyItem.user?.name || "User Avatar"}
+                  alt="User Avatar"
                   className="w-10 h-10 rounded-full object-cover"
                 />
                 <div className="pl-3">
                   <div className="flex items-center">
-                    <h5 className="text-[20px]">
-                      {replyItem.user?.name || "User"}
+                    <h5 className="text-[20px] flex items-center">
+                      <UserNameBadge
+                        userObj={replyItem.user}
+                        currentUserRole={user?.role}
+                      />
                     </h5>
                     {replyItem.user?.role === "admin" && (
                       <VscVerifiedFilled className="text-[#0095f6] ml-2 text-[20px]" />

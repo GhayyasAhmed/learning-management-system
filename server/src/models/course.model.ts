@@ -1,12 +1,26 @@
 import "dotenv/config";
 import mongoose, { Document, Model, Schema } from "mongoose";
 
+interface IQuestionReply {
+    user: mongoose.Types.ObjectId;
+    answer: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
 export interface IComment {
     _id?: mongoose.Types.ObjectId; // Optional if you want to reference it cleanly
     user: mongoose.Types.ObjectId;
     question: string;
-    questionReplies?:[];
+    questionReplies?: IQuestionReply[];
     createdAt: Date;
+}
+
+interface IReviewReply {
+    user: mongoose.Types.ObjectId;
+    comment: string;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 // Remove "extends Document" here
@@ -14,8 +28,8 @@ export interface IReview {
     user: mongoose.Types.ObjectId;
     rating: number;
     review: string;
-    reviewReplies?: IComment[];
-    createdAt?: Date; // 👈 Add this
+    reviewReplies?: IReviewReply[];
+    createdAt?: Date;
     updatedAt?: Date;
     // createdAt: Date;
 }
@@ -59,6 +73,21 @@ export interface ICourse extends Document {
 
 }
 
+const reviewReplySchema = new mongoose.Schema<IReviewReply>(
+    {
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+        comment: {
+            type: String,
+            required: true,
+        },
+    },
+    { timestamps: true }
+);
+
 const reviewSchema: Schema<IReview> = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
@@ -72,7 +101,7 @@ const reviewSchema: Schema<IReview> = new mongoose.Schema({
     review: {
         type: String,
     },
-    reviewReplies: [Object]
+    reviewReplies: [reviewReplySchema]
 }, { timestamps: true });
 
 const linkSchema: Schema<ILink> = new mongoose.Schema({
@@ -87,6 +116,21 @@ const linkSchema: Schema<ILink> = new mongoose.Schema({
 }, { timestamps: true });
 
 
+const questionReplySchema = new mongoose.Schema<IQuestionReply>(
+    {
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+        answer: {
+            type: String,
+            required: true,
+        },
+    },
+    { timestamps: true }
+);
+
 const commentSchema: Schema<IComment> = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
@@ -97,7 +141,7 @@ const commentSchema: Schema<IComment> = new mongoose.Schema({
         type: String,
         required: true
     },
-    questionReplies: [Object]
+    questionReplies: [questionReplySchema]
 }, { timestamps: true });
 
 const courseDataSchema: Schema<ICourseData> = new mongoose.Schema({
