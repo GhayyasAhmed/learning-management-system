@@ -69,7 +69,7 @@ interface IActivationToken {
     activationCode: string;
 }
 
-const expiryTime = process.env.JWT_EXPIRE;
+const expiryTime = process.env.JWT_EXPIRE + "m";
 
 // Create a type guard or fallback to a known literal string
 const finalExpiry = (expiryTime && typeof expiryTime === "string")
