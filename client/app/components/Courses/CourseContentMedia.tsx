@@ -1,10 +1,7 @@
 import Image from "next/image";
 import { FC, useState } from "react";
 import { toast } from "react-hot-toast";
-import {
-  AiFillStar,
-  AiOutlineStar,
-} from "react-icons/ai";
+import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { BiMessage } from "react-icons/bi";
 import { VscVerifiedFilled } from "react-icons/vsc";
 import SocketIO from "socket.io-client";
@@ -18,6 +15,7 @@ import {
   useAddReviewInCourseMutation,
   useGetCourseDetailsQuery,
 } from "@/redux/features/courses/courseApi";
+import CoursePlayer from "@/app/utils/CoursePlayer";
 
 const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || "";
 const socket = SocketIO(ENDPOINT, { transports: ["websocket"] });
@@ -104,6 +102,7 @@ const CourseContentMedia: FC<Props> = ({
   data,
   refetch,
 }) => {
+  console.log("data", data);
   const [active, setActive] = useState<number>(0);
   const [question, setQuestion] = useState<string>("");
   const [rating, setRating] = useState<number>(1);
@@ -115,161 +114,156 @@ const CourseContentMedia: FC<Props> = ({
   const [reviewId, setReviewId] = useState<string>("");
 
   // RTK Query hooks
-  const [
-    addNewQuestion,
-    { isLoading: questionLoading },
-  ] = useAddNewQuestionMutation();
+  const [addNewQuestion, { isLoading: questionLoading }] =
+    useAddNewQuestionMutation();
 
-  const [
-    addAnswerInQuestion,
-    { isLoading: answerLoading },
-  ] = useAddAnswerInQuestionMutation();
+  const [addAnswerInQuestion, { isLoading: answerLoading }] =
+    useAddAnswerInQuestionMutation();
 
   const { data: courseData, refetch: courseRefetch } = useGetCourseDetailsQuery(
     id,
-    { refetchOnMountOrArgChange: true }
+    { refetchOnMountOrArgChange: true },
   );
 
-  const [
-    addReviewInCourse,
-    { isLoading: reviewLoading },
-  ] = useAddReviewInCourseMutation();
+  const [addReviewInCourse, { isLoading: reviewLoading }] =
+    useAddReviewInCourseMutation();
 
-  const [
-    addReplyInReview,
-    { isLoading: replyLoading },
-  ] = useAddReplyInReviewMutation();
+  const [addReplyInReview, { isLoading: replyLoading }] =
+    useAddReplyInReviewMutation();
 
   const course = courseData?.course;
 
   // Check if active user already reviewed this course
   const isReviewed = course?.reviews?.some((item: Review) => {
-    const reviewUserId = typeof item.user === "object" ? item.user?._id : item.user;
+    const reviewUserId =
+      typeof item.user === "object" ? item.user?._id : item.user;
     return reviewUserId === user?._id;
   });
 
- // Handle Question submission
-const handleQuestionSubmit = async () => {
-  if (question.trim().length === 0) {
-    toast.error("Question cannot be empty!");
-    return;
-  }
+  // Handle Question submission
+  const handleQuestionSubmit = async () => {
+    if (question.trim().length === 0) {
+      toast.error("Question cannot be empty!");
+      return;
+    }
 
-  try {
-    await addNewQuestion({
-      question,
-      courseId: id,
-      contentId: data[activeVideo]?._id,
-    }).unwrap();
+    try {
+      await addNewQuestion({
+        question,
+        courseId: id,
+        contentId: data[activeVideo]?._id,
+      }).unwrap();
 
-    // Reset state directly upon success
-    setQuestion("");
-    refetch();
-    toast.success("Question added successfully!");
-    socket?.emit("notification", {
-      title: "New Question Received",
-      message: `You have a new question in ${data[activeVideo]?.title}`,
-      userId: user?._id,
-    });
-  } catch (error: unknown) {
-    const err = error as CustomError;
-    toast.error(err?.data?.message || "Failed to add question");
-  }
-  
-};
-
-// Handle Answer submission
-const handleAnswerSubmit = async () => {
-  if (answer.trim().length === 0) {
-    toast.error("Answer cannot be empty!");
-    return;
-  }
-
-  try {
-    await addAnswerInQuestion({
-      answer,
-      courseId: id,
-      contentId: data[activeVideo]?._id,
-      questionId,
-    }).unwrap();
-
-    // Reset state directly upon success
-    setAnswer("");
-    setQuestionId("");
-    refetch();
-    toast.success("Answer added successfully!");
-
-    if (user?.role !== "admin") {
+      // Reset state directly upon success
+      setQuestion("");
+      refetch();
+      toast.success("Question added successfully!");
       socket?.emit("notification", {
-        title: "New Reply Received",
-        message: `You have a new question reply in ${data[activeVideo]?.title}`,
+        title: "New Question Received",
+        message: `You have a new question in ${data[activeVideo]?.title}`,
         userId: user?._id,
       });
+    } catch (error: unknown) {
+      const err = error as CustomError;
+      toast.error(err?.data?.message || "Failed to add question");
     }
-  } 
-  catch (error: unknown) {
-    const err = error as CustomError;
-    toast.error(err?.data?.message || "Failed to add answer");
-  }
-};
+  };
 
-// 3. Handle Review Submission
-const handleReviewSubmit = async () => {
-  if (review.trim().length === 0) {
-    toast.error("Review cannot be empty!");
-    return;
-  }
+  // Handle Answer submission
+  const handleAnswerSubmit = async () => {
+    if (answer.trim().length === 0) {
+      toast.error("Answer cannot be empty!");
+      return;
+    }
 
-  try {
-    await addReviewInCourse({
-      review,
-      rating,
-      courseId: id,
-    }).unwrap();
+    try {
+      await addAnswerInQuestion({
+        answer,
+        courseId: id,
+        contentId: data[activeVideo]?._id,
+        questionId,
+      }).unwrap();
 
-    setReview("");
-    setRating(1);
-    courseRefetch();
-    toast.success("Review added successfully!");
-    socket?.emit("notification", {
-      title: "New Review Received",
-      message: `You have a new review in ${data[activeVideo]?.title}`,
-      userId: user?._id,
-    });
-  } catch (error: unknown) {
-    const err = error as CustomError;
-    toast.error(err?.data?.message || "Failed to add review");
-  }
-};
+      // Reset state directly upon success
+      setAnswer("");
+      setQuestionId("");
+      refetch();
+      toast.success("Answer added successfully!");
 
-// 4. Handle Review Reply Submission
-const handleReviewReplySubmit = async () => {
-  if (reply.trim().length === 0) {
-    toast.error("Reply cannot be empty!");
-    return;
-  }
+      if (user?.role !== "admin") {
+        socket?.emit("notification", {
+          title: "New Reply Received",
+          message: `You have a new question reply in ${data[activeVideo]?.title}`,
+          userId: user?._id,
+        });
+      }
+    } catch (error: unknown) {
+      const err = error as CustomError;
+      toast.error(err?.data?.message || "Failed to add answer");
+    }
+  };
 
-  try {
-    await addReplyInReview({
-      comment: reply,
-      courseId: id,
-      reviewId,
-    }).unwrap();
+  // 3. Handle Review Submission
+  const handleReviewSubmit = async () => {
+    if (review.trim().length === 0) {
+      toast.error("Review cannot be empty!");
+      return;
+    }
 
-    setReply("");
-    setIsReviewReply(false);
-    setReviewId("");
-    courseRefetch();
-    toast.success("Reply added successfully!");
-  } catch (error: unknown) {
-    const err = error as CustomError;
-    toast.error(err?.data?.message || "Failed to add reply");
-  }
-};
+    try {
+      await addReviewInCourse({
+        review,
+        rating,
+        courseId: id,
+      }).unwrap();
+
+      setReview("");
+      setRating(1);
+      courseRefetch();
+      toast.success("Review added successfully!");
+      socket?.emit("notification", {
+        title: "New Review Received",
+        message: `You have a new review in ${data[activeVideo]?.title}`,
+        userId: user?._id,
+      });
+    } catch (error: unknown) {
+      const err = error as CustomError;
+      toast.error(err?.data?.message || "Failed to add review");
+    }
+  };
+
+  // 4. Handle Review Reply Submission
+  const handleReviewReplySubmit = async () => {
+    if (reply.trim().length === 0) {
+      toast.error("Reply cannot be empty!");
+      return;
+    }
+
+    try {
+      await addReplyInReview({
+        comment: reply,
+        courseId: id,
+        reviewId,
+      }).unwrap();
+
+      setReply("");
+      setIsReviewReply(false);
+      setReviewId("");
+      courseRefetch();
+      toast.success("Reply added successfully!");
+    } catch (error: unknown) {
+      const err = error as CustomError;
+      toast.error(err?.data?.message || "Failed to add reply");
+    }
+  };
 
   return (
     <div className="w-[95%] 800px:w-[92%] m-auto py-5">
       {/* Navigation Tabs */}
+      <CoursePlayer
+        title={data[activeVideo]?.title}
+        videoUrl={data[activeVideo].videoUrl}
+      />
       <div className="w-full flex items-center justify-between bg-[#1e1e2d] p-4 rounded-md shadow">
         {["Overview", "Resources", "Q&A", "Reviews"].map((text, index) => (
           <h5
@@ -290,7 +284,8 @@ const handleReviewReplySubmit = async () => {
       {active === 0 && (
         <div className="my-5 text-white">
           <p className="text-[18px] whitespace-pre-line leading-8">
-            {data[activeVideo]?.description || "No description provided for this lesson."}
+            {data[activeVideo]?.description ||
+              "No description provided for this lesson."}
           </p>
         </div>
       )}
@@ -346,7 +341,9 @@ const handleReviewReplySubmit = async () => {
             <button
               disabled={questionLoading || !question.trim()}
               className={`font-Poppins px-6 py-2 rounded text-white bg-[#37a39a] ${
-                questionLoading || !question.trim() ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                questionLoading || !question.trim()
+                  ? "opacity-50 cursor-not-allowed"
+                  : "cursor-pointer"
               }`}
               onClick={handleQuestionSubmit}
             >
@@ -410,7 +407,7 @@ const handleReviewReplySubmit = async () => {
                           size={25}
                           onClick={() => setRating(i)}
                         />
-                      )
+                      ),
                     )}
                   </div>
                   <textarea
@@ -429,7 +426,9 @@ const handleReviewReplySubmit = async () => {
                 <button
                   disabled={reviewLoading || !review.trim()}
                   className={`font-Poppins px-6 py-2 rounded text-white bg-[#37a39a] ${
-                    reviewLoading || !review.trim() ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                    reviewLoading || !review.trim()
+                      ? "opacity-50 cursor-not-allowed"
+                      : "cursor-pointer"
                   }`}
                   onClick={handleReviewSubmit}
                 >
@@ -446,12 +445,20 @@ const handleReviewReplySubmit = async () => {
           <div className="w-full">
             {(course?.reviews && [...course.reviews].reverse())?.map(
               (item: Review, index: number) => {
-                const isUserObj = typeof item.user === "object" && item.user !== null;
-                const userName = isUserObj ? (item.user as User).name : "Anonymous User";
-                const userAvatar = isUserObj ? (item.user as User).avatar?.url : undefined;
+                const isUserObj =
+                  typeof item.user === "object" && item.user !== null;
+                const userName = isUserObj
+                  ? (item.user as User).name
+                  : "Anonymous User";
+                const userAvatar = isUserObj
+                  ? (item.user as User).avatar?.url
+                  : undefined;
 
                 return (
-                  <div className="w-full my-5 dark:text-white text-black" key={item._id || index}>
+                  <div
+                    className="w-full my-5 dark:text-white text-black"
+                    key={item._id || index}
+                  >
                     <div className="w-full flex">
                       <Image
                         src={
@@ -503,7 +510,9 @@ const handleReviewReplySubmit = async () => {
                         <button
                           disabled={replyLoading || !reply.trim()}
                           className={`ml-2 px-4 py-1 bg-[#37a39a] text-white rounded ${
-                            replyLoading || !reply.trim() ? "opacity-50 cursor-not-allowed" : ""
+                            replyLoading || !reply.trim()
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
                           }`}
                           onClick={handleReviewReplySubmit}
                         >
@@ -513,37 +522,41 @@ const handleReviewReplySubmit = async () => {
                     )}
 
                     {/* Render Comment Replies */}
-                    {item.commentReplies?.map((replyItem: ReviewReply, rIndex: number) => (
-                      <div
-                        className="w-full flex md:ml-12 ml-6 my-4 border-l-2 border-[#37a39a] pl-3"
-                        key={replyItem._id || rIndex}
-                      >
-                        <Image
-                          src={
-                            replyItem.user?.avatar?.url
-                              ? replyItem.user.avatar.url
-                              : "https://res.cloudinary.com/dshp9jnuy/image/upload/v1665822253/avatars/nrxsg8sd9iy10bbsoenn.png"
-                          }
-                          width={40}
-                          height={40}
-                          alt={replyItem.user?.name || "User"}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                        <div className="ml-3">
-                          <h5 className="text-[16px] flex items-center">
-                            {replyItem.user?.name || "Admin"}
-                            <VscVerifiedFilled className="text-[#0095f6] ml-1 text-[16px]" />
-                          </h5>
-                          <p>{replyItem.comment}</p>
-                          <small className="text-[#000000b8] dark:text-[#ffffff83]">
-                            {replyItem.createdAt ? formatTimeAgo(replyItem.createdAt) : ""}
-                          </small>
+                    {item.commentReplies?.map(
+                      (replyItem: ReviewReply, rIndex: number) => (
+                        <div
+                          className="w-full flex md:ml-12 ml-6 my-4 border-l-2 border-[#37a39a] pl-3"
+                          key={replyItem._id || rIndex}
+                        >
+                          <Image
+                            src={
+                              replyItem.user?.avatar?.url
+                                ? replyItem.user.avatar.url
+                                : "https://res.cloudinary.com/dshp9jnuy/image/upload/v1665822253/avatars/nrxsg8sd9iy10bbsoenn.png"
+                            }
+                            width={40}
+                            height={40}
+                            alt={replyItem.user?.name || "User"}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <div className="ml-3">
+                            <h5 className="text-[16px] flex items-center">
+                              {replyItem.user?.name || "Admin"}
+                              <VscVerifiedFilled className="text-[#0095f6] ml-1 text-[16px]" />
+                            </h5>
+                            <p>{replyItem.comment}</p>
+                            <small className="text-[#000000b8] dark:text-[#ffffff83]">
+                              {replyItem.createdAt
+                                ? formatTimeAgo(replyItem.createdAt)
+                                : ""}
+                            </small>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ),
+                    )}
                   </div>
                 );
-              }
+              },
             )}
           </div>
         </div>
@@ -631,7 +644,9 @@ const CommentItem: FC<CommentItemProps> = ({
           className="w-12.5 h-12.5 rounded-full object-cover"
         />
         <div className="pl-3 dark:text-white text-black">
-          <h5 className="text-[20px] font-Poppins">{item.user?.name || "Anonymous User"}</h5>
+          <h5 className="text-[20px] font-Poppins">
+            {item.user?.name || "Anonymous User"}
+          </h5>
           <p>{item.question}</p>
           <small className="text-[#000000b8] dark:text-[#ffffff83]">
             {item.createdAt ? formatTimeAgo(item.createdAt) : ""}
@@ -654,7 +669,8 @@ const CommentItem: FC<CommentItemProps> = ({
               </>
             ) : (
               <>
-                <BiMessage size={20} className="mr-1" /> All Replies ({repliesCount})
+                <BiMessage size={20} className="mr-1" /> All Replies (
+                {repliesCount})
               </>
             )
           ) : (
@@ -665,36 +681,42 @@ const CommentItem: FC<CommentItemProps> = ({
 
       {replyActive && questionId === item._id && (
         <div className="w-full">
-          {item.questionReplies?.map((replyItem: QuestionReply, rIndex: number) => (
-            <div
-              className="w-full flex md:ml-16 ml-8 my-5 text-black dark:text-white border-l-2 border-[#37a39a] pl-3"
-              key={replyItem._id || rIndex}
-            >
-              <Image
-                src={
-                  replyItem.user?.avatar?.url
-                    ? replyItem.user.avatar.url
-                    : "https://res.cloudinary.com/dshp9jnuy/image/upload/v1665822253/avatars/nrxsg8sd9iy10bbsoenn.png"
-                }
-                width={40}
-                height={40}
-                alt={replyItem.user?.name || "User Avatar"}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-              <div className="pl-3">
-                <div className="flex items-center">
-                  <h5 className="text-[20px]">{replyItem.user?.name || "User"}</h5>
-                  {replyItem.user?.role === "admin" && (
-                    <VscVerifiedFilled className="text-[#0095f6] ml-2 text-[20px]" />
-                  )}
+          {item.questionReplies?.map(
+            (replyItem: QuestionReply, rIndex: number) => (
+              <div
+                className="w-full flex md:ml-16 ml-8 my-5 text-black dark:text-white border-l-2 border-[#37a39a] pl-3"
+                key={replyItem._id || rIndex}
+              >
+                <Image
+                  src={
+                    replyItem.user?.avatar?.url
+                      ? replyItem.user.avatar.url
+                      : "https://res.cloudinary.com/dshp9jnuy/image/upload/v1665822253/avatars/nrxsg8sd9iy10bbsoenn.png"
+                  }
+                  width={40}
+                  height={40}
+                  alt={replyItem.user?.name || "User Avatar"}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+                <div className="pl-3">
+                  <div className="flex items-center">
+                    <h5 className="text-[20px]">
+                      {replyItem.user?.name || "User"}
+                    </h5>
+                    {replyItem.user?.role === "admin" && (
+                      <VscVerifiedFilled className="text-[#0095f6] ml-2 text-[20px]" />
+                    )}
+                  </div>
+                  <p>{replyItem.answer}</p>
+                  <small className="text-[#000000b8] dark:text-[#ffffff83]">
+                    {replyItem.createdAt
+                      ? formatTimeAgo(replyItem.createdAt)
+                      : ""}
+                  </small>
                 </div>
-                <p>{replyItem.answer}</p>
-                <small className="text-[#000000b8] dark:text-[#ffffff83]">
-                  {replyItem.createdAt ? formatTimeAgo(replyItem.createdAt) : ""}
-                </small>
               </div>
-            </div>
-          ))}
+            ),
+          )}
 
           <div className="w-full flex relative md:ml-16 ml-8 my-3">
             <input
@@ -708,7 +730,9 @@ const CommentItem: FC<CommentItemProps> = ({
               type="submit"
               disabled={answerLoading || !answer.trim()}
               className={`ml-2 px-4 py-1 bg-[#37a39a] text-white rounded ${
-                answerLoading || !answer.trim() ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                answerLoading || !answer.trim()
+                  ? "opacity-50 cursor-not-allowed"
+                  : "cursor-pointer"
               }`}
               onClick={handleAnswerSubmit}
             >
