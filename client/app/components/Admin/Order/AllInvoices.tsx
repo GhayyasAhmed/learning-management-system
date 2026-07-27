@@ -1,5 +1,5 @@
 import formatTimeAgo from "@/app/utils/formatTimeAgo";
-import { Box } from "@mui/material";
+import { Box, Modal } from "@mui/material";
 import {
   DataGrid,
   GridColDef,
@@ -7,11 +7,13 @@ import {
   GridToolbar,
 } from "@mui/x-data-grid";
 import { useTheme } from "next-themes";
-import { useMemo } from "react";
-import { AiOutlineMail } from "react-icons/ai";
+import { useMemo, useState } from "react";
+import { AiOutlineEye, AiOutlineMail } from "react-icons/ai";
 import { useGetAllCourseQuery } from "../../../../redux/features/courses/courseApi";
 import { useGetAllOrdersQuery } from "../../../../redux/features/orders/orderApi";
 import { useGetAllUsersQuery } from "../../../../redux/features/user/userApi";
+import { styles } from "../../../styles/styles";
+import { getErrorMessage } from "../../../utils/getErrorMessage";
 import Loader from "../../Loader/Loader";
 
 interface IOrder {
@@ -19,16 +21,19 @@ interface IOrder {
   userId: string;
   courseId: string;
   createdAt: string;
+  paymentInfo?: Record<string, unknown>;
 }
 
 interface IUser {
   _id: string;
   name: string;
-  Email: string;
+  // Email: string;
+  email?: string;
 }
 
 interface ICourse {
   _id: string;
+  name?: string;
   price: number;
 }
 
@@ -41,44 +46,88 @@ interface IInvoiceRow {
   formattedDate: string;
 }
 
+interface ISelectedInvoice {
+  orderId: string;
+  userName: string;
+  userEmail: string;
+  courseTitle: string;
+  price: string;
+  date: string;
+  paymentInfo?: Record<string, unknown>;
+}
+
 type Props = {
   isDashboard?: boolean;
 };
 
 const AllInvoices = ({ isDashboard }: Props) => {
   const { theme } = useTheme();
-  const { isLoading: ordersLoading, data: OrdersData } = useGetAllOrdersQuery(
-    {},
-  );
+  const {
+    isLoading: ordersLoading,
+    data: OrdersData,
+    error: ordersError,
+  } = useGetAllOrdersQuery({});
   const { isLoading: usersLoading, data: UsersData } = useGetAllUsersQuery({});
   const { isLoading: coursesLoading, data: CoursesData } = useGetAllCourseQuery(
     {},
   );
 
+  const [selectedInvoice, setSelectedInvoice] =
+    useState<ISelectedInvoice | null>(null);
+
   const isLoading = ordersLoading || usersLoading || coursesLoading;
 
-  // Derived synchronously on render via useMemo to avoid setState inside useEffect
-  const rows: IInvoiceRow[] = useMemo(() => {
-    if (!OrdersData?.orders || !UsersData?.users || !CoursesData?.courses) {
-      return [];
-    }
+  // Memoize data extractions to prevent new array references on every render
+  const orders: IOrder[] = useMemo(
+    () => OrdersData?.orders ?? [],
+    [OrdersData],
+  );
+  const users: IUser[] = useMemo(() => UsersData?.users ?? [], [UsersData]);
+  const courses: ICourse[] = useMemo(
+    () => CoursesData?.courses ?? [],
+    [CoursesData],
+  );
 
-    return OrdersData.orders.map((order: IOrder) => {
-      const user = UsersData.users.find((u: IUser) => u._id === order.userId);
-      const course = CoursesData.courses.find(
-        (c: ICourse) => c._id === order.courseId,
-      );
+  console.log("orders", orders);
+  console.log("users", users);
+  console.log("courses", courses);
+
+  const rows: IInvoiceRow[] = useMemo(() => {
+    if (!orders.length) return [];
+
+    return orders.map((order: IOrder) => {
+      const user = users.find((u: IUser) => u._id === order.userId);
+      const course = courses.find((c: ICourse) => c._id === order.courseId);
 
       return {
         id: order._id,
         userName: user?.name ?? "N/A",
-        userEmail: user?.Email ?? "N/A",
-        title: user?.name ?? "N/A",
+        userEmail: user?.email ?? "N/A",
+        title: course?.name ?? "N/A",
         price: course ? `$${course.price}` : "N/A",
         formattedDate: formatTimeAgo(order.createdAt),
       };
     });
-  }, [OrdersData, UsersData, CoursesData]);
+  }, [orders, users, courses]);
+
+  console.log("rows", rows);
+
+  const handleViewDetails = (orderId: string) => {
+    const order = orders.find((o) => o._id === orderId);
+    if (!order) return;
+    const user = users.find((u: IUser) => u._id === order.userId);
+    const course = courses.find((c: ICourse) => c._id === order.courseId);
+
+    setSelectedInvoice({
+      orderId: order._id,
+      userName: user?.name ?? "N/A",
+      userEmail: user?.email ?? "N/A",
+      courseTitle: course?.name ?? "N/A",
+      price: course ? `$${course.price}` : "N/A",
+      date: new Date(order.createdAt).toLocaleString(),
+      paymentInfo: order.paymentInfo,
+    });
+  };
 
   const columns: GridColDef<IInvoiceRow>[] = useMemo(
     () => [
@@ -95,27 +144,57 @@ const AllInvoices = ({ isDashboard }: Props) => {
         ? [{ field: "formattedDate", headerName: "Created At", flex: 0.5 }]
         : [
             {
+              field: "actionDetails",
+              headerName: "Details",
+              flex: 0.2,
+              sortable: false,
+              filterable: false,
+              renderCell: (params: GridRenderCellParams<IInvoiceRow>) => (
+                <button
+                  type="button"
+                  onClick={() => handleViewDetails(params.row.id)}
+                  className="cursor-pointer flex items-center justify-center w-full h-full"
+                >
+                  <AiOutlineEye
+                    className="dark:text-white text-black"
+                    size={20}
+                  />
+                </button>
+              ),
+            },
+            {
               field: "actionEmail",
               headerName: "Email",
               flex: 0.2,
               renderCell: (params: GridRenderCellParams<IInvoiceRow>) => (
-                <a href={`mailto:${params.row.userEmail}`}>
-                  <AiOutlineMail
-                    className="dark:text-white text-black"
-                    size={20}
-                  />
-                </a>
+                <div className="flex items-center justify-center w-full h-full">
+                  <a href={`mailto:${params.row.userEmail}`}>
+                    <AiOutlineMail
+                      className="dark:text-white text-black"
+                      size={20}
+                    />
+                  </a>
+                </div>
               ),
             },
           ]),
     ],
-    [isDashboard],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isDashboard, orders, users, courses],
   );
 
   return (
     <div className={!isDashboard ? "mt-30" : "mt-0"}>
       {isLoading ? (
         <Loader />
+      ) : ordersError ? (
+        <p className="text-black dark:text-white opacity-80 font-Poppins px-5 py-10 text-center">
+          {getErrorMessage(ordersError, "Failed to load invoices.")}
+        </p>
+      ) : rows.length === 0 ? (
+        <p className="text-black dark:text-white opacity-80 font-Poppins px-5 py-10 text-center">
+          No invoices found.
+        </p>
       ) : (
         <Box sx={{ margin: isDashboard ? "0" : "40px" }}>
           <Box
@@ -124,7 +203,6 @@ const AllInvoices = ({ isDashboard }: Props) => {
               height: isDashboard ? "35vh" : "82.49vh",
               overflow: "hidden",
               "& .MuiDataGrid-menuIcon": {
-                // Ensure the menu icon button container stays visible and styled correctly
                 "& .MuiIconButton-root": {
                   color:
                     theme === "dark" ? "#fff !important" : "#000 !important",
@@ -222,6 +300,62 @@ const AllInvoices = ({ isDashboard }: Props) => {
             />
           </Box>
         </Box>
+      )}
+
+      {selectedInvoice && (
+        <Modal
+          open={!!selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
+          aria-labelledby="invoice-details-title"
+        >
+          <Box className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-137.5 max-h-[85vh] overflow-y-auto bg-white dark:bg-slate-900 rounded-lg shadow p-4 800px:p-6 outline-none">
+            <h1 className={`${styles.title} text-start!`}>Invoice Details</h1>
+            <div className="font-Poppins text-black dark:text-white space-y-2 mt-4 text-[15px]">
+              <p>
+                <span className="font-semibold">Order ID:</span>{" "}
+                {selectedInvoice.orderId}
+              </p>
+              <p>
+                <span className="font-semibold">Customer:</span>{" "}
+                {selectedInvoice.userName}
+              </p>
+              <p>
+                <span className="font-semibold">Email:</span>{" "}
+                {selectedInvoice.userEmail}
+              </p>
+              <p>
+                <span className="font-semibold">Course:</span>{" "}
+                {selectedInvoice.courseTitle}
+              </p>
+              <p>
+                <span className="font-semibold">Price:</span>{" "}
+                {selectedInvoice.price}
+              </p>
+              <p>
+                <span className="font-semibold">Date:</span>{" "}
+                {selectedInvoice.date}
+              </p>
+            </div>
+            {selectedInvoice.paymentInfo && (
+              <div className="mt-4">
+                <h5 className="font-semibold font-Poppins text-black dark:text-white mb-2">
+                  Payment Info
+                </h5>
+                <pre className="text-[12px] whitespace-pre-wrap break-all bg-[#0000000d] dark:bg-[#ffffff0d] p-3 rounded font-Poppins text-black dark:text-white">
+                  {JSON.stringify(selectedInvoice.paymentInfo, null, 2)}
+                </pre>
+              </div>
+            )}
+            <div className="w-full flex justify-end mt-6">
+              <div
+                className={`${styles.button} w-30! h-8.75 cursor-pointer`}
+                onClick={() => setSelectedInvoice(null)}
+              >
+                Close
+              </div>
+            </div>
+          </Box>
+        </Modal>
       )}
     </div>
   );
