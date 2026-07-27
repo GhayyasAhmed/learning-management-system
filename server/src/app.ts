@@ -43,14 +43,14 @@ app.use(cookieParser());
 // Rate Limiter Configuration
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 100, // 100 requests per IP per window
+  limit: 500, // 100 requests per IP per window
   standardHeaders: "draft-8",
   legacyHeaders: false,
   ipv6Subnet: 56,
 });
 
 // Apply Rate Limiter globally
-// app.use(limiter);
+app.use(limiter);
 
 // Database Connection Middleware
 app.use(async (req, res, next) => {
