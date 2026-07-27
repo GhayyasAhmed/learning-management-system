@@ -1,4 +1,6 @@
+import { RootState } from "@/redux/store";
 import Link from "next/link";
+import { useSelector } from "react-redux";
 
 export const navItemsData = [
   {
@@ -29,6 +31,7 @@ type Props = {
 };
 
 const NavItems = ({ activeItem, isMobile }: Props) => {
+  const { user } = useSelector((state: RootState) => state.auth);
   return (
     <>
       {/* Desktop Navigation */}
@@ -75,6 +78,13 @@ const NavItems = ({ activeItem, isMobile }: Props) => {
                 </span>
               </Link>
             ))}
+          {user && typeof user === "object" && user.role === "admin" && (
+            <Link href={"/admin"}>
+              <span className="dark:text-white text-black block py-5 text-[18px] px-6 font-Poppins font-normal">
+                Admin Dashboard
+              </span>
+            </Link>
+          )}
         </div>
       )}
     </>

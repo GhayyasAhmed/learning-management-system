@@ -16,22 +16,23 @@ import avatarDefault from "../../../../public/assets/avatardefault.jpg";
 import { useLogoutUserQuery } from "../../../../redux/features/auth/authApi";
 import { userLoggedOut } from "../../../../redux/features/auth/authSlice";
 import {
-    ArrowBackIosIcon,
-    ArrowForwardIosIcon,
-    BarChartOutlinedIcon,
-    ExitToAppIcon,
-    GroupsIcon,
-    HomeOutlinedIcon,
-    ManageHistoryIcon,
-    MapOutlinedIcon,
-    OndemandVideoIcon,
-    PeopleOutlinedIcon,
-    QuizIcon,
-    ReceiptOutlinedIcon,
-    VideoCallIcon,
-    WebIcon,
-    WysiwygIcon,
-    NotificationsIcon
+  ArrowBackIosIcon,
+  ArrowForwardIosIcon,
+  BarChartOutlinedIcon,
+  ExitToAppIcon,
+  GroupsIcon,
+  HomeOutlinedIcon,
+  ManageHistoryIcon,
+  MapOutlinedIcon,
+  OndemandVideoIcon,
+  PeopleOutlinedIcon,
+  QuizIcon,
+  ReceiptOutlinedIcon,
+  VideoCallIcon,
+  WebIcon,
+  WysiwygIcon,
+  NotificationsIcon,
+  LaunchIcon,
 } from "./Icons";
 
 type itemProps = {
@@ -74,7 +75,9 @@ const AdminSideBar = () => {
 
   const { theme } = useTheme();
   const [logout, setLogout] = useState(false);
-  const {isSuccess: isLogoutSuccess } = useLogoutUserQuery(undefined, { skip: !logout });
+  const { isSuccess: isLogoutSuccess } = useLogoutUserQuery(undefined, {
+    skip: !logout,
+  });
   const dispatch = useDispatch();
 
   const logoutHandler = async () => {
@@ -180,44 +183,50 @@ const AdminSideBar = () => {
           </MenuItem>
 
           {!isCollapsed && (
-            <Box sx={{ mb: "25px" }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <Image
-                  alt="profile-user"
-                  width={100}
-                  height={100}
-                  src={userData?.avatar ? userData.avatar.url : avatarDefault}
-                  className="w-20 h-20 rounded-full cursor-pointer"
-                  style={{
-                    cursor: "pointer",
-                    borderRadius: "50%",
-                    border: "3px solid #5b6fe6",
+            <>
+              <p className="text-center text-[12px] font-Poppins uppercase tracking-wider text-black/60 dark:text-white/60 -mt-3 mb-3">
+                Admin Panel
+              </p>
+
+              <Box sx={{ mb: "25px" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
                   }}
-                />
-              </Box>
-              <Box sx={{ textAlign: "center" }}>
-                <Typography
-                  variant="h4"
-                  className="text-[20px]! text-black dark:text-[#ffffffc1]"
-                  sx={{ m: "10px 0 0 0" }}
                 >
-                  {userData?.name}
-                </Typography>
-                <Typography
-                  variant="h6"
-                  sx={{ m: "10px 0 0 0" }}
-                  className="text-[20px]! text-black dark:text-[#ffffffc1] capitalize"
-                >
-                  - {userData?.role}
-                </Typography>
+                  <Image
+                    alt="profile-user"
+                    width={100}
+                    height={100}
+                    src={userData?.avatar ? userData.avatar.url : avatarDefault}
+                    className="w-20 h-20 rounded-full cursor-pointer"
+                    style={{
+                      cursor: "pointer",
+                      borderRadius: "50%",
+                      border: "3px solid #5b6fe6",
+                    }}
+                  />
+                </Box>
+                <Box sx={{ textAlign: "center" }}>
+                  <Typography
+                    variant="h4"
+                    className="text-[20px]! text-black dark:text-[#ffffffc1]"
+                    sx={{ m: "10px 0 0 0" }}
+                  >
+                    {userData?.name}
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{ m: "10px 0 0 0" }}
+                    className="text-[20px]! text-black dark:text-[#ffffffc1] capitalize"
+                  >
+                    - {userData?.role}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
+            </>
           )}
 
           <Box sx={{ paddingLeft: isCollapsed ? undefined : "8%" }}>
@@ -225,6 +234,14 @@ const AdminSideBar = () => {
               title="Dashboard"
               to="/admin"
               icon={<HomeOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+
+            <Item
+              title="Back to Site"
+              to="/"
+              icon={<LaunchIcon />}
               selected={selected}
               setSelected={setSelected}
             />

@@ -6,9 +6,13 @@ import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import toast from "react-hot-toast";
 import { HiOutlineMenuAlt3, HiOutlineUserCircle } from "react-icons/hi";
+import { MdOutlineAdminPanelSettings } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import avatar from "../../public/assets/avatardefault.jpg";
-import { useLogoutUserQuery, useSocialAuthMutation } from "../../redux/features/auth/authApi";
+import {
+  useLogoutUserQuery,
+  useSocialAuthMutation,
+} from "../../redux/features/auth/authApi";
 import { userLoggedOut } from "../../redux/features/auth/authSlice";
 import CustomModal from "../utils/CustomModal";
 import { getErrorMessage } from "../utils/getErrorMessage";
@@ -31,7 +35,7 @@ const useIsMounted = () =>
   useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
 
 const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
@@ -39,14 +43,16 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
   const [openSidebar, setOpenSidebar] = useState(false);
   const mounted = useIsMounted();
   const dispatch = useDispatch();
-  
+
   // Extract isSocial flag from state
   const { user, isSocial } = useSelector((state: RootState) => state.auth);
   const { data } = useSession();
   // const [logout, setLogout] = useState(false)
   const [socialAuth, { isSuccess, error }] = useSocialAuthMutation();
   const shouldLogout = data === null && isSocial && !!user;
-  const {isSuccess: isLogoutSuccess} = useLogoutUserQuery(undefined, { skip: !shouldLogout });
+  const { isSuccess: isLogoutSuccess } = useLogoutUserQuery(undefined, {
+    skip: !shouldLogout,
+  });
   // const {} = useLogoutUserQuery(undefined, {skip: !logout ? true: false});
   // const [logoutUser] = useLogoutUserMutation();
 
@@ -67,7 +73,7 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
 
     if (error) {
       toast.error(
-        getErrorMessage(error, "Social login failed. Please try again.")
+        getErrorMessage(error, "Social login failed. Please try again."),
       );
     }
 
@@ -76,14 +82,12 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
     // }
   }, [data, user, isSocial, isSuccess, error, socialAuth, setOpen, dispatch]);
 
-
   useEffect(() => {
     if (isLogoutSuccess) {
       dispatch(userLoggedOut());
       toast.success("Logged out successfully!");
     }
   }, [isLogoutSuccess, dispatch]);
-
 
   useEffect(() => {
     const handleScroll = () => {
@@ -124,6 +128,19 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
             <div className="flex items-center">
               <NavItems activeItem={activeItem} isMobile={false} />
               <ThemeSwitcher />
+              {mounted &&
+                user &&
+                typeof user === "object" &&
+                user.role === "admin" && (
+                  <Link href={"/admin"} className="mr-3 hidden 800px:block">
+                    <MdOutlineAdminPanelSettings
+                      className="cursor-pointer dark:text-white text-black"
+                      size={24}
+                      title="Admin Dashboard"
+                    />
+                  </Link>
+                )}
+
               <div className="800px:hidden">
                 <HiOutlineMenuAlt3
                   className="cursor-pointer dark:text-white text-black"
@@ -167,7 +184,6 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
           >
             <div className="w-[70%] fixed z-999999999 h-screen bg-white top-0 right-0 dark:bg-slate-900 dark:bg-opacity-90">
               <NavItems activeItem={activeItem} isMobile={true} />
-
               {mounted && user ? (
                 <Link href={"/profile"}>
                   <Image
