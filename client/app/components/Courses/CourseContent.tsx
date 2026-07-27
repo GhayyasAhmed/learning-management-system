@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGetCourseContentQuery } from "../../../redux/features/courses/courseApi";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 import Heading from "../../utils/Heading";
@@ -55,9 +55,11 @@ export interface ICourseContent {
 type Props = {
   id: string;
   user: IUser;
+  initialTab?: number;
+  initialContentId?: string;
 };
 
-const CourseContent = ({ id, user }: Props) => {
+const CourseContent = ({ id, user, initialTab, initialContentId }: Props) => {
   const {
     data: contentData,
     isLoading,
@@ -70,6 +72,20 @@ const CourseContent = ({ id, user }: Props) => {
   const [route, setRoute] = useState("Login");
 
   const data: ICourseContent[] | undefined = contentData?.content;
+
+  useEffect(() => {
+    if (initialContentId && Array.isArray(data) && data.length > 0) {
+      const idx = data.findIndex((item) => item._id === initialContentId);
+      if (idx >= 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setActiveVideo(idx);
+        // -- one-time deep-link
+        // sync from a notification redirect; data arrives asynchronously after mount so
+        // there is no synchronous/render-time way to compute this.
+      }
+    }
+  }, [initialContentId, data]);
+
   return (
     <>
       {isLoading ? (
@@ -109,6 +125,7 @@ const CourseContent = ({ id, user }: Props) => {
                   activeVideo={activeVideo}
                   // setActiveVideo={setActiveVideo}
                   refetch={refetch}
+                  initialTab={initialTab}
                 />
               </div>
               <div className="hidden 800px:block 800px:col-span-3">

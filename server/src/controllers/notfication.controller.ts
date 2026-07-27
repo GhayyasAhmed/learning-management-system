@@ -1,34 +1,70 @@
 import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
-import catchAsyncError from "../middlewares/catchAsyncError.js";
-import CourseModel from "../models/course.model.js";
-import NotificationModel from "../models/notification.models.js";
-import OrderModel, { IOrder } from "../models/order.models.js";
-import UserModel from "../models/user.model.js";
-import ErrorHandler from "../utils/errorhandler.js";
-import sendEmail from "../utils/sendEmail.js";
 import cron from 'node-cron';
+import catchAsyncError from "../middlewares/catchAsyncError.js";
+import NotificationModel from "../models/notification.models.js";
+import ErrorHandler from "../utils/errorhandler.js";
 
 
 
-// only for admin
 export const getAllNotifications = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const notifications = await NotificationModel.find().sort({ createdAt: -1 })
+        const pageRaw = parseInt(req.query.page as string, 10);
+        const limitRaw = parseInt(req.query.limit as string, 10);
+        const statusRaw = (req.query.status as string) || "all";
+
+        const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1;
+        const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 20) : 20;
+        const validStatuses = ["all", "read", "unread"];
+        const status = validStatuses.includes(statusRaw) ? statusRaw : "all";
+
+        const query: Record<string, unknown> = {};
+        if (status !== "all") {
+            query.status = status;
+        }
+
+        const [notifications, total, unreadCount] = await Promise.all([
+            NotificationModel.find(query)
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit),
+            NotificationModel.countDocuments(query),
+            NotificationModel.countDocuments({ status: "unread" }),
+        ]);
 
         res.status(200).json({
             success: true,
-            notifications
-        })
-
+            notifications,
+            unreadCount,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.max(1, Math.ceil(total / limit)),
+            },
+        });
     }
     catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
-
     }
-
 })
 
+export const markAllNotificationsRead = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        // Admin-facing notification inbox is shared (gated by authorizeRoles("admin"),
+        // same as every other notification route) — not per-user, so this is a global
+        // bulk update, matching existing getAllNotifications/updateNotificationStatus semantics.
+        await NotificationModel.updateMany({ status: "unread" }, { $set: { status: "read" } });
+
+        res.status(200).json({
+            success: true,
+            message: "All notifications marked as read",
+        });
+    }
+    catch (error: any) {
+        return next(new ErrorHandler(error.message, 400))
+    }
+})
 
 interface INotificationStatusUpdateRequest{
     status: string;

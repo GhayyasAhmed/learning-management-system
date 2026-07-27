@@ -84,6 +84,7 @@ export interface Props {
   activeVideo: number;
   data: CourseContentItem[];
   refetch: () => void;
+  initialTab?: number;
 }
 
 export interface CustomError {
@@ -127,8 +128,9 @@ const CourseContentMedia: FC<Props> = ({
   activeVideo,
   data,
   refetch,
+  initialTab,
 }) => {
-  const [active, setActive] = useState<number>(0);
+  const [active, setActive] = useState<number>(initialTab  ?? 0);
   const [question, setQuestion] = useState<string>("");
   const [rating, setRating] = useState<number>(1);
   const [review, setReview] = useState<string>("");

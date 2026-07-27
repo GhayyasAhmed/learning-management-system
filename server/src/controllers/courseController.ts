@@ -285,11 +285,16 @@ export const addQuestion = catchAsyncError(
             const courseContent = updatedCourse?.courseData?.find((item: any) =>
                 item._id.equals(contentId)
             );
+            const addedQuestion = courseContent?.questions?.[courseContent.questions.length - 1];
 
             await NotificationModel.create({
                 userId: req.user?._id?.toString(),
                 title: "New Question",
                 message: `You have a new question in ${courseContent?.title}`,
+                type: "question",
+                courseId,
+                contentId,
+                questionId: addedQuestion?._id?.toString(),
             });
 
             res.status(200).json({
@@ -386,6 +391,10 @@ export const addAnswer = catchAsyncError(
                     userId: req.user?._id?.toString(),
                     title: "New Question Reply Received",
                     message: `You have a new question reply in ${courseContent?.title}`,
+                    type: "question_reply",
+                    courseId,
+                    contentId,
+                    questionId,
                 });
             } else {
                 const data = {
@@ -472,7 +481,8 @@ export const addReview = catchAsyncError(
             await course.save();
 
             await updatePublicCourseCache(courseId);
-
+            const createdReview = course.reviews[course.reviews.length - 1];
+            
             const updatedCourse = await CourseModel.findById(courseId)
                 .select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links")
                 .populate({
@@ -488,6 +498,9 @@ export const addReview = catchAsyncError(
                 userId: req.user?._id?.toString(),
                 title: "New Review Received",
                 message: `${req.user?.name} has given a new review for ${course?.name}`,
+                type: "review",
+                courseId,
+                reviewId: createdReview?._id?.toString(),
             });
 
             res.status(200).json({

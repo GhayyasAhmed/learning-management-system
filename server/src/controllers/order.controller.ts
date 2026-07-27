@@ -118,6 +118,8 @@ export const createOrder = catchAsyncError(
                     userId: user?._id?.toString(),
                     title: "New Order",
                     message: `You have a new order from ${course.name}`,
+                    type: "order",
+                    courseId: course._id?.toString(),
                 });
             }
 

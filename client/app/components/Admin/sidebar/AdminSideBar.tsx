@@ -31,6 +31,7 @@ import {
     VideoCallIcon,
     WebIcon,
     WysiwygIcon,
+    NotificationsIcon
 } from "./Icons";
 
 type itemProps = {
@@ -247,6 +248,13 @@ const AdminSideBar = () => {
               title="Invoices"
               to="/admin/invoices"
               icon={<ReceiptOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Notifications"
+              to="/admin/notifications"
+              icon={<NotificationsIcon />}
               selected={selected}
               setSelected={setSelected}
             />

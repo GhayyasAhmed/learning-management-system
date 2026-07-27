@@ -25,6 +25,7 @@ interface IReviewReply {
 
 // Remove "extends Document" here
 export interface IReview {
+    _id?: mongoose.Types.ObjectId;
     user: mongoose.Types.ObjectId;
     rating: number;
     review: string;

@@ -3,8 +3,8 @@ import { apiSlice } from "../api/apiSlice";
 export const notificationApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         getAllNotifications: builder.query({
-            query: () => ({
-                url: "/notification/admin/all",
+            query: ({ page = 1, limit = 20, status = "all" }: { page?: number; limit?: number; status?: string } = {}) => ({
+                url: `/notification/admin/all?page=${page}&limit=${limit}&status=${status}`,
                 method: "GET",
                 credentials: "include" as const,
             }),
@@ -17,10 +17,18 @@ export const notificationApi = apiSlice.injectEndpoints({
                 credentials: "include" as const,
             }),
         }),
+        markAllNotificationsRead: builder.mutation({
+            query: () => ({
+                url: `/notification/admin/mark-all-read`,
+                method: "PATCH",
+                credentials: "include" as const,
+            }),
+        }),
     }),
 });
 
 export const {
     useGetAllNotificationsQuery,
-    useUpdateNotificationStatusMutation
+    useUpdateNotificationStatusMutation,
+    useMarkAllNotificationsReadMutation
 } = notificationApi;
