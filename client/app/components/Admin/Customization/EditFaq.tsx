@@ -7,6 +7,7 @@ import { HiMinus, HiPlus } from "react-icons/hi";
 import { IoMdAddCircleOutline } from "react-icons/io";
 import { styles } from "../../../../app/styles/styles";
 import {
+  useCreateLayoutMutation,
   useEditLayoutMutation,
   useGetHeroDataQuery,
 } from "../../../../redux/features/layout/layoutApi";
@@ -22,15 +23,32 @@ export interface IFaqItem {
 
 interface EditFaqFormProps {
   initialFaq: IFaqItem[];
+  layoutExists: boolean;
+  hasQueryError: boolean;
   refetch: () => void;
 }
 
 // ---------------------------------------------------------
 // Form Component: Handles Local State & FAQ Operations
 // ---------------------------------------------------------
-const EditFaqForm = ({ initialFaq, refetch }: EditFaqFormProps) => {
-  const [editLayout, { isLoading, isSuccess: layoutSuccess, error }] =
-    useEditLayoutMutation();
+const EditFaqForm = ({
+  initialFaq,
+  layoutExists,
+  hasQueryError,
+  refetch,
+}: EditFaqFormProps) => {
+  const [
+    editLayout,
+    { isLoading: isEditing, isSuccess: editSuccess, error: editError },
+  ] = useEditLayoutMutation();
+  const [
+    createLayout,
+    { isLoading: isCreating, isSuccess: createSuccess, error: createError },
+  ] = useCreateLayoutMutation();
+
+  const isLoading = isEditing || isCreating;
+  const layoutSuccess = editSuccess || createSuccess;
+  const error = editError || createError;
 
   const [questions, setQuestions] = useState<IFaqItem[]>(initialFaq);
 
@@ -97,26 +115,33 @@ const EditFaqForm = ({ initialFaq, refetch }: EditFaqFormProps) => {
   };
 
   const isDisabled =
-    areQuestionsUnchanged(initialFaq, questions) ||
+    (areQuestionsUnchanged(initialFaq, questions) && layoutExists) ||
     isAnyQuestionEmpty(questions);
 
   const handleEdit = async () => {
-    if (!isDisabled) {
-      // Sanitize payload: strip temporary/mock IDs created via Date.now()
-      const sanitizedFaq = questions.map(({ _id, question, answer }) => {
-        // If _id is not a valid 24-char ObjectId, exclude it so Mongo auto-generates a real one
-        const isRealObjectId = _id && /^[0-9a-fA-F]{24}$/.test(_id);
-        return {
-          ...(isRealObjectId ? { _id } : {}),
-          question,
-          answer,
-        };
-      });
+    if (isDisabled) return;
 
-      await editLayout({
-        type: "FAQ",
-        faq: sanitizedFaq,
-      });
+    if (hasQueryError) {
+      toast.error(
+        "Could not verify existing FAQ data. Please refresh and try again.",
+      );
+      return;
+    }
+
+    // Sanitize payload: strip temporary/mock IDs created via Date.now()
+    const sanitizedFaq = questions.map(({ _id, question, answer }) => {
+      const isRealObjectId = _id && /^[0-9a-fA-F]{24}$/.test(_id);
+      return {
+        ...(isRealObjectId ? { _id } : {}),
+        question,
+        answer,
+      };
+    });
+
+    if (layoutExists) {
+      await editLayout({ type: "FAQ", faq: sanitizedFaq });
+    } else {
+      await createLayout({ data: { type: "FAQ", faq: sanitizedFaq } });
     }
   };
 
@@ -217,7 +242,7 @@ const EditFaqForm = ({ initialFaq, refetch }: EditFaqFormProps) => {
 // Container Component: Handles Data Fetching & Key Re-initialization
 // ---------------------------------------------------------
 const EditFaq = () => {
-  const { data, isLoading, refetch } = useGetHeroDataQuery("FAQ", {
+  const { data, isLoading, error, refetch } = useGetHeroDataQuery("FAQ", {
     refetchOnMountOrArgChange: true,
   });
 
@@ -226,10 +251,19 @@ const EditFaq = () => {
   }
 
   const faqData: IFaqItem[] = data?.layout?.faq || [];
+  const layoutExists = !!data?.layout;
   // Use data length/signature as key to reset local state when fresh data arrives
   const key = faqData.map((f) => f._id).join("-") || "empty";
 
-  return <EditFaqForm key={key} initialFaq={faqData} refetch={refetch} />;
+  return (
+    <EditFaqForm
+      key={key}
+      initialFaq={faqData}
+      layoutExists={layoutExists}
+      hasQueryError={!!error}
+      refetch={refetch}
+    />
+  );
 };
 
 export default EditFaq;

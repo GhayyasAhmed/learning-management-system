@@ -6,6 +6,7 @@ import { AiOutlineDelete } from "react-icons/ai";
 import { IoMdAddCircleOutline } from "react-icons/io";
 import { styles } from "../../../../app/styles/styles";
 import {
+  useCreateLayoutMutation,
   useEditLayoutMutation,
   useGetHeroDataQuery,
 } from "../../../../redux/features/layout/layoutApi";
@@ -19,6 +20,8 @@ export interface ICategoryItem {
 
 interface EditCategoriesFormProps {
   initialCategories: ICategoryItem[];
+  layoutExists: boolean;
+  hasQueryError: boolean;
   refetch: () => void;
 }
 
@@ -27,13 +30,25 @@ interface EditCategoriesFormProps {
 // ---------------------------------------------------------
 const EditCategoriesForm = ({
   initialCategories,
+  layoutExists,
+  hasQueryError,
   refetch,
 }: EditCategoriesFormProps) => {
   const [categories, setCategories] =
     useState<ICategoryItem[]>(initialCategories);
 
-  const [editLayout, { isLoading, isSuccess: layoutSuccess, error }] =
-    useEditLayoutMutation();
+  const [
+    editLayout,
+    { isLoading: isEditing, isSuccess: editSuccess, error: editError },
+  ] = useEditLayoutMutation();
+  const [
+    createLayout,
+    { isLoading: isCreating, isSuccess: createSuccess, error: createError },
+  ] = useCreateLayoutMutation();
+
+  const isLoading = isEditing || isCreating;
+  const layoutSuccess = editSuccess || createSuccess;
+  const error = editError || createError;
 
   useEffect(() => {
     if (layoutSuccess) {
@@ -80,23 +95,36 @@ const EditCategoriesForm = ({
   };
 
   const isDisabled =
-    areCategoriesUnchanged(initialCategories, categories) ||
+    (areCategoriesUnchanged(initialCategories, categories) && layoutExists) ||
     isAnyCategoryTitleEmpty(categories);
 
   const editCategoriesHandler = async () => {
-    if (!isDisabled) {
-      // Strip temporary IDs so Mongoose auto-generates valid ObjectIds on new documents
-      const sanitizedCategories = categories.map(({ _id, title }) => {
-        const isRealObjectId = _id && /^[0-9a-fA-F]{24}$/.test(_id);
-        return {
-          ...(isRealObjectId ? { _id } : {}),
-          title,
-        };
-      });
+    if (isDisabled) return;
 
+    if (hasQueryError) {
+      toast.error(
+        "Could not verify existing categories data. Please refresh and try again.",
+      );
+      return;
+    }
+
+    // Strip temporary IDs so Mongoose auto-generates valid ObjectIds on new documents
+    const sanitizedCategories = categories.map(({ _id, title }) => {
+      const isRealObjectId = _id && /^[0-9a-fA-F]{24}$/.test(_id);
+      return {
+        ...(isRealObjectId ? { _id } : {}),
+        title,
+      };
+    });
+
+    if (layoutExists) {
       await editLayout({
         type: "Categories",
         categories: sanitizedCategories,
+      });
+    } else {
+      await createLayout({
+        data: { type: "Categories", categories: sanitizedCategories },
       });
     }
   };
@@ -165,7 +193,7 @@ const EditCategoriesForm = ({
 // Wrapper Component: Fetches Data & Controls Re-render Keys
 // ---------------------------------------------------------
 const EditCategories = () => {
-  const { data, isLoading, refetch } = useGetHeroDataQuery("Categories", {
+  const { data, isLoading, error, refetch } = useGetHeroDataQuery("Categories", {
     refetchOnMountOrArgChange: true,
   });
 
@@ -174,12 +202,15 @@ const EditCategories = () => {
   }
 
   const categoryData: ICategoryItem[] = data?.layout?.categories || [];
+  const layoutExists = !!data?.layout;
   const key = categoryData.map((c) => c._id).join("-") || "empty";
 
   return (
     <EditCategoriesForm
       key={key}
       initialCategories={categoryData}
+      layoutExists={layoutExists}
+      hasQueryError={!!error}
       refetch={refetch}
     />
   );

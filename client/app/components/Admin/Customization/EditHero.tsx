@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { AiOutlineCamera } from "react-icons/ai";
 import { CiEdit } from "react-icons/ci";
 import {
+  useCreateLayoutMutation,
   useEditLayoutMutation,
   useGetHeroDataQuery,
 } from "../../../../redux/features/layout/layoutApi";
@@ -68,13 +69,12 @@ export const EditHeroPresenter = ({
       <div className="1000px:w-[40%] flex 1000px:min-h-screen items-center justify-end pt-17.5 1000px:pt-0 z-10">
         <div className="relative flex items-center justify-end min-h-75 w-full">
           {image ? (
-            /* Using native img to bypass Next Image framework wrapper sizing issues */
             <Image
               src={image}
               alt="Banner"
               fill
               priority
-              unoptimized // Prevents Next.js optimization errors on local base64/blob image previews
+              unoptimized
               className="object-contain pointer-events-none z-10"
             />
           ) : null}
@@ -133,16 +133,22 @@ export const EditHeroPresenter = ({
 // ---------------------------------------------------------
 interface EditHeroFormProps {
   initialBanner?: IBanner;
+  layoutExists: boolean;
+  hasQueryError: boolean;
   isLoading: boolean;
   refetch: () => void;
 }
 
 const EditHeroForm = ({
   initialBanner,
+  layoutExists,
+  hasQueryError,
   isLoading,
   refetch,
 }: EditHeroFormProps) => {
-  const [editLayout, { isLoading: isSaving }] = useEditLayoutMutation();
+  const [editLayout, { isLoading: isEditing }] = useEditLayoutMutation();
+  const [createLayout, { isLoading: isCreating }] = useCreateLayoutMutation();
+  const isSaving = isEditing || isCreating;
 
   const [title, setTitle] = useState<string>(initialBanner?.title || "");
   const [subTitle, setSubTitle] = useState<string>(
@@ -171,13 +177,21 @@ const EditHeroForm = ({
   const handleEdit = async () => {
     if (!isModified) return;
 
+    if (hasQueryError) {
+      toast.error(
+        "Could not verify existing hero data. Please refresh and try again.",
+      );
+      return;
+    }
+
+    const payload = { type: "Banner", title, subTitle, image };
+
     try {
-      await editLayout({
-        type: "Banner",
-        title,
-        subTitle,
-        image,
-      }).unwrap();
+      if (layoutExists) {
+        await editLayout(payload).unwrap();
+      } else {
+        await createLayout({ data: payload }).unwrap();
+      }
 
       toast.success("Hero section updated successfully!");
       refetch();
@@ -211,17 +225,20 @@ const EditHeroForm = ({
 // Container Component: Query Execution & Key-based Initialization
 // ---------------------------------------------------------
 const EditHero = () => {
-  const { data, isLoading, refetch } = useGetHeroDataQuery("Banner", {
+  const { data, isLoading, error, refetch } = useGetHeroDataQuery("Banner", {
     refetchOnMountOrArgChange: true,
   });
 
   const banner = data?.layout?.banner;
+  const layoutExists = !!data?.layout;
   const key = banner?.image?.url ?? "loading";
 
   return (
     <EditHeroForm
       key={key}
       initialBanner={banner}
+      layoutExists={layoutExists}
+      hasQueryError={!!error}
       isLoading={isLoading}
       refetch={refetch}
     />
