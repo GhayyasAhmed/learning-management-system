@@ -47,23 +47,24 @@ export const apiSlice = createApi({
                 credentials: "include",
             }),
 
-            async onQueryStarted(arg, { queryFulfilled, dispatch }) {
+            async onQueryStarted(arg, { queryFulfilled, dispatch, getState }) {
                 try {
                     const result = await queryFulfilled;
                     const user = result.data?.user;
+                    const currentState = getState() as { auth?: { isSocial?: boolean } };
                     // Don't treat "guest" (missing _id) as logged in
                     if (user && typeof user === "object" && user._id) {
                         dispatch(
                             userLogin({
                                 accessToken: result.data.accessToken,
                                 user,
+                                isSocial: currentState.auth?.isSocial ?? false,
                             })
                         );
                     } else {
                         dispatch(userLoggedOut());
                     }
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                } catch (error: any) {
+                } catch (error: unknown) {
                     console.log("Error occured in loadUser api", error);
                 }
             },

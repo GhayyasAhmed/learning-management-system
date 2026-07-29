@@ -28,7 +28,6 @@ interface CustomSession extends Session {
   provider?: string;
 }
 
-
 type Props = {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -71,11 +70,12 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
   const sessionAccessToken = customSession?.accessToken;
   const sessionProvider = customSession?.provider;
 
-  // const sessionAccessToken = (data as unknown as Record<string, unknown>)?.accessToken as string | undefined;
-  // const sessionProvider = (data as unknown as Record<string, unknown>)?.provider as string | undefined;
-
+  // Trigger social auth only when the session identity itself changes (a
+  // fresh NextAuth sign-in). Deliberately does NOT depend on isSuccess/error
+  // — those reflect the outcome of an attempt, not a new attempt to make.
+  // Depending on them here previously caused a failed attempt to be
+  // retried on every re-render, producing an infinite request loop.
   useEffect(() => {
-    // 1. Social Login Trigger
     if (!user && data?.user && sessionAccessToken && sessionProvider) {
       socialAuth({
         email: data.user.email,
@@ -85,7 +85,12 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
         provider: sessionProvider,
       });
     }
+  }, [data, user, sessionAccessToken, sessionProvider, socialAuth]);
 
+  // Surface the outcome of a social auth attempt (success/error feedback
+  // only). Kept separate from the trigger effect above so that resolving
+  // to an error never re-invokes socialAuth.
+  useEffect(() => {
     if (data === null && isSuccess) {
       toast.success("Logged in successfully!");
       setOpen(false);
@@ -96,22 +101,7 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
         getErrorMessage(error, "Social login failed. Please try again."),
       );
     }
-
-    // if(data === null && isSocial && user){
-    //   setLogout(true)
-    // }
-  }, [
-    data,
-    user,
-    isSocial,
-    isSuccess,
-    error,
-    socialAuth,
-    setOpen,
-    dispatch,
-    sessionAccessToken,
-    sessionProvider,
-  ]);
+  }, [data, isSuccess, error, setOpen]);
 
   useEffect(() => {
     if (isLogoutSuccess) {

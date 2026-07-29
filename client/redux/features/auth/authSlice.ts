@@ -80,7 +80,7 @@ const authSlice = createSlice({
     ) => {
       state.user = action.payload.user;
       state.token = action.payload.accessToken ?? action.payload.token ?? "";
-      state.isSocial = action.payload.isSocial ?? false;
+      state.isSocial = action.payload.isSocial ?? state.isSocial;
       persistAuthState(state);
     },
     userLoggedOut: (state) => {

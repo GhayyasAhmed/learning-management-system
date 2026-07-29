@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import SideBarProfile from "./SideBarProfile";
 // Make sure this mutation or lazy query exists in authApi.ts
+import { RootState } from "@/redux/store";
 import { signOut, useSession } from "next-auth/react";
 import toast from "react-hot-toast";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useLogoutUserQuery } from "../../../redux/features/auth/authApi";
 import { userLoggedOut } from "../../../redux/features/auth/authSlice";
 import { useGetUsersAllCoursesQuery } from "../../../redux/features/courses/courseApi";
@@ -24,6 +25,10 @@ const Profile = ({ user }: Props) => {
   const { data: session } = useSession();
   const [logout, setLogout] = useState(false);
   const dispatch = useDispatch();
+  const { isSocial } = useSelector((state: RootState) => state.auth);
+
+  console.log("isSocial", isSocial)
+  console.log("user", user)
 
   const { isSuccess: isLogoutSuccess } = useLogoutUserQuery(undefined, {
     skip: !logout,
@@ -83,6 +88,7 @@ const Profile = ({ user }: Props) => {
       >
         <SideBarProfile
           user={user}
+          isSocial={isSocial}
           active={active}
           setActive={setActive}
           avatar={avatar}
@@ -92,7 +98,7 @@ const Profile = ({ user }: Props) => {
 
       <div className="w-full h-full bg-transparent mt-20">
         {active === 1 && <ProfileInfo user={user} avatar={avatar} />}
-        {active === 2 && <ChangePassword />}
+        {active === 2 && !isSocial && <ChangePassword />}
         {active === 3 && (
           <div className="w-full pl-7 px-2 800px:px-10 800px:pl-8">
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6.25 xl:grid-cols-3 xl:gap-8.75">
