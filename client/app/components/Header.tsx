@@ -21,6 +21,13 @@ import ThemeSwitcher from "../utils/ThemeSwitcher";
 import Login from "./Auth/Login";
 import SignUp from "./Auth/SignUp";
 import Verification from "./Auth/Verification";
+import type { Session } from "next-auth";
+
+interface CustomSession extends Session {
+  accessToken?: string;
+  provider?: string;
+}
+
 
 type Props = {
   open: boolean;
@@ -56,13 +63,26 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
   // const {} = useLogoutUserQuery(undefined, {skip: !logout ? true: false});
   // const [logoutUser] = useLogoutUserMutation();
 
+  // The provider access token (and which provider issued it) that NextAuth
+  // attaches to the session via the jwt/session callbacks. This is what
+  // proves the sign-in actually happened with Google/GitHub; the backend
+  // independently re-verifies it before trusting any identity from it.
+  const customSession = data as CustomSession | null;
+  const sessionAccessToken = customSession?.accessToken;
+  const sessionProvider = customSession?.provider;
+
+  // const sessionAccessToken = (data as unknown as Record<string, unknown>)?.accessToken as string | undefined;
+  // const sessionProvider = (data as unknown as Record<string, unknown>)?.provider as string | undefined;
+
   useEffect(() => {
     // 1. Social Login Trigger
-    if (!user && data?.user) {
+    if (!user && data?.user && sessionAccessToken && sessionProvider) {
       socialAuth({
         email: data.user.email,
         name: data.user.name,
         avatar: data.user.image,
+        accessToken: sessionAccessToken,
+        provider: sessionProvider,
       });
     }
 
@@ -80,7 +100,18 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
     // if(data === null && isSocial && user){
     //   setLogout(true)
     // }
-  }, [data, user, isSocial, isSuccess, error, socialAuth, setOpen, dispatch]);
+  }, [
+    data,
+    user,
+    isSocial,
+    isSuccess,
+    error,
+    socialAuth,
+    setOpen,
+    dispatch,
+    sessionAccessToken,
+    sessionProvider,
+  ]);
 
   useEffect(() => {
     if (isLogoutSuccess) {

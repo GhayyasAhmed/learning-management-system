@@ -34,9 +34,13 @@ export const isAuthenticated = CatchAsyncError(async (req: Request, res: Respons
 
 export const authorizeRoles = (...roles: string[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
-        if(!roles.includes(req.user?.role || "")){
-            next(new ErrorHandler(`Role ${req.user?.role} is not allowed to access this resource`, 401))
+        if (!roles.includes(req.user?.role || "")) {
+            // Stop processing immediately: do not fall through to next().
+            // Previously this branch called next(err) and then execution
+            // continued to an unconditional next() below, which advanced
+            // Express to the protected route handler regardless of role.
+            return next(new ErrorHandler(`Role ${req.user?.role} is not allowed to access this resource`, 403));
         }
-        next()
+        return next();
     }
 }

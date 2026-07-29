@@ -2,6 +2,7 @@ import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import type { StringValue } from "ms";
+import axios from "axios";
 import { redis } from "../config/redis.js";
 import catchAsyncError from "../middlewares/catchAsyncError.js";
 import UserModel, { IUser } from "../models/user.model.js";
@@ -251,21 +252,99 @@ export const getUserInfo = catchAsyncError(async (req: Request, res: Response, n
 // social auth
 
 interface ISocialAuthRequest {
-    name: string;
-    email: string;
-    avatar: string
+    name?: string;
+    email?: string;
+    avatar?: string;
+    accessToken: string;
+    provider: "google" | "github";
 }
+
+interface IVerifiedSocialIdentity {
+    email: string;
+    name?: string;
+    avatar?: string;
+}
+
+// Verifies the supplied OAuth access token directly against the provider's
+// own API and returns the identity the PROVIDER attests to. The email used
+// for account lookup/creation must always come from this verified response
+// — never from client-supplied request-body fields — so that a request can
+// only ever authenticate as the Google/GitHub identity that actually issued
+// the access token.
+const verifySocialIdentity = async (
+    provider: string,
+    accessToken: string
+): Promise<IVerifiedSocialIdentity | null> => {
+    try {
+        if (provider === "google") {
+            const { data } = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+                headers: { Authorization: `Bearer ${accessToken}` },
+            });
+
+            if (!data?.email || data?.email_verified !== true) {
+                return null;
+            }
+
+            return { email: data.email, name: data.name, avatar: data.picture };
+        }
+
+        if (provider === "github") {
+            const { data } = await axios.get("https://api.github.com/user", {
+                headers: { Authorization: `Bearer ${accessToken}` },
+            });
+
+            let email: string | undefined = data?.email || undefined;
+
+            if (!email) {
+                const { data: emails } = await axios.get("https://api.github.com/user/emails", {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                });
+                const primary = Array.isArray(emails)
+                    ? emails.find((e: any) => e.primary && e.verified)
+                    : null;
+                email = primary?.email;
+            }
+
+            if (!email) {
+                return null;
+            }
+
+            return { email, name: data?.name || data?.login, avatar: data?.avatar_url };
+        }
+
+        return null;
+    } catch {
+        return null;
+    }
+};
 
 export const socialAuth = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { name, email, avatar } = req.body as ISocialAuthRequest;
+        const { avatar, accessToken, provider } = req.body as ISocialAuthRequest;
+
+        if (!accessToken || !provider) {
+            return next(new ErrorHandler("Missing social authentication credentials", 400));
+        }
+
+        // Independently verify the identity with the provider. This is the
+        // control that prevents account takeover: the request body's email
+        // is never trusted for lookup/creation below.
+        const verifiedIdentity = await verifySocialIdentity(provider, accessToken);
+        if (!verifiedIdentity?.email) {
+            return next(new ErrorHandler("Could not verify social account. Please try again.", 401));
+        }
+
+        const email = verifiedIdentity.email;
+        const name = verifiedIdentity.name || req.body.name || "";
+        const resolvedAvatar = verifiedIdentity.avatar || avatar;
+
         const user = await UserModel.findOne({ email });
         if (!user) {
             let avatarData = { public_id: "", url: "" };
 
             // If a social avatar URL exists, upload it directly to Cloudinary
-            if (avatar) {
-                const cloudResult = await cloudinary.v2.uploader.upload(avatar, {
+            if (resolvedAvatar) {
+                const cloudResult = await cloudinary.v2.uploader.upload(resolvedAvatar, {
                     folder: "profile_pictures",
                     width: 150,
                 });
