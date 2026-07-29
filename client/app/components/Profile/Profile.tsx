@@ -27,9 +27,6 @@ const Profile = ({ user }: Props) => {
   const dispatch = useDispatch();
   const { isSocial } = useSelector((state: RootState) => state.auth);
 
-  console.log("isSocial", isSocial)
-  console.log("user", user)
-
   const { isSuccess: isLogoutSuccess } = useLogoutUserQuery(undefined, {
     skip: !logout,
   });
