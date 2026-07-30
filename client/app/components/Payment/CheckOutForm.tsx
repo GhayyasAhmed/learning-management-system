@@ -73,7 +73,7 @@ const CheckOutForm: FC<Props> = ({ data, user, refetch, setOpen }) => {
       setIsLoading(false);
     } else if (paymentIntent && paymentIntent.status === "succeeded") {
       setIsLoading(false);
-      createOrder({ courseId, payment_info: paymentIntent, userId });
+      createOrder({ courseId, paymentInfo: paymentIntent, userId });
     }
   };
 
@@ -143,11 +143,11 @@ const CheckOutForm: FC<Props> = ({ data, user, refetch, setOpen }) => {
         </span>
       </button>
 
-      {message && (
+      {/* {message && (
         <div id="payment-message" className="text-[red] font-Poppins pt-2">
           {message}
         </div>
-      )}
+      )} */}
     </form>
   );
 };

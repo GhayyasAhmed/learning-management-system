@@ -34,28 +34,56 @@ export const createOrder = catchAsyncError(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { courseId, paymentInfo } = req.body as IOrder;
+
+            if (!courseId) {
+                return next(new ErrorHandler("Course id is required", 400));
+            }
             const normalizedCourseId = String(courseId);
 
-            // Verify Stripe Payment Intent if paymentInfo is provided
-            if (paymentInfo && typeof paymentInfo === "object" && "id" in paymentInfo) {
-                const paymentIntentId = String(paymentInfo.id); // 💡 Fixed TS2345 by explicitly coercing to string
+            const course = (await CourseModel.findById(courseId)) as any;
+            if (!course) {
+                return next(new ErrorHandler("Course not found.", 404));
+            }
 
-                if (!paymentIntentId) {
-                    return next(new ErrorHandler("Invalid payment information", 400));
-                }
+            // Payment verification is mandatory: an order must never be created
+            // without a verified, successful Stripe PaymentIntent. Previously
+            // this check only ran "if paymentInfo was provided", so omitting
+            // paymentInfo entirely skipped verification and let the order
+            // through unpaid.
+            if (!paymentInfo || typeof paymentInfo !== "object" || !("id" in paymentInfo)) {
+                return next(new ErrorHandler("Payment information is required", 400));
+            }
 
-                const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-                if (paymentIntent.status !== "succeeded") {
-                    return next(new ErrorHandler("Payment not successful!", 400));
-                }
+            const paymentIntentId = String((paymentInfo as any).id); // 💡 Fixed TS2345 by explicitly coercing to string
+
+            if (!paymentIntentId) {
+                return next(new ErrorHandler("Invalid payment information", 400));
+            }
+
+            const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+            if (paymentIntent.status !== "succeeded") {
+                return next(new ErrorHandler("Payment not successful!", 400));
+            }
+
+            // Ensure the verified PaymentIntent was actually created for this
+            // course and for its current price, so a valid payment for one
+            // course cannot be replayed to unlock a different (or re-priced)
+            // course. `newPayment` already sets metadata.courseId and computes
+            // the amount from the course price when creating the intent.
+            const expectedAmount = Math.round(Number(course.price) * 100);
+            if (
+                paymentIntent.metadata?.courseId !== normalizedCourseId ||
+                paymentIntent.amount !== expectedAmount
+            ) {
+                return next(new ErrorHandler("Payment does not match this course", 400));
             }
 
             // Check if the course is already purchased by the user
             const userId = req.user?._id ? String(req.user._id) : "";
             const user = userId ? await UserModel.findById(userId) : null;
-            const courseExistInUser = user?.courses?.some((course: any) => {
+            const courseExistInUser = user?.courses?.some((c: any) => {
                 // tolerate historical bad data where `courses` items might be raw ids/strings
-                const id = course?.courseId ?? course?._id ?? course;
+                const id = c?.courseId ?? c?._id ?? c;
                 if (!id) return false;
                 return id.toString() === normalizedCourseId;
             });
@@ -64,11 +92,6 @@ export const createOrder = catchAsyncError(
                 return next(
                     new ErrorHandler("You have already purchased this course.", 400)
                 );
-            }
-
-            const course = (await CourseModel.findById(courseId)) as any;
-            if (!course) {
-                return next(new ErrorHandler("Course not found.", 404));
             }
 
             const data: any = {
