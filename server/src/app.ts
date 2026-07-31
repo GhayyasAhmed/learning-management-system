@@ -13,6 +13,7 @@ import analyticsRouter from "./routes/analytics.routes.js";
 import layoutRouter from "./routes/layout.routes.js";
 import { connectDatabase } from "./config/database.js";
 import connectCloudinary from "./config/cloudinary.js";
+import { stripeWebhook } from "./controllers/order.controller.js";
 
 const app = express();
 
@@ -36,6 +37,34 @@ app.use(
   }),
 );
 
+// Database Connection Middleware
+const ensureDatabaseConnection = async (
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction,
+) => {
+  try {
+    await connectDatabase();
+    next();
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Database connection fail: Please check MONGO_URI string or network status.",
+    });
+  }
+};
+
+// Stripe webhook: registered with the raw body parser BEFORE express.json()
+// below. Stripe's signature verification requires the exact original
+// request bytes — a JSON-parsed-then-reserialized body will not match the
+// signature, so this route cannot go through the global JSON parser.
+app.post(
+  "/api/v1/order/webhook",
+  express.raw({ type: "application/json" }),
+  ensureDatabaseConnection,
+  stripeWebhook,
+);
+
 // Body parser & Cookie Parser
 app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
@@ -53,17 +82,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Database Connection Middleware
-app.use(async (req, res, next) => {
-  try {
-    await connectDatabase();
-    next();
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Database connection fail: Please check MONGO_URI string or network status.",
-    });
-  }
-});
+app.use(ensureDatabaseConnection);
 
 // GET /api/v1/env-check
 app.get("/api/v1/env-check", (req, res) => {
@@ -82,6 +101,7 @@ app.get("/api/v1/env-check", (req, res) => {
     "CLOUDINARY_API_SECRET",
     "STRIPE_PUBLISHABLE_KEY",
     "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
     "VDOCIPHER_API_SECRET",
     "SMPT_HOST",
     "SMPT_PORT",
