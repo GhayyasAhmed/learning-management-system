@@ -121,6 +121,7 @@ CLOUDINARY_API_SECRET=...
 # Stripe (use TEST keys locally — never commit live keys)
 STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...       # from `stripe listen` locally, or the Dashboard webhook endpoint in production
 
 # VdoCipher
 VDOCIPHER_API_SECRET=...
@@ -139,6 +140,11 @@ Notes:
 - `FRONTEND_URLS` supports multiple comma-separated origins (e.g. a deployed client
   URL alongside `localhost`) — anything not in this list is rejected by the CORS
   middleware in `app.ts`.
+- `STRIPE_WEBHOOK_SECRET` is required for `/api/v1/order/webhook` to accept events.
+  Locally, run `stripe listen --forward-to localhost:3001/api/v1/order/webhook` and
+  use the `whsec_...` value it prints. In production, create a webhook endpoint in the
+  Stripe Dashboard pointed at `<your-api-domain>/api/v1/order/webhook` subscribed to
+  `payment_intent.succeeded`, and use the signing secret it generates.
 - Never commit a real `.env` file. Treat every secret above as sensitive, including in
   local development — use test/sandbox credentials wherever the provider offers them.
 
@@ -206,10 +212,11 @@ Redis) → `authorizeRoles("admin")` where applicable.
 ### `/order`
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | `/create` | user | Create order after a successful payment |
+| POST | `/create` | user | Verify a completed Stripe payment and fulfill enrollment (client-confirmed path) |
 | GET | `/admin/all` | admin | List all orders |
 | GET | `/payment/stripePublishAbleKey` | — | Get the Stripe publishable key |
 | POST | `/payment/process` | user | Create a Stripe PaymentIntent for a course |
+| POST | `/webhook` | Stripe signature | Authoritative, idempotent order fulfillment on `payment_intent.succeeded` |
 
 ### `/layout`
 | Method | Path | Auth | Description |
@@ -243,7 +250,9 @@ Redis) → `authorizeRoles("admin")` where applicable.
   prerequisites, `reviews[]` (rating, review text, nested `reviewReplies`),
   `courseData[]` (lessons: title, description, videoUrl, videoSection, videoLength,
   links, nested `questions`/`questionReplies`), rating, purchased count.
-- **Order** — userId, courseId, paymentInfo.
+- **Order** — userId, courseId, paymentInfo, `paymentIntentId` (unique, sparse — the
+  Stripe PaymentIntent id this order was fulfilled from; enforces that a given payment
+  can only ever produce one order, regardless of how many times fulfillment is triggered).
 - **Layout** — one collection, `type` discriminates between `banner` (hero image/title/
   subtitle), `faq` (question/answer list), and `categories` (title list).
 - **Notification** — userId, title, message, status (`"unread"` | `"read"`); a daily
@@ -271,6 +280,24 @@ suggestions excluded via a Mongoose `.select()` projection). Any mutation that c
 course's public-facing content — edits, new questions, new answers, new reviews, new
 review replies — calls `updatePublicCourseCache` to re-fetch and re-cache the sanitized
 document, so the cache never serves stale data after an admin/user action.
+
+## Payments & Fulfillment
+
+- `POST /order/payment/process` creates a Stripe PaymentIntent with a server-computed
+  `amount` (derived from the course's current price, never trusted from the client) and
+  stamps `metadata.courseId`/`metadata.userId` onto it from the authenticated request.
+- After the client confirms payment with Stripe, `POST /order/create` independently
+  re-verifies the PaymentIntent against Stripe's API (status, amount, and metadata match)
+  before fulfilling the order — it never trusts client-side confirmation alone.
+- `POST /order/webhook` is the authoritative fulfillment path: Stripe calls it directly
+  and its signature is verified against `STRIPE_WEBHOOK_SECRET` before any event data is
+  trusted. On `payment_intent.succeeded` it fulfills the order the same way as the
+  client-confirmed path, so purchases are still completed even if the browser never
+  calls back (closed tab, network failure, etc.).
+- Both paths share one fulfillment routine keyed by the Stripe PaymentIntent id
+  (`Order.paymentIntentId`, unique+sparse), so redelivered webhook events or overlap
+  between the two paths can never create duplicate orders, duplicate enrollments,
+  duplicate notifications, or duplicate confirmation emails.
 
 ## Real-time Notifications
 
@@ -303,5 +330,7 @@ layer (versus the several raw shapes RTK Query itself can produce for network fa
 | `MONGO_URI is required outside development` | Running with `NODE_ENV` ≠ `development` and no `MONGO_URI` | Set `MONGO_URI` |
 | `CORS origin is not allowed` in the client console | Client origin missing from `FRONTEND_URLS` | Add it (comma-separated) |
 | `Stripe is not configured on the server` on checkout | `STRIPE_SECRET_KEY` unset | Add your Stripe test secret key |
+| `Webhook is not configured on the server` | `STRIPE_WEBHOOK_SECRET` unset | Add the signing secret from `stripe listen` (dev) or the Dashboard webhook endpoint (prod) |
+| Webhook requests return `Invalid webhook signature` | Wrong `STRIPE_WEBHOOK_SECRET`, or a proxy/CDN re-encoding the request body | Verify the secret matches the endpoint that sent the event; ensure nothing in front of the API rewrites the raw body |
 | Cloudinary uploads fail | Missing/incorrect `CLOUDINARY_*` vars | Recheck credentials in the Cloudinary dashboard |
 | Emails never send | Wrong SMTP creds, or Gmail without an App Password | Use a Gmail App Password (requires 2FA enabled) |
