@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import type { StringValue } from "ms";
 import axios from "axios";
+import crypto from "crypto";
 import { redis } from "../config/redis.js";
 import catchAsyncError from "../middlewares/catchAsyncError.js";
 import UserModel, { IUser } from "../models/user.model.js";
@@ -36,7 +37,7 @@ export const registerUser = catchAsyncError(async (req: Request, res: Response, 
             password
         };
 
-        const activationToken = createActiviationToken(user);
+        const activationToken = await createActiviationToken(user);
         const { activationCode } = activationToken
         const expirationTime = process.env.JWT_EXPIRE || "5";
         const data = { user: { name: user.name }, activationCode, expirationTime }
@@ -77,11 +78,35 @@ const finalExpiry = (expiryTime && typeof expiryTime === "string")
     ? (expiryTime as StringValue)
     : "5m";
 
-export const createActiviationToken = (user: IRegistrationBody): IActivationToken => {
-    const activationCode = Math.floor(1000 + Math.random() * 9000).toString();
+// Generates the activation code and a signed activation token.
+//
+// The token handed back to the client contains ONLY an opaque, random
+// registration id (`regId`) — never the user's name/email/password, and
+// never the plaintext activation code. The actual pending-registration data
+// (including the password, in the same plaintext shape UserModel.create
+// already expects, so its existing pre("save") bcrypt hook hashes it
+// exactly as before) and a hash of the activation code are stored
+// server-side in Redis, keyed by that id, with a TTL matching the token's
+// own expiry window. This means decoding the JWT (trivial for anyone, since
+// JWTs are signed, not encrypted) reveals nothing usable: no password, and
+// no way to derive the activation code needed to actually activate the
+// account.
+export const createActiviationToken = async (user: IRegistrationBody): Promise<IActivationToken> => {
+    // crypto.randomInt is a CSPRNG-backed generator, unlike Math.random().
+    const activationCode = crypto.randomInt(1000, 10000).toString();
+    const regId = crypto.randomBytes(16).toString("hex");
+    const activationCodeHash = crypto.createHash("sha256").update(activationCode).digest("hex");
+
+    const expireMinutes = parseInt(process.env.JWT_EXPIRE || "5", 10);
+    await redis.set(
+        `activation:${regId}`,
+        JSON.stringify({ user, activationCodeHash }),
+        "EX",
+        Math.max(expireMinutes, 1) * 60
+    );
 
     const token = jwt.sign(
-        { user, activationCode },
+        { regId },
         process.env.ACTIVATION_SECRET as Secret,
         {
             expiresIn: finalExpiry
@@ -103,16 +128,51 @@ interface IActivationRequest {
 export const activateUser = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { activationToken, activationCode } = req.body as IActivationRequest;
-        const newUser: { user: IUser; activationCode: string } = jwt.verify(
-            activationToken,
-            process.env.ACTIVATION_SECRET as string
-        ) as { user: IUser; activationCode: string }
 
-        if (newUser.activationCode !== activationCode) {
+        if (!activationToken || !activationCode) {
+            return next(new ErrorHandler("Activation token and code are required", 400));
+        }
+
+        let decoded: { regId: string };
+        try {
+            decoded = jwt.verify(
+                activationToken,
+                process.env.ACTIVATION_SECRET as string
+            ) as { regId: string };
+        } catch {
+            return next(new ErrorHandler("Invalid or expired activation request. Please register again.", 400));
+        }
+
+        const pendingKey = `activation:${decoded.regId}`;
+        const pending = await redis.get(pendingKey);
+        if (!pending) {
+            // Either already used (the key is deleted on successful
+            // activation below, preventing replay of the same code) or
+            // expired via its Redis TTL.
+            return next(new ErrorHandler("Invalid or expired activation request. Please register again.", 400));
+        }
+
+        const { user: pendingUser, activationCodeHash } = JSON.parse(pending) as {
+            user: IRegistrationBody;
+            activationCodeHash: string;
+        };
+
+        const submittedCodeHash = crypto.createHash("sha256").update(activationCode).digest("hex");
+        const submittedBuf = Buffer.from(submittedCodeHash);
+        const storedBuf = Buffer.from(activationCodeHash);
+        const codeMatches =
+            submittedBuf.length === storedBuf.length &&
+            crypto.timingSafeEqual(submittedBuf, storedBuf);
+
+        if (!codeMatches) {
             return next(new ErrorHandler("Invalid activation code", 400))
         }
 
-        const { name, email, password } = newUser.user
+        // One-time use: remove the pending registration immediately so this
+        // token/code pair can never be replayed, even if it hasn't expired.
+        await redis.del(pendingKey);
+
+        const { name, email, password } = pendingUser
 
         const existUser = await UserModel.findOne({ email })
 
