@@ -35,7 +35,7 @@ const SideBarProfile = ({
         onClick={() => setActive(1)}
       >
         <Image
-          alt=""
+          alt="User avatar"
           src={
             user.avatar || avatar ? user.avatar.url || avatar : avatarDefault
           }

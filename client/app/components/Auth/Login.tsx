@@ -82,7 +82,7 @@ const Login = (props: Props) => {
           <span className="text-red-500 pt-2 block">{errors.email}</span>
         )}
         <div className="w-full mt-5 relative mb-1">
-          <label className={`${styles.label}`} htmlFor="email">
+          <label className={`${styles.label}`} htmlFor="password">
             Enter Your Password
           </label>
           <input

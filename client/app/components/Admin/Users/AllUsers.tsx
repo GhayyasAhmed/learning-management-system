@@ -4,7 +4,7 @@ import formatTimeAgo from "@/app/utils/formatTimeAgo";
 import { Box, Button, Modal } from "@mui/material";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { useTheme } from "next-themes";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { AiOutlineDelete, AiOutlineMail } from "react-icons/ai";
 import {
@@ -168,6 +168,7 @@ export const AllUsersPresenter = ({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter email..."
+                  aria-label="Member email"
                   className={`${styles.input}`}
                 />
                 <select
@@ -248,44 +249,48 @@ const AllUsers = ({ isTeam }: Props) => {
   const [updateUserRole] = useUpdateUserRoleMutation();
   const [deleteUser] = useDeleteUserMutation();
 
-  const columns: GridColDef[] = [
-    { field: "id", headerName: "ID", flex: 0.3 },
-    { field: "name", headerName: "Name", flex: 0.5 },
-    { field: "email", headerName: "Email", flex: 1 },
-    { field: "role", headerName: "Role", flex: 0.5 },
-    { field: "courses", headerName: "Purchased Courses", flex: 0.5 },
-    { field: "created_at", headerName: "Joined At", flex: 0.5 },
-    {
-      field: "emailAction",
-      headerName: "Email",
-      flex: 0.2,
-      renderCell: (params: GridRenderCellParams<IRow>) => (
-        <div className="flex items-center justify-center w-full h-full">
-          <a href={`mailto:${params.row.email}`}>
-            <AiOutlineMail className="dark:text-white text-black" size={20} />
-          </a>
-        </div>
-      ),
-    },
-    {
-      field: "deleteAction",
-      headerName: "Delete",
-      flex: 0.2,
-      renderCell: (params: GridRenderCellParams<IRow>) => (
-        <Button
-          onClick={() => {
-            setOpen(true);
-            setUserId(params.row.id);
-          }}
-        >
-          <AiOutlineDelete
-            className="dark:text-white text-black"
-            size={20}
-          />
-        </Button>
-      ),
-    },
-  ];
+  const columns: GridColDef[] = useMemo(
+    () => [
+      { field: "id", headerName: "ID", flex: 0.3 },
+      { field: "name", headerName: "Name", flex: 0.5 },
+      { field: "email", headerName: "Email", flex: 1 },
+      { field: "role", headerName: "Role", flex: 0.5 },
+      { field: "courses", headerName: "Purchased Courses", flex: 0.5 },
+      { field: "created_at", headerName: "Joined At", flex: 0.5 },
+      {
+        field: "emailAction",
+        headerName: "Email",
+        flex: 0.2,
+        renderCell: (params: GridRenderCellParams<IRow>) => (
+          <div className="flex items-center justify-center w-full h-full">
+            <a href={`mailto:${params.row.email}`} aria-label="Email user">
+              <AiOutlineMail className="dark:text-white text-black" size={20} />
+            </a>
+          </div>
+        ),
+      },
+      {
+        field: "deleteAction",
+        headerName: "Delete",
+        flex: 0.2,
+        renderCell: (params: GridRenderCellParams<IRow>) => (
+          <Button
+            aria-label="Delete user"
+            onClick={() => {
+              setOpen(true);
+              setUserId(params.row.id);
+            }}
+          >
+            <AiOutlineDelete
+              className="dark:text-white text-black"
+              size={20}
+            />
+          </Button>
+        ),
+      },
+    ],
+    [],
+  );
 
   const handleSubmit = async () => {
     const userToUpdate = data?.users?.find(

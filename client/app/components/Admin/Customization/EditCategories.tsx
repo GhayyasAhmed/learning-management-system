@@ -143,6 +143,7 @@ const EditCategoriesForm = ({
                   <input
                     className={`${styles.input} w-[unset]! border-none! text-[20px]!`}
                     value={item.title}
+                    aria-label="Category title"
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleCategoriesAdd(item._id, e.target.value)
                     }

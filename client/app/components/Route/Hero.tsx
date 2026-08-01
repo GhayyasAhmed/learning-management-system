@@ -58,14 +58,17 @@ const Hero = () => {
           <div className="relative">
             <input
               value={search}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setSearch(e.target.value)
+              }
               type="search"
+              aria-label="Search courses"
               placeholder="Search Courses..."
               className="w-full h-12 px-4 pr-12 text-lg text-gray-700 bg-white dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
             <button
               type="submit"
-            //   onClick={handleSearch}
+              aria-label="Search"
               className="absolute right-0 top-0 h-12 w-12 flex items-center justify-center bg-blue-500 rounded-r-lg hover:bg-blue-600 transition-colors"
             >
               <BiSearch className="text-white" size={24} />

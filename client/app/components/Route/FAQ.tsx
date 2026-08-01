@@ -12,9 +12,7 @@ export interface IQuestionItem {
 const FAQ = () => {
   const [activeQuestion, setActiveQuestion] = useState<string | null>(null);
 
-  const { data } = useGetHeroDataQuery("FAQ", {
-    refetchOnMountOrArgChange: true,
-  });
+  const { data } = useGetHeroDataQuery("FAQ");
 
   // Derive questions directly from query cache
   const questions: IQuestionItem[] = data?.layout?.faq ?? [];

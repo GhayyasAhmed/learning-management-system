@@ -20,10 +20,7 @@ export interface ICourse {
 }
 
 const Courses = () => {
-  const { data, isLoading } = useGetUsersAllCoursesQuery(
-    {},
-    { refetchOnMountOrArgChange: true }
-  );
+   const { data, isLoading } = useGetUsersAllCoursesQuery({});
 
   // Derived directly from RTK Query cache to prevent cascading re-renders
   const courses: ICourse[] = data?.courses ?? [];

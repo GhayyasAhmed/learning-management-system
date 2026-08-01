@@ -88,10 +88,6 @@ const AllInvoices = ({ isDashboard }: Props) => {
     [CoursesData],
   );
 
-  console.log("orders", orders);
-  console.log("users", users);
-  console.log("courses", courses);
-
   const rows: IInvoiceRow[] = useMemo(() => {
     if (!orders.length) return [];
 
@@ -110,7 +106,6 @@ const AllInvoices = ({ isDashboard }: Props) => {
     });
   }, [orders, users, courses]);
 
-  console.log("rows", rows);
 
   const handleViewDetails = (orderId: string) => {
     const order = orders.find((o) => o._id === orderId);
@@ -152,6 +147,7 @@ const AllInvoices = ({ isDashboard }: Props) => {
               renderCell: (params: GridRenderCellParams<IInvoiceRow>) => (
                 <button
                   type="button"
+                  aria-label="View invoice details"
                   onClick={() => handleViewDetails(params.row.id)}
                   className="cursor-pointer flex items-center justify-center w-full h-full"
                 >
@@ -167,8 +163,8 @@ const AllInvoices = ({ isDashboard }: Props) => {
               headerName: "Email",
               flex: 0.2,
               renderCell: (params: GridRenderCellParams<IInvoiceRow>) => (
-                <div className="flex items-center justify-center w-full h-full">
-                  <a href={`mailto:${params.row.userEmail}`}>
+                 <div className="flex items-center justify-center w-full h-full">
+                  <a href={`mailto:${params.row.userEmail}`} aria-label="Email customer">
                     <AiOutlineMail
                       className="dark:text-white text-black"
                       size={20}

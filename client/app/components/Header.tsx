@@ -111,15 +111,18 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
   }, [isLogoutSuccess, dispatch]);
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      if (window.scrollY > 80) {
-        setActive(true);
-      } else {
-        setActive(false);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setActive(window.scrollY > 80);
+          ticking = false;
+        });
+        ticking = true;
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -129,11 +132,12 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
 
   return (
     <header className="w-full relative">
+      <div className="w-full h-20" aria-hidden="true" />
       <div
-        className={`${
+         className={`fixed top-0 left-0 w-full h-20 z-80 bg-white border-b border-gray-200 transition duration-500 dark:border-gray-700 ${
           active
-            ? "fixed top-0 left-0 w-full h-20 z-80 bg-white border-b border-gray-200 shadow-xl transition duration-500 dark:bg-opacity-50 dark:bg-linear-to-b dark:from-gray-900 dark:to-black dark:border-gray-700"
-            : "w-full h-20 z-80 bg-white border-b border-gray-200 dark:bg-transparent dark:border-[#ffffff1c] dark:shadow"
+            ? "shadow-xl dark:bg-opacity-50 dark:bg-linear-to-b dark:from-gray-900 dark:to-black"
+            : "dark:bg-transparent dark:border-[#ffffff1c] dark:shadow"
         }`}
       >
         <div className="w-[95%] 800px:w-[92%] m-auto py-2 h-full">
@@ -163,10 +167,14 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
                 )}
 
               <div className="800px:hidden">
-                <HiOutlineMenuAlt3
-                  className="cursor-pointer dark:text-white text-black"
+                 <button
+                  type="button"
+                  aria-label="Open menu"
+                  className="cursor-pointer dark:text-white text-black bg-transparent border-0 p-0 flex items-center"
                   onClick={() => setOpenSidebar(true)}
-                />
+                >
+                  <HiOutlineMenuAlt3 />
+                </button>
               </div>
 
               {mounted && user ? (
@@ -177,7 +185,7 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
                         ? user.avatar.url
                         : avatar
                     }
-                    alt=""
+                    alt="User avatar"
                     width={30}
                     height={30}
                     className="w-7.5 h-7.5 rounded-full cursor-pointer hidden 800px:block"
@@ -187,11 +195,14 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
                   />
                 </Link>
               ) : (
-                <HiOutlineUserCircle
-                  size={25}
-                  className="cursor-pointer hidden 800px:block dark:text-white text-black"
+                <button
+                  type="button"
+                  aria-label="Open login"
+                  className="cursor-pointer hidden 800px:block dark:text-white text-black bg-transparent border-0 p-0"
                   onClick={() => setOpen(true)}
-                />
+                >
+                  <HiOutlineUserCircle size={25} />
+                </button>
               )}
             </div>
           </div>

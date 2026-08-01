@@ -21,21 +21,20 @@ const ThemeSwitcher = () => {
 
   return (
     <div className="flex items-center justify-center mx-4">
-      {theme === "light" ? (
-        <BiMoon
-          className="cursor-pointer"
-          fill="black"
-          size={25}
-          onClick={() => setTheme("dark")}
-        />
-      ) : (
-        <BiSun
-          className="cursor-pointer"
-          fill="white"
-          size={25}
-          onClick={() => setTheme("light")}
-        />
-      )}
+      <button
+        type="button"
+        aria-label={
+          theme === "light" ? "Switch to dark mode" : "Switch to light mode"
+        }
+        className="cursor-pointer bg-transparent border-0 p-0 flex items-center"
+        onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+      >
+        {theme === "light" ? (
+          <BiMoon fill="black" size={25} />
+        ) : (
+          <BiSun fill="white" size={25} />
+        )}
+      </button>
     </div>
   );
 };

@@ -6,8 +6,8 @@ import { AiOutlineCamera } from "react-icons/ai";
 import avatarDefault from "../../../public/assets/avatardefault.jpg";
 import { useLoadUserQuery } from "../../../redux/features/api/apiSlice";
 import {
-    useEditProfileMutation,
-    useUpdateAvatarMutation,
+  useEditProfileMutation,
+  useUpdateAvatarMutation,
 } from "../../../redux/features/user/userApi";
 import { styles } from "../../styles/styles";
 import { getErrorMessage } from "../../utils/getErrorMessage";
@@ -21,9 +21,10 @@ type ProfileInfoProps = {
 
 const ProfileInfo = ({ user, avatar }: ProfileInfoProps) => {
   const [name, setName] = useState(user?.name || "");
-  const [updateAvatar, { isLoading: isAvatarLoading }] = useUpdateAvatarMutation();
+  const [updateAvatar, { isLoading: isAvatarLoading }] =
+    useUpdateAvatarMutation();
   const [editProfile, { isLoading: isEditLoading }] = useEditProfileMutation();
-  
+
   // Directly trigger refetch if needed, or rely on tag invalidation in userApi/apiSlice
   const { refetch } = useLoadUserQuery(undefined);
 
@@ -48,7 +49,7 @@ const ProfileInfo = ({ user, avatar }: ProfileInfoProps) => {
           refetch();
         } catch (err) {
           toast.error(
-            getErrorMessage(err, "Could not update avatar. Please try again.")
+            getErrorMessage(err, "Could not update avatar. Please try again."),
           );
         }
       }
@@ -77,7 +78,10 @@ const ProfileInfo = ({ user, avatar }: ProfileInfoProps) => {
       refetch();
     } catch (err) {
       toast.error(
-        getErrorMessage(err, "Could not update your profile. Please try again.")
+        getErrorMessage(
+          err,
+          "Could not update your profile. Please try again.",
+        ),
       );
     }
   };
@@ -87,13 +91,11 @@ const ProfileInfo = ({ user, avatar }: ProfileInfoProps) => {
       <div className="w-full flex justify-center">
         <div className="relative">
           <Image
-            src={
-              user?.avatar?.url || avatar || avatarDefault
-            }
+            src={user?.avatar?.url || avatar || avatarDefault}
             alt="Profile Photo"
             width={120}
             height={120}
-            loading="eager"
+            priority
             className="w-30 object-cover h-30 cursor-pointer border-[3px] border-[#30bbb2ca] rounded-full"
           />
           <input

@@ -5,7 +5,7 @@ import { Box, Button, Modal } from "@mui/material";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { FC, useState } from "react";
+import { FC, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { AiOutlineDelete } from "react-icons/ai";
 import { FiEdit2 } from "react-icons/fi";
@@ -224,40 +224,47 @@ const AllCourses: FC = () => {
   );
   const [deleteCourse] = useDeleteCourseMutation({});
 
-  const columns: GridColDef[] = [
-    { field: "id", headerName: "ID", flex: 0.5 },
-    { field: "title", headerName: "Course Title", flex: 1 },
-    { field: "ratings", headerName: "Ratings", flex: 0.5 },
-    { field: "purchased", headerName: "Purchased", flex: 0.5 },
-    { field: "created_at", headerName: "Created At", flex: 0.5 },
-    {
-      field: "edit",
-      headerName: "Edit",
-      flex: 0.2,
-      renderCell: (params: GridRenderCellParams<IRow>) => (
-        <div className="flex items-center justify-center w-full h-full">
-          <Link href={`/admin/edit-course/${params.row.id}`}>
-            <FiEdit2 className="dark:text-white text-black" size={20} />
-          </Link>
-        </div>
-      ),
-    },
-    {
-      field: "delete",
-      headerName: "Delete",
-      flex: 0.2,
-      renderCell: (params: GridRenderCellParams<IRow>) => (
-        <Button
-          onClick={() => {
-            setOpen(true);
-            setCourseId(params.row.id);
-          }}
-        >
-          <AiOutlineDelete className="dark:text-white text-black" size={20} />
-        </Button>
-      ),
-    },
-  ];
+  const columns: GridColDef[] = useMemo(
+    () => [
+      { field: "id", headerName: "ID", flex: 0.5 },
+      { field: "title", headerName: "Course Title", flex: 1 },
+      { field: "ratings", headerName: "Ratings", flex: 0.5 },
+      { field: "purchased", headerName: "Purchased", flex: 0.5 },
+      { field: "created_at", headerName: "Created At", flex: 0.5 },
+      {
+        field: "edit",
+        headerName: "Edit",
+        flex: 0.2,
+        renderCell: (params: GridRenderCellParams<IRow>) => (
+          <div className="flex items-center justify-center w-full h-full">
+            <Link
+              href={`/admin/edit-course/${params.row.id}`}
+              aria-label="Edit course"
+            >
+              <FiEdit2 className="dark:text-white text-black" size={20} />
+            </Link>
+          </div>
+        ),
+      },
+      {
+        field: "delete",
+        headerName: "Delete",
+        flex: 0.2,
+        renderCell: (params: GridRenderCellParams<IRow>) => (
+          <Button
+            aria-label="Delete course"
+            onClick={() => {
+              setOpen(true);
+              setCourseId(params.row.id);
+            }}
+          >
+            <AiOutlineDelete className="dark:text-white text-black" size={20} />
+          </Button>
+        ),
+      },
+    ],
+    [],
+  );
 
   const rows: IRow[] =
     data?.courses?.map((course: ICourse) => ({

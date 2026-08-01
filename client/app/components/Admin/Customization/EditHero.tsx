@@ -76,6 +76,7 @@ export const EditHeroPresenter = ({
               fill
               priority
               unoptimized
+              sizes="(max-width: 1000px) 100vw, 40vw"
               className="object-contain pointer-events-none z-10"
             />
           ) : null}

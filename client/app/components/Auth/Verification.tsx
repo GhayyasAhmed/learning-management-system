@@ -138,7 +138,7 @@ const Verification = ({ setRoute }: Props) => {
   ) => {
     if (
       e.key === "Backspace" &&
-      !verifyNumber[`${index}`as keyof verifyNumberType] &&
+      !verifyNumber[`${index}` as keyof verifyNumberType] &&
       index > 0
     ) {
       inputRefs[index - 1].current?.focus();
@@ -168,6 +168,7 @@ const Verification = ({ setRoute }: Props) => {
             pattern="[0-9]*"
             key={key}
             ref={inputRefs[index]}
+            aria-label={`Digit ${index + 1} of verification code`}
             className={`w-16.25 h-16.25 bg-transparent border-[3px] rounded-[10px] flex items-center text-black dark:text-white justify-center text-[18px] font-Poppins outline-none text-center ${
               invalidError || isError
                 ? "shake border-red-500"

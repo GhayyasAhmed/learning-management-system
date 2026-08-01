@@ -44,7 +44,7 @@ const Profile = ({ user }: Props) => {
   const logOutHandler = async () => {
     try {
       setLogout(true);
-      if(session){
+      if (session) {
         await signOut();
       }
       // dispatch(userLoggedOut());
@@ -65,14 +65,17 @@ const Profile = ({ user }: Props) => {
   }, [isLogoutSuccess, dispatch]);
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      if (window.scrollY > 85) {
-        setScroll(true);
-      } else {
-        setScroll(false);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScroll(window.scrollY > 85);
+          ticking = false;
+        });
+        ticking = true;
       }
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 

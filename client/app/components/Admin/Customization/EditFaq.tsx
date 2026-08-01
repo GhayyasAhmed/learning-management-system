@@ -168,6 +168,7 @@ const EditFaqForm = ({
                       <input
                         className={`${styles.input} border-none`}
                         value={q.question}
+                        aria-label="FAQ question"
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           handleQuestionChange(q._id, e.target.value)
                         }
@@ -188,6 +189,7 @@ const EditFaqForm = ({
                       <input
                         className={`${styles.input} border-none`}
                         value={q.answer}
+                        aria-label="FAQ answer"
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           handleAnswerChange(q._id, e.target.value)
                         }

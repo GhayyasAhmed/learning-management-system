@@ -59,8 +59,10 @@ export const DashboardHeaderPresenter = ({
   return (
     <div className="w-full flex items-center justify-end p-6 fixed top-5 right-0 z-9999">
       <ThemeSwitcher />
-      <div
-        className="relative cursor-pointer m-2"
+      <button
+        type="button"
+        aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
+        className="relative cursor-pointer m-2 bg-transparent border-0 p-0"
         onClick={() => setOpen(!open)}
       >
         <IoMdNotificationsOutline className="text-2xl cursor-pointer text-black dark:text-white" />
@@ -69,7 +71,7 @@ export const DashboardHeaderPresenter = ({
             {unreadCount}
           </span>
         )}
-      </div>
+      </button>
 
       {open && (
         <div className="w-87.5 max-h-[60vh] dark:bg-[#111C43] bg-white shadow-2xl absolute top-16 right-2 z-10000 rounded overflow-hidden border border-[#00000014] dark:border-[#ffffff1a] flex flex-col">
