@@ -2,6 +2,7 @@ import mongoose, { Document, Schema, Model } from "mongoose";
 import bcrypt from "bcryptjs"
 import "dotenv/config";
 import jwt from "jsonwebtoken"
+import { env } from "../config/env.js";
 
 
 const emailRegexPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -84,12 +85,12 @@ userSchema.pre<IUser>("save", async function() {
 
 // sign access token
 userSchema.methods.signAccessToken = function (){
-    return jwt.sign({id: this._id}, process.env.ACCESS_TOKEN || "", {expiresIn: "2h"})
+    return jwt.sign({id: this._id}, env.accessTokenSecret, {expiresIn: "2h"})
 }
 
 // sign refresh token
 userSchema.methods.signRefreshToken = function (){
-    return jwt.sign({id: this._id}, process.env.REFRESH_TOKEN || "", {expiresIn: "24h"})
+    return jwt.sign({id: this._id}, env.refreshTokenSecret, {expiresIn: "24h"})
 }
 
 

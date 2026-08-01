@@ -1,9 +1,9 @@
 import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
-import jwt, { JwtPayload, Secret } from "jsonwebtoken";
-import type { StringValue } from "ms";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import axios from "axios";
 import crypto from "crypto";
+import { env } from "../config/env.js";
 import { redis } from "../config/redis.js";
 import catchAsyncError from "../middlewares/catchAsyncError.js";
 import UserModel, { IUser } from "../models/user.model.js";
@@ -75,7 +75,7 @@ const expiryTime = process.env.JWT_EXPIRE + "m";
 
 // Create a type guard or fallback to a known literal string
 const finalExpiry = (expiryTime && typeof expiryTime === "string")
-    ? (expiryTime as StringValue)
+    ? (expiryTime as import("ms").StringValue)
     : "5m";
 
 // Generates the activation code and a signed activation token.
@@ -107,7 +107,7 @@ export const createActiviationToken = async (user: IRegistrationBody): Promise<I
 
     const token = jwt.sign(
         { regId },
-        process.env.ACTIVATION_SECRET as Secret,
+        env.activationSecret,
         {
             expiresIn: finalExpiry
         }
@@ -137,7 +137,7 @@ export const activateUser = catchAsyncError(async (req: Request, res: Response, 
         try {
             decoded = jwt.verify(
                 activationToken,
-                process.env.ACTIVATION_SECRET as string
+                env.activationSecret
             ) as { regId: string };
         } catch {
             return next(new ErrorHandler("Invalid or expired activation request. Please register again.", 400));
@@ -253,7 +253,7 @@ export const logoutUser = catchAsyncError(async (req: Request, res: Response, ne
 export const updateAccessToken = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const refreshToken = req.cookies.refreshToken as string;
-        const decodedRefreshToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN as string) as JwtPayload;
+        const decodedRefreshToken = jwt.verify(refreshToken, env.refreshTokenSecret) as JwtPayload;
 
         if (!decodedRefreshToken) {
             return next(new ErrorHandler("Invalid refresh token", 401));
@@ -267,8 +267,8 @@ export const updateAccessToken = catchAsyncError(async (req: Request, res: Respo
         const user = JSON.parse(session) as IUser;
 
         // Updated lifetimes: 2 hours for Access Token, 24 hours for Refresh Token
-        const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN as string, { expiresIn: "2h" });
-        const newRefreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN as string, { expiresIn: "24h" });
+        const accessToken = jwt.sign({ id: user._id }, env.accessTokenSecret, { expiresIn: "2h" });
+        const newRefreshToken = jwt.sign({ id: user._id }, env.refreshTokenSecret, { expiresIn: "24h" });
 
         req.user = user;
 
