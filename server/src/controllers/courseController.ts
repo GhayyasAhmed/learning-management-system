@@ -9,6 +9,7 @@ import CourseModel, { ICourse, IReview } from "../models/course.model.js";
 import NotificationModel from "../models/notification.models.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import sendEmail from "../utils/sendEmail.js";
+import { isNonEmptyString, isValidObjectId } from "../utils/validators.js";
 
 interface IStoredThumbnail {
     public_id: string;
@@ -79,6 +80,11 @@ export const editCourse = catchAsyncError(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { id } = req.params;
+
+             if (!isValidObjectId(id)) {
+                return next(new ErrorHandler("Invalid course id", 400));
+            }
+
             let course = await CourseModel.findById(id);
             if (!course) {
                 return next(new ErrorHandler("Course not found", 404));
@@ -460,6 +466,15 @@ export const addReview = catchAsyncError(
             }
 
             const { review, rating } = req.body as IAddReviewData;
+
+            if (!isNonEmptyString(review)) {
+                return next(new ErrorHandler("Please provide a review text", 400));
+            }
+
+            if (typeof rating !== "number" || rating < 1 || rating > 5) {
+                return next(new ErrorHandler("Rating must be between 1 and 5", 400));
+            }
+
             const reviewData: IReview = {
                 user: req.user?._id as mongoose.Types.ObjectId,
                 review,
@@ -597,6 +612,11 @@ export const deleteCourse = catchAsyncError(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { courseId } = req.body;
+
+            if (!isValidObjectId(courseId)) {
+                return next(new ErrorHandler("Invalid course id", 400));
+            }
+
             const course = await CourseModel.findById(courseId);
             if (!course) {
                 return next(new ErrorHandler("Course not found", 404));
@@ -619,6 +639,9 @@ export const generateVideoUrl = catchAsyncError(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { videoId } = req.body;
+            if (!isNonEmptyString(videoId)) {
+                return next(new ErrorHandler("Please provide a valid video id", 400));
+            }
             const response = await axios.post(
                 `https://dev.vdocipher.com/api/videos/${videoId}/otp`,
                 { ttl: 300 },

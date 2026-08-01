@@ -5,7 +5,8 @@ import jwt from "jsonwebtoken"
 import { env } from "../config/env.js";
 
 
-const emailRegexPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// const emailRegexPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+export const emailRegexPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export interface IUser extends Document {
     name: string;

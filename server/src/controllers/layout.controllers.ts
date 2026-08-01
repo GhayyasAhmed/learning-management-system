@@ -4,10 +4,17 @@ import catchAsyncError from "../middlewares/catchAsyncError.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import cloudinary from "cloudinary"
 import LayoutModel from "../models/layout.model.js";
+import { isNonEmptyString } from "../utils/validators.js";
 
 export const createLayout = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const type = req.body?.type?.toLowerCase();
+        const rawType = req.body?.type;
+
+        if (!isNonEmptyString(rawType)) {
+            return next(new ErrorHandler("Layout type is required", 400));
+        }
+
+        const type = rawType.toLowerCase();
 
         if (!type) {
             return next(new ErrorHandler("Layout type is required", 400));
@@ -66,10 +73,18 @@ export const createLayout = catchAsyncError(async (req: Request, res: Response, 
 
 export const editLayout = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const type = req.body?.type?.toLowerCase();
-        if (!type) {
+        const rawType = req.body?.type;
+
+        if (!isNonEmptyString(rawType)) {
             return next(new ErrorHandler("Layout type is required", 400));
         }
+
+        const type = rawType.toLowerCase();
+
+        if (!["banner", "faq", "categories"].includes(type)) {
+            return next(new ErrorHandler("Invalid layout type", 400));
+        }
+
         const oldLayout: any = await LayoutModel.findOne({
             type: { $regex: new RegExp(`^${type}$`, "i") }
         });
@@ -145,9 +160,14 @@ export const editLayout = catchAsyncError(async (req: Request, res: Response, ne
 export const getLayoutByType = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { type } = req?.params
-        const layout = await LayoutModel.findOne({
-            type: { $regex: new RegExp(`^${type}$`, "i") }
-        });
+        if (!isNonEmptyString(type)) {
+            return next(new ErrorHandler("Layout type is required", 400));
+        }
+
+        const layout = await LayoutModel.findOne({ type: type.toLowerCase() });
+        // const layout = await LayoutModel.findOne({
+        //     type: { $regex: new RegExp(`^${type}$`, "i") }
+        // });
 
         res.status(200).json({
             success: true,

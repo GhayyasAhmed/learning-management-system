@@ -1,17 +1,17 @@
+import axios from "axios";
+import cloudinary from "cloudinary";
+import crypto from "crypto";
 import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import axios from "axios";
-import crypto from "crypto";
 import { env } from "../config/env.js";
 import { redis } from "../config/redis.js";
 import catchAsyncError from "../middlewares/catchAsyncError.js";
-import UserModel, { IUser } from "../models/user.model.js";
+import UserModel, { IUser, emailRegexPattern } from "../models/user.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
-import { sendToken } from "../utils/jwt.js";
+import { accessTokenOptions, refreshTokenOptions, sendToken } from "../utils/jwt.js";
+import { isNonEmptyString, isValidObjectId } from "../utils/validators.js";
 import sendEmail from "../utils/sendEmail.js";
-import { accessTokenOptions, refreshTokenOptions } from "../utils/jwt.js";
-import cloudinary from "cloudinary";
 
 // Use lowercase primitive types 'string' instead of uppercase 'String'
 interface IRegistrationBody {
@@ -24,6 +24,18 @@ interface IRegistrationBody {
 export const registerUser = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { name, email, password } = req.body;
+
+         if (!isNonEmptyString(name) || name.trim().length < 2) {
+            return next(new ErrorHandler("Please enter a valid name", 400));
+        }
+
+        if (!isNonEmptyString(email) || !emailRegexPattern.test(email)) {
+            return next(new ErrorHandler("Please enter a valid email", 400));
+        }
+
+        if (!isNonEmptyString(password) || password.length < 8) {
+            return next(new ErrorHandler("Password must be at least 8 characters", 400));
+        }
 
         // CRUCIAL: Use findOne so it returns null if the user does not exist
         const isEmailExist = await UserModel.findOne({ email });
@@ -585,6 +597,15 @@ export const getAllUsers = catchAsyncError(async (req: Request, res: Response, n
 export const updateUserRole = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { role, userId } = req.body;
+
+        if (!isValidObjectId(userId)) {
+            return next(new ErrorHandler("Invalid user id", 400));
+        }
+
+        if (!["user", "admin"].includes(role)) {
+            return next(new ErrorHandler("Invalid role value", 400));
+        }
+
         const user = await UserModel.findById(userId)
         if (!user) {
             return next(new ErrorHandler("User not found", 404))
@@ -606,6 +627,11 @@ export const updateUserRole = catchAsyncError(async (req: Request, res: Response
 export const deleteUser = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { userId } = req.body
+
+        if (!isValidObjectId(userId)) {
+            return next(new ErrorHandler("Invalid user id", 400));
+        }
+        
         const user = await UserModel.findById(userId)
         if (!user) {
             return next(new ErrorHandler("User not found", 404))

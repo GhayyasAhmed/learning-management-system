@@ -4,7 +4,7 @@ import cron from 'node-cron';
 import catchAsyncError from "../middlewares/catchAsyncError.js";
 import NotificationModel from "../models/notification.models.js";
 import ErrorHandler from "../utils/errorhandler.js";
-
+import { isValidObjectId } from "../utils/validators.js";
 
 
 export const getAllNotifications = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
@@ -73,12 +73,21 @@ interface INotificationStatusUpdateRequest{
 export const updateNotificationStatus = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         const id = req.params.id;
+        if (!isValidObjectId(id)) {
+            return next(new ErrorHandler("Invalid notification id", 400))
+        }
+
         const notification = await NotificationModel.findById(id)
         if(!notification){
             return next(new ErrorHandler("Invalid notification id", 404))
         }
 
         const {status} = req.body as INotificationStatusUpdateRequest
+        
+        if (!["read", "unread"].includes(status)) {
+            return next(new ErrorHandler("Invalid status value", 400))
+        }
+        
         notification.status = status
         await notification.save()
 
