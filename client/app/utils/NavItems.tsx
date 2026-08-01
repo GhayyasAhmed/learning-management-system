@@ -33,7 +33,7 @@ type Props = {
 const NavItems = ({ activeItem, isMobile }: Props) => {
   const { user } = useSelector((state: RootState) => state.auth);
   return (
-    <>
+    <nav aria-label={isMobile ? "Mobile" : "Primary"}>
       {/* Desktop Navigation */}
       <div className="hidden 800px:flex">
         {navItemsData &&
@@ -87,7 +87,7 @@ const NavItems = ({ activeItem, isMobile }: Props) => {
           )}
         </div>
       )}
-    </>
+    </nav>
   );
 };
 

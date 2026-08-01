@@ -4,6 +4,7 @@ import Footer from "../components/Footer";
 import Header from "../components/Header";
 import FAQ from "../components/Route/FAQ";
 import Heading from "../utils/Heading";
+import { styles } from "../styles/styles";
 
 const Page = () => {
   const [open, setOpen] = useState(false); 
@@ -24,7 +25,10 @@ const Page = () => {
         route={route}
       />
       <br />
-      <FAQ />
+      <h1 className={`${styles.title} 800px:text-[40px]! text-center`}>
+        Frequently Asked Questions
+      </h1>
+     <FAQ/>
       <Footer />
     </div>
   );

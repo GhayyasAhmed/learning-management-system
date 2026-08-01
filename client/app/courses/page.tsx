@@ -75,11 +75,13 @@ const CoursesContent = () => {
           <div className="w-[95%] 800px:w-[85%] m-auto min-h-[70vh]">
             <Headings
               title={"All courses - LMS"}
-              description={"LMS is a programming community."}
               keywords={
                 "programming community, coding skills, expert insights, collaboration, growth"
               }
             />
+            <h1 className={`${styles.title} text-start! 800px:text-[32px]!`}>
+              All Courses
+            </h1>
             <br />
             <div className="w-full flex items-center flex-wrap">
               <div

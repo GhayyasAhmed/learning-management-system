@@ -70,9 +70,12 @@ const CourseDetailsPage: FC<Props> = ({ id }: Props) => {
         <Loader />
       ) : (
         <>
+          {/* Page description/canonical/OG are handled server-side by
+              generateMetadata in app/course/[id]/page.tsx; only the
+              live-updating title (and keywords) are set here to avoid a
+              duplicate <meta name="description"> tag. */}
           <Heading
             title={`${data?.course?.name || "Course"}-ELearning`}
-            description="ELearning is a platform for online learning and education."
             keywords={data?.course?.tags}
           />
           <Header

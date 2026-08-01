@@ -158,6 +158,24 @@ const CourseDetails: FC<Props> = ({
         <div className="w-full flex flex-col-reverse 800px:flex-row">
           {/* LEFT SIDE */}
           <div className="w-full 800px:w-[65%] 800px:pr-5">
+            {/* Breadcrumb: also mirrored as BreadcrumbList JSON-LD in
+                app/course/[id]/page.tsx */}
+            <nav
+              aria-label="Breadcrumb"
+              className="text-[14px] font-Poppins text-black dark:text-white opacity-70 mb-3 flex items-center flex-wrap gap-1"
+            >
+              <Link href="/" className="hover:underline">
+                Home
+              </Link>
+              <span aria-hidden="true">/</span>
+              <Link href="/courses" className="hover:underline">
+                Courses
+              </Link>
+              <span aria-hidden="true">/</span>
+              <span aria-current="page" className="opacity-100">
+                {data.name}
+              </span>
+            </nav>
             <h1 className="text-[25px] font-Poppins font-semibold text-black dark:text-white">
               {data.name}
             </h1>
@@ -175,9 +193,9 @@ const CourseDetails: FC<Props> = ({
             <br />
 
             {/* Benefits */}
-            <h1 className="text-[25px] font-Poppins font-semibold text-black dark:text-white">
+            <h2 className="text-[25px] font-Poppins font-semibold text-black dark:text-white">
               What you will learn from this course?
-            </h1>
+            </h2>
             <div>
               {data.benefits?.map((item: ICourseBenefit, index: number) => (
                 <div
@@ -202,9 +220,9 @@ const CourseDetails: FC<Props> = ({
             <br />
 
             {/* Prerequisites */}
-            <h1 className="text-[25px] font-Poppins font-semibold text-black dark:text-white">
+            <h2 className="text-[25px] font-Poppins font-semibold text-black dark:text-white">
               What are the prerequisites for starting this course?
-            </h1>
+            </h2>
             {data.prerequisites?.map(
               (item: ICoursePrerequisite, index: number) => (
                 <div
@@ -227,9 +245,9 @@ const CourseDetails: FC<Props> = ({
             <br />
 
             <div>
-              <h1 className="text-[25px] font-Poppins font-semibold text-black dark:text-white">
+              <h2 className="text-[25px] font-Poppins font-semibold text-black dark:text-white">
                 Course Overview
-              </h1>
+              </h2>
               <CourseContentList data={data?.courseData || []} isDemo={true} />
             </div>
             <br />
@@ -237,9 +255,9 @@ const CourseDetails: FC<Props> = ({
 
             {/* Course Description */}
             <div className="w-full">
-              <h1 className="text-[25px] font-Poppins font-semibold text-black dark:text-white">
+              <h2 className="text-[25px] font-Poppins font-semibold text-black dark:text-white">
                 Course Details
-              </h1>
+              </h2>
               <p className="text-[18px] mt-5 whitespace-pre-line w-full overflow-hidden text-black dark:text-white">
                 {data.description}
               </p>
@@ -340,9 +358,9 @@ const CourseDetails: FC<Props> = ({
                 title={data.title || data.name || ""}
               />
               <div className="flex items-center">
-                <h1 className="pt-5 text-[25px] text-black dark:text-white">
+                <p className="pt-5 text-[25px] text-black dark:text-white">
                   {data.price === 0 ? "Free" : data.price + "$"}
-                </h1>
+                </p>
 
                 <h5 className="pl-3 text-[20px] mt-2 line-through opacity-80 text-black dark:text-white">
                   {data.estimatedPrice}$

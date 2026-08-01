@@ -20,8 +20,9 @@ const josefinSans = Josefin_Sans({
 // Absolute site URL, used by the Metadata API to resolve relative assets
 // (Open Graph / Twitter images, og:url, etc.) into fully-qualified URLs that
 // external crawlers (WhatsApp, LinkedIn, Facebook, Telegram, Discord, Slack,
-// X) can fetch. Falls back to localhost for local development; set
-// NEXT_PUBLIC_SITE_URL in deployment envs (see client/readme.md#environment-variables).
+// X, search engines, and JS-executing AI/LLM crawlers) can fetch. Falls back
+// to localhost for local development; set NEXT_PUBLIC_SITE_URL in deployment
+// envs (see client/readme.md#environment-variables).
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 const siteName = "Elearing";
 const siteTitle = "Elearing";
@@ -37,8 +38,11 @@ export const metadata: Metadata = {
     default: siteTitle,
     template: `%s | ${siteName}`,
   },
-  description: siteDescription,
-  keywords: ["Programming", "MERN", "Redux", "Machine Learning"],
+  // Per-page description/keywords are supplied by each route (via the
+  // shared <Heading /> component, or via a route's own generateMetadata),
+  // which every page already renders — keeping them out of the root
+  // metadata avoids emitting a second, duplicate <meta name="description">
+  // / <meta name="keywords"> on every page.
   openGraph: {
     title: siteTitle,
     description: siteDescription,
@@ -74,6 +78,20 @@ export const viewport: Viewport = {
   ],
 };
 
+// Site-wide Organization structured data (JSON-LD). Emitted once, globally,
+// so it doesn't depend on per-route data — it helps search engines and
+// AI/LLM crawlers reliably identify the site as an educational platform,
+// independent of whatever a given page's own structured data (Course,
+// FAQPage, BreadcrumbList) adds.
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "EducationalOrganization",
+  name: siteName,
+  url: siteUrl,
+  description: siteDescription,
+  logo: `${siteUrl}${previewImage}`,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -89,6 +107,15 @@ export default function RootLayout({
       <body
         className={`${poppinsSans.variable} ${josefinSans.variable} bg-white! dark:bg-linear-to-b dark:from-gray-900 dark:to-black duration-300 bg-no-repeat`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationJsonLd).replace(
+              /</g,
+              "\\u003c",
+            ),
+          }}
+        />
         <Providers>
             {children}
             <Toaster position="top-right" reverseOrder={false} />

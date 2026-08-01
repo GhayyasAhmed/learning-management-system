@@ -1,42 +1,44 @@
-"use client";
+import type { Metadata } from "next";
+import HomeContent from "./components/Route/HomeContent";
 
-import { useState } from "react";
-import Heading from "./utils/Heading";
-import Header from "./components/Header";
-import Hero from "./components/Route/Hero";
-import Courses from "./components/Route/Courses";
-import Reviews from "./components/Route/Reviews";
-import FAQ from "./components/Route/FAQ";
-import Footer from "./components/Footer";
+const title = "LMS - Learn from the best";
+const description =
+  "Learn from the best instructors and experts in the industry. Join our LMS platform to access high-quality courses and enhance your skills.";
+const previewImage = "/assets/hero-banner-1.png";
+
+export const metadata: Metadata = {
+  title,
+  description,
+  keywords: [
+    "LMS",
+    "online learning",
+    "courses",
+    "education",
+    "skills",
+    "instructors",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title,
+    description,
+    url: "/",
+    type: "website",
+    images: [
+      { url: previewImage, width: 1200, height: 630, alt: title },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: [previewImage],
+  },
+};
 
 const Page = () => {
-  const [open, setOpen] = useState(false);
-  const [route, setRoute] = useState("Login");
-  const activeItem = 0;
-
-  return (
-    <div>
-      <Heading
-        title="LMS - Learn from the best"
-        description="Learn from the best instructors and experts in the industry. Join our LMS platform to access high-quality courses and enhance your skills."
-        keywords="LMS, online learning, courses, education, skills, instructors"
-      />
-
-      <Header
-        open={open}
-        setOpen={setOpen}
-        activeItem={activeItem}
-        route={route}
-        setRoute={setRoute}
-      />
-
-      <Hero />
-      <Courses />
-      <Reviews />
-      <FAQ />
-      <Footer />
-    </div>
-  );
+  return <HomeContent />;
 };
 
 export default Page;

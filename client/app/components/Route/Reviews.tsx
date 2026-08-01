@@ -77,11 +77,11 @@ const Reviews = () => {
         </div>
         {/* Right Side */}
         <div className="w-full 800px:w-[50%]">
-          <h3 className={`${styles.title} 800px:text-[40px]!`}>
+          <h2 className={`${styles.title} 800px:text-[40px]!`}>
             Our Students are <span className="text-gradient"> Our Strength</span>
             <br />
             See What They Say About Us
-          </h3>
+          </h2>
           <br />
           <p className={styles.label}>
             Lorem, ipsum dolor sit amet consectetur adipisicing elit. Minus,

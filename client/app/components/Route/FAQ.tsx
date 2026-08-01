@@ -19,16 +19,43 @@ const FAQ = () => {
   // Derive questions directly from query cache
   const questions: IQuestionItem[] = data?.layout?.faq ?? [];
 
+  // Mirrors the visible FAQ content on this page so it stays in sync with
+  // Google's FAQPage structured-data guidance (structured data must match
+  // what's actually rendered).
+  const faqJsonLd =
+    questions.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: questions.map((q) => ({
+            "@type": "Question",
+            name: q.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: q.answer,
+            },
+          })),
+        }
+      : null;
+
   const toggleQuestion = (id: string) => {
     setActiveQuestion((prev) => (prev === id ? null : id));
   };
 
   return (
     <div>
+      {faqJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(faqJsonLd).replace(/</g, "\\u003c"),
+          }}
+        />
+      )}
       <div className="w-[90%] 800px:w-[80%] m-auto">
-        <h1 className={`${styles.title} 800px:text-[40px]`}>
+        <h2 className={`${styles.title} 800px:text-[40px]`}>
           Frequently Asked Questions
-        </h1>
+        </h2>
         <div className="mt-12">
           <div className="space-y-8">
             {questions.map((q: IQuestionItem) => (

@@ -128,7 +128,7 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
   };
 
   return (
-    <div className="w-full relative">
+    <header className="w-full relative">
       <div
         className={`${
           active
@@ -271,7 +271,7 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
           />
         )}
       </div>
-    </div>
+    </header>
   );
 };
 

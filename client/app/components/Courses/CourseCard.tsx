@@ -41,7 +41,7 @@ export const CourseCardPresenter = ({
           src={thumbnailUrl}
           style={{ objectFit: "cover" }}
           className="w-125 h-75 rounded"
-          alt="thumbnail"
+          alt={item.name ? `${item.name} course thumbnail` : "Course thumbnail"}
         />
         <br />
         <h1 className="font-Poppins text-[16px] text-black dark:text-white">
