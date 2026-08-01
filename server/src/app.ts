@@ -14,7 +14,7 @@ import layoutRouter from "./routes/layout.routes.js";
 import notificationRouter from "./routes/notification.routes.js";
 import orderRouter from "./routes/order.routes.js";
 import userRouter from "./routes/userRoutes.js";
-import * as helmet from "helmet";
+import helmet from "helmet";
 
 const app = express();
 
@@ -22,7 +22,7 @@ const app = express();
 connectCloudinary();
 
 app.use(
-  helmet.default({
+  (helmet as any)({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'none'"],
