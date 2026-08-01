@@ -2,18 +2,18 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import mongoose from "mongoose";
-import { rateLimit } from "express-rate-limit";
+import connectCloudinary from "./config/cloudinary.js";
+import { connectDatabase } from "./config/database.js";
 import { env } from "./config/env.js";
+import { stripeWebhook } from "./controllers/order.controller.js";
 import errorMiddleware from "./middlewares/error.js";
+import { generalLimiter } from "./middlewares/rateLimiter.js";
+import analyticsRouter from "./routes/analytics.routes.js";
 import courseRouter from "./routes/courseRoutes.js";
+import layoutRouter from "./routes/layout.routes.js";
 import notificationRouter from "./routes/notification.routes.js";
 import orderRouter from "./routes/order.routes.js";
 import userRouter from "./routes/userRoutes.js";
-import analyticsRouter from "./routes/analytics.routes.js";
-import layoutRouter from "./routes/layout.routes.js";
-import { connectDatabase } from "./config/database.js";
-import connectCloudinary from "./config/cloudinary.js";
-import { stripeWebhook } from "./controllers/order.controller.js";
 
 const app = express();
 
@@ -69,17 +69,8 @@ app.post(
 app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 
-// Rate Limiter Configuration
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 500, // 100 requests per IP per window
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
-  ipv6Subnet: 56,
-});
-
 // Apply Rate Limiter globally
-app.use(limiter);
+app.use(generalLimiter);
 
 // Database Connection Middleware
 app.use(ensureDatabaseConnection);

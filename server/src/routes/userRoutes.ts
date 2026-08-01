@@ -11,19 +11,25 @@ import {
     updateUserRole
 } from "../controllers/userController.js";
 import { authorizeRoles, isAuthenticated } from "../middlewares/auth.js";
+import {
+    authLimiter,
+    passwordLimiter,
+    strictAuthLimiter,
+    uploadLimiter,
+} from "../middlewares/rateLimiter.js";
 
 const userRouter = Router()
 
-userRouter.post("/register", registerUser)
-userRouter.post("/activate", activateUser)
-userRouter.post("/login", loginUser)
+userRouter.post("/register", strictAuthLimiter, registerUser)
+userRouter.post("/activate", strictAuthLimiter, activateUser)
+userRouter.post("/login", strictAuthLimiter, loginUser)
 userRouter.get("/logout",updateAccessToken, isAuthenticated, logoutUser)
-userRouter.get("/refreshtoken", updateAccessToken)
+userRouter.get("/refreshtoken", authLimiter, updateAccessToken)
 userRouter.get("/me",updateAccessToken, isAuthenticated, getUserInfo)
-userRouter.post("/social-auth", socialAuth)
+userRouter.post("/social-auth", strictAuthLimiter, socialAuth)
 userRouter.patch("/me/update",updateAccessToken, isAuthenticated, updateUserInfo)
-userRouter.put("/password/update",updateAccessToken, isAuthenticated, updateUserPassword)
-userRouter.put("/me/update/profile-picture",updateAccessToken, isAuthenticated, updateProfilePicture)
+userRouter.put("/password/update",updateAccessToken, isAuthenticated, passwordLimiter, updateUserPassword)
+userRouter.put("/me/update/profile-picture",updateAccessToken, isAuthenticated, uploadLimiter, updateProfilePicture)
 userRouter.get("/admin/all",updateAccessToken, isAuthenticated, authorizeRoles("admin"), getAllUsers)
 userRouter.put("/admin/update-role",updateAccessToken, isAuthenticated, authorizeRoles("admin"), updateUserRole)
 userRouter.delete("/admin/delete",updateAccessToken, isAuthenticated, authorizeRoles("admin"), deleteUser)
