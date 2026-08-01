@@ -48,35 +48,35 @@ course/user/content management — all backed by Redux Toolkit + RTK Query talki
 
 ```
 client/
-├── app/                       # App Router pages + UI
-│   ├── admin/                 # Admin-only routes: courses, users, analytics, customization…
-│   ├── components/            # Feature components (Auth, Courses, Payment, Admin, Route, Profile…)
-│   ├── course/[id]/           # Public course detail page
-│   ├── course-access/[id]/    # Enrolled course content viewer (protected)
-│   ├── courses/               # Course catalog/search page
-│   ├── hooks/                 # useAuth, useProtected, useAdminProtected
-│   ├── utils/                 # Heading, NavItems, Ratings, CoursePlayer, ThemeSwitcher, CustomModal…
-│   ├── styles/                # Shared Tailwind class strings
-│   ├── layout.tsx / Provider.tsx / globals.css
-│   └── page.tsx                # Landing page
-├── pages/                      # Legacy Pages Router — NextAuth route only
-│   ├── api/auth/[...nextauth].ts
-│   └── _app.tsx
+├── app/ # App Router pages + UI
+│ ├── admin/ # Admin-only routes: courses, users, analytics, customization…
+│ ├── components/ # Feature components (Auth, Courses, Payment, Admin, Route, Profile…)
+│ ├── course/[id]/ # Public course detail page
+│ ├── course-access/[id]/ # Enrolled course content viewer (protected)
+│ ├── courses/ # Course catalog/search page
+│ ├── hooks/ # useAuth, useProtected, useAdminProtected
+│ ├── utils/ # Heading, NavItems, Ratings, CoursePlayer, ThemeSwitcher, CustomModal…
+│ ├── styles/ # Shared Tailwind class strings
+│ ├── layout.tsx / Provider.tsx / globals.css
+│ └── page.tsx # Landing page
+├── pages/ # Legacy Pages Router — NextAuth route only
+│ ├── api/auth/[...nextauth].ts
+│ └── _app.tsx
 ├── redux/
-│   ├── store.ts                 # Store setup; boots refreshToken + loadUser on load
-│   └── features/
-│       ├── api/apiSlice.ts       # Base RTK Query slice (refreshToken, loadUser)
-│       ├── auth/                  # authSlice (localStorage-persisted) + authApi
-│       ├── courses/               # courseApi
-│       ├── orders/                # orderApi (Stripe key, payment intent, create order)
-│       ├── layout/                # layoutApi (banner/FAQ/categories)
-│       ├── user/                  # userApi (profile, admin user management)
-│       ├── notifications/         # notificationsApi
-│       └── analytics/             # analyticsApi
-├── public/assets/              # Static images
-├── next.config.ts              # Next Image remote patterns (Cloudinary, randomuser.me)
+│ ├── store.ts # Store setup; boots refreshToken + loadUser on load
+│ └── features/
+│ ├── api/apiSlice.ts # Base RTK Query slice (refreshToken, loadUser)
+│ ├── auth/ # authSlice (localStorage-persisted) + authApi
+│ ├── courses/ # courseApi
+│ ├── orders/ # orderApi (Stripe key, payment intent, create order)
+│ ├── layout/ # layoutApi (banner/FAQ/categories)
+│ ├── user/ # userApi (profile, admin user management)
+│ ├── notifications/ # notificationsApi
+│ └── analytics/ # analyticsApi
+├── public/assets/ # Static images
+├── next.config.ts # Next Image remote patterns (Cloudinary, randomuser.me)
 ├── tailwind.config.ts
-└── AGENTS.md / CLAUDE.md       # Repo-specific agent instructions
+└── AGENTS.md / CLAUDE.md # Repo-specific agent instructions
 ```
 
 ## Prerequisites
@@ -104,6 +104,13 @@ npm run dev
 # Backend API + sockets
 NEXT_PUBLIC_SERVER_URL=http://localhost:3001/api/v1
 NEXT_PUBLIC_SOCKET_SERVER_URI=http://localhost:3001
+
+# Public site URL — used to build absolute Open Graph / Twitter Card URLs
+# (metadataBase in app/layout.tsx) so shared links render a proper preview
+# (image, title, description) on WhatsApp/LinkedIn/Facebook/Telegram/
+# Discord/Slack/X. Defaults to http://localhost:3000 if unset; set this to
+# the real deployed origin (e.g. https://elearning.example.com) in production.
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 # NextAuth
 NEXTAUTH_SECRET=some_random_secret
@@ -232,3 +239,4 @@ the app instead of every call site re-implementing its own fallback logic.
 | "Buy Now" button does nothing / errors | Stripe publishable key not returned (server misconfigured) | Confirm `STRIPE_PUBLISHABLE_KEY`/`STRIPE_SECRET_KEY` are set on the server |
 | Social login redirects to an error page | Redirect URI mismatch or missing `NEXTAUTH_SECRET` | Recheck the OAuth app's callback URL and `.env.local` |
 | Course thumbnails/avatars don't load | Cloudinary domain missing from `next.config.ts` `images.remotePatterns`, or upload failed server-side | Confirm the Cloudinary hostname is allow-listed and the server logs show a successful upload |
+| Shared link preview (WhatsApp/LinkedIn/etc.) shows no image or the wrong URL | `NEXT_PUBLIC_SITE_URL` unset or wrong in the deployed environment, so Open Graph image/URL metadata resolves against the wrong origin | Set `NEXT_PUBLIC_SITE_URL` to the real deployed origin and rebuild/redeploy, then re-scrape the link with the platform's debugger (e.g. Facebook Sharing Debugger, LinkedIn Post Inspector) |
