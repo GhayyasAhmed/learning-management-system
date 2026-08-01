@@ -1,15 +1,16 @@
-import { useGetCourseDetailsQuery } from "../../../redux/features/courses/courseApi";
-import React, { FC, useEffect, useState, useMemo } from "react";
-import Loader from "../Loader/Loader";
-import Heading from "../../utils/Heading";
-import Header from "../Header";
-import Footer from "../Footer";
-import CourseDetails from "./CourseDetails";
+"use client";
 import { loadStripe, Stripe } from "@stripe/stripe-js";
+import { FC, useEffect, useMemo, useState } from "react";
+import { useGetCourseDetailsQuery } from "../../../redux/features/courses/courseApi";
 import {
   useCreatePaymentIntentMutation,
   useGetStripePublishAbleKeyQuery,
 } from "../../../redux/features/orders/orderApi";
+import Heading from "../../utils/Heading";
+import Footer from "../Footer";
+import Header from "../Header";
+import Loader from "../Loader/Loader";
+import CourseDetails from "./CourseDetails";
 
 type Props = {
   id: string;

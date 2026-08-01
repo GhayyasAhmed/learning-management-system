@@ -38,7 +38,7 @@ const CheckOutForm: FC<Props> = ({ data, user, refetch, setOpen }) => {
   const dispatch = useDispatch();
   const token = useSelector((state: RootState) => state.auth.token);
   const socketRef = useRef<Socket | null>(null);
-  const [message, setMessage] = useState<string>("");
+  // const [message, setMessage] = useState<string>("");
   const [createOrder, { error, data: orderData }] = useCreateOrderMutation({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -69,7 +69,7 @@ const CheckOutForm: FC<Props> = ({ data, user, refetch, setOpen }) => {
       redirect: "if_required",
     });
     if (error) {
-      setMessage(error.message || "An unexpected error occurred.");
+      // setMessage(error.message || "An unexpected error occurred.");
       setIsLoading(false);
     } else if (paymentIntent && paymentIntent.status === "succeeded") {
       setIsLoading(false);
