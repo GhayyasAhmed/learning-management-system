@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { ChangeEvent, useState } from "react";
 import toast from "react-hot-toast";
 import { AiOutlineCamera } from "react-icons/ai";
@@ -11,8 +12,8 @@ import {
 } from "../../../../redux/features/layout/layoutApi";
 import { styles } from "../../../styles/styles";
 import { getErrorMessage } from "../../../utils/getErrorMessage";
+import { validateImageFile } from "../../../utils/validateFile";
 import Loader from "../../Loader/Loader";
-import Image from "next/image";
 
 export interface IBanner {
   title?: string;
@@ -161,9 +162,14 @@ const EditHeroForm = ({
     (initialBanner?.subTitle || "") !== subTitle ||
     (initialBanner?.image?.url || "") !== image;
 
-  const handleUpdate = (e: ChangeEvent<HTMLInputElement>) => {
+ const handleUpdate = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const validationError = validateImageFile(file, { maxSizeMB: 5 });
+      if (validationError) {
+        toast.error(validationError);
+        return;
+      }
       const reader = new FileReader();
       reader.onload = () => {
         if (reader.readyState === 2 && typeof reader.result === "string") {
@@ -175,7 +181,15 @@ const EditHeroForm = ({
   };
 
   const handleEdit = async () => {
-    if (!isModified) return;
+    if (!isModified || isSaving) return;
+
+    const trimmedTitle = title.trim();
+    const trimmedSubTitle = subTitle.trim();
+
+    if (!trimmedTitle || !trimmedSubTitle) {
+      toast.error("Title and subtitle cannot be empty.");
+      return;
+    }
 
     if (hasQueryError) {
       toast.error(
@@ -184,7 +198,7 @@ const EditHeroForm = ({
       return;
     }
 
-    const payload = { type: "Banner", title, subTitle, image };
+    const payload = { type: "Banner", title: trimmedTitle, subTitle: trimmedSubTitle, image };
 
     try {
       if (layoutExists) {

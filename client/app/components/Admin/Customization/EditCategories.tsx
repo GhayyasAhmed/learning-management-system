@@ -113,7 +113,7 @@ const EditCategoriesForm = ({
       const isRealObjectId = _id && /^[0-9a-fA-F]{24}$/.test(_id);
       return {
         ...(isRealObjectId ? { _id } : {}),
-        title,
+        title: title.trim(),
       };
     });
 

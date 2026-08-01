@@ -118,7 +118,7 @@ const EditFaqForm = ({
     (areQuestionsUnchanged(initialFaq, questions) && layoutExists) ||
     isAnyQuestionEmpty(questions);
 
-  const handleEdit = async () => {
+   const handleEdit = async () => {
     if (isDisabled) return;
 
     if (hasQueryError) {
@@ -128,13 +128,12 @@ const EditFaqForm = ({
       return;
     }
 
-    // Sanitize payload: strip temporary/mock IDs created via Date.now()
     const sanitizedFaq = questions.map(({ _id, question, answer }) => {
       const isRealObjectId = _id && /^[0-9a-fA-F]{24}$/.test(_id);
       return {
         ...(isRealObjectId ? { _id } : {}),
-        question,
-        answer,
+        question: question.trim(),
+        answer: answer.trim(),
       };
     });
 

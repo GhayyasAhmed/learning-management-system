@@ -169,14 +169,16 @@ const CourseContentMedia: FC<Props> = ({
 
   // Handle Question submission
   const handleQuestionSubmit = async () => {
-    if (question.trim().length === 0) {
+    const trimmedQuestion = question.trim();
+    if (trimmedQuestion.length === 0) {
       toast.error("Question cannot be empty!");
       return;
     }
+    if (questionLoading) return;
 
     try {
       await addNewQuestion({
-        question,
+        question: trimmedQuestion,
         courseId: id,
         contentId: data[activeVideo]?._id,
       }).unwrap();
@@ -197,14 +199,16 @@ const CourseContentMedia: FC<Props> = ({
 
   // Handle Answer submission
   const handleAnswerSubmit = async () => {
-    if (answer.trim().length === 0) {
+    const trimmedAnswer = answer.trim();
+    if (trimmedAnswer.length === 0) {
       toast.error("Answer cannot be empty!");
       return;
     }
+    if (answerLoading) return;
 
     try {
       await addAnswerInQuestion({
-        answer,
+        answer: trimmedAnswer,
         courseId: id,
         contentId: data[activeVideo]?._id,
         questionId,
@@ -230,14 +234,20 @@ const CourseContentMedia: FC<Props> = ({
 
   // Handle Review Submission
   const handleReviewSubmit = async () => {
-    if (review.trim().length === 0) {
+    const trimmedReview = review.trim();
+    if (trimmedReview.length === 0) {
       toast.error("Review cannot be empty!");
       return;
     }
+    if (rating < 1 || rating > 5) {
+      toast.error("Please select a rating between 1 and 5.");
+      return;
+    }
+    if (reviewLoading) return;
 
     try {
       await addReviewInCourse({
-        review,
+        review: trimmedReview,
         rating,
         courseId: id,
       }).unwrap();
@@ -257,16 +267,17 @@ const CourseContentMedia: FC<Props> = ({
     }
   };
 
-  // Handle Review Reply Submission
   const handleReviewReplySubmit = async () => {
-    if (reply.trim().length === 0) {
+    const trimmedReply = reply.trim();
+    if (trimmedReply.length === 0) {
       toast.error("Reply cannot be empty!");
       return;
     }
+    if (replyLoading) return;
 
     try {
       await addReplyInReview({
-        comment: reply,
+        comment: trimmedReply,
         courseId: id,
         reviewId,
       }).unwrap();

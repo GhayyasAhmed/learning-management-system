@@ -11,6 +11,7 @@ import {
 } from "../../../redux/features/user/userApi";
 import { styles } from "../../styles/styles";
 import { getErrorMessage } from "../../utils/getErrorMessage";
+import { validateImageFile } from "../../utils/validateFile";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type ProfileInfoProps = {
@@ -27,8 +28,15 @@ const ProfileInfo = ({ user, avatar }: ProfileInfoProps) => {
   const { refetch } = useLoadUserQuery(undefined);
 
   const imageHandler = (e: any) => {
+    if (isAvatarLoading) return;
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
 
     const fileReader = new FileReader();
 
@@ -50,16 +58,27 @@ const ProfileInfo = ({ user, avatar }: ProfileInfoProps) => {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    if (name !== "") {
-      try {
-        await editProfile({ name }).unwrap();
-        toast.success("Profile updated successfully!");
-        refetch();
-      } catch (err) {
-        toast.error(
-          getErrorMessage(err, "Could not update your profile. Please try again.")
-        );
-      }
+    const trimmedName = name.trim();
+    if (isEditLoading) return;
+    if (!trimmedName) {
+      toast.error("Name cannot be empty.");
+      return;
+    }
+    if (trimmedName.length < 2) {
+      toast.error("Name must be at least 2 characters.");
+      return;
+    }
+    if (trimmedName === (user?.name || "")) {
+      return;
+    }
+    try {
+      await editProfile({ name: trimmedName }).unwrap();
+      toast.success("Profile updated successfully!");
+      refetch();
+    } catch (err) {
+      toast.error(
+        getErrorMessage(err, "Could not update your profile. Please try again.")
+      );
     }
   };
 

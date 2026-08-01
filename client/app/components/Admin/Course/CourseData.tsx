@@ -31,7 +31,7 @@ const CourseData = ({
   // Updating the title of a benefit at a specific index
   const handleBenefitChange = (index: number, value: string) => {
     const updatedBenefits = benefits.map((b, i) =>
-      i === index ? { ...b, title: value } : b
+      i === index ? { ...b, title: value } : b,
     );
     setBenefits(updatedBenefits);
   };
@@ -44,7 +44,7 @@ const CourseData = ({
   // Updates the title of a prerequisite at a specific index
   const handlePrerequisitesChange = (index: number, value: string) => {
     const updatedPrerequisites = prequisites.map((p, i) =>
-      i === index ? { ...p, title: value } : p
+      i === index ? { ...p, title: value } : p,
     );
     setPrerequisites(updatedPrerequisites);
   };
@@ -55,13 +55,20 @@ const CourseData = ({
 
   // Validates all inputs and moves to the next step if filled, otherwise shows error
   const handleOptions = () => {
+    const lastBenefit = benefits[benefits.length - 1]?.title.trim();
+    const lastPrerequisite = prequisites[prequisites.length - 1]?.title.trim();
+    const anyEmptyBenefit = benefits.some((b) => b.title.trim() === "");
+    const anyEmptyPrereq = prequisites.some((p) => p.title.trim() === "");
+
     if (
-      benefits[benefits.length - 1]?.title !== "" &&
-      prequisites[prequisites.length - 1]?.title !== ""
+      lastBenefit === "" ||
+      lastPrerequisite === "" ||
+      anyEmptyBenefit ||
+      anyEmptyPrereq
     ) {
-      setActive(active + 1);
-    } else {
       toast.error("Please fill all the fields before proceeding.");
+    } else {
+      setActive(active + 1);
     }
   };
 
@@ -91,7 +98,10 @@ const CourseData = ({
         />
       </div>
       <div>
-        <label className={`${styles.label} text-[20px]`} htmlFor="prerequisites">
+        <label
+          className={`${styles.label} text-[20px]`}
+          htmlFor="prerequisites"
+        >
           What are the prerequisites for starting this course?
         </label>
         <br />
@@ -104,9 +114,7 @@ const CourseData = ({
             required
             className={`${styles.input} my-2`}
             value={prerequisitesItem.title}
-            onChange={(e) =>
-              handlePrerequisitesChange(index, e.target.value)
-            }
+            onChange={(e) => handlePrerequisitesChange(index, e.target.value)}
           />
         ))}
         <AiOutlinePlusCircle

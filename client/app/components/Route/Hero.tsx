@@ -1,20 +1,20 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-// import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ChangeEvent, SubmitEvent, useState } from "react";
 import { BiSearch } from "react-icons/bi";
 
 const Hero = () => {
   const [search, setSearch] = useState("");
+  const router = useRouter();
   const handleSearch = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (search === "") {
+    const trimmed = search.trim();
+    if (trimmed === "") {
       return;
     }
-    // else {
-    //   router.push(`/courses?title=${search}`);
-    // }
+    router.push(`/courses?title=${encodeURIComponent(trimmed)}`);
   };
   return (
     <div className="w-full min-h-screen flex flex-col lg:flex-row items-center justify-center lg:justify-between px-4 lg:px-8 py-10 lg:py-0 relative overflow-hidden">

@@ -67,17 +67,28 @@ const CourseContent = ({
     setCourseContentData(updatedData);
   };
 
-  // Ensures all required fields
-  const newContentHandler = (item: ICourseContentItem) => {
+   const isValidUrl = (url: string) => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
-    if (
-      item.title === "" ||
-      item.description === "" ||
-      item.videoUrl === "" ||
-      item.links[0].title === "" ||
-      item.links[0].url === ""
-    ) {
-      toast.error("Please fill all the fields before adding new content.");
+
+  // Ensures all required fields
+  const isContentComplete = (item: ICourseContentItem) =>
+    item.title.trim() !== "" &&
+    item.description.trim() !== "" &&
+    item.videoUrl.trim() !== "" &&
+    item.links[0]?.title.trim() !== "" &&
+    item.links[0]?.url.trim() !== "" &&
+    isValidUrl(item.links[0]?.url.trim());
+
+  const newContentHandler = (item: ICourseContentItem) => {
+    if (!isContentComplete(item)) {
+      toast.error("Please fill all the fields with a valid link URL.");
     } else {
       let newVideoSection = "";
       if (courseContentData.length > 0) {
@@ -105,15 +116,11 @@ const CourseContent = ({
     }
   };
 
+
   // Adds a new video content
   const addNewSection = () => {
-    if (
-      courseContentData[courseContentData.length - 1].title === "" ||
-      courseContentData[courseContentData.length - 1].description === "" ||
-      courseContentData[courseContentData.length - 1].videoUrl === "" ||
-      courseContentData[courseContentData.length - 1].links[0].title === "" ||
-      courseContentData[courseContentData.length - 1].links[0].url === ""
-    ) {
+    const lastItem = courseContentData[courseContentData.length - 1];
+    if (!isContentComplete(lastItem)) {
       toast.error("Please fill all the fields first!");
     } else {
       setActiveSection(activeSection + 1);
@@ -135,12 +142,8 @@ const CourseContent = ({
 
   //Making sure that last content isComplete?
   const handleOptions = () => {
-    if (
-      courseContentData[courseContentData.length - 1].title === "" ||
-      courseContentData[courseContentData.length - 1].description === "" ||
-      courseContentData[courseContentData.length - 1].videoUrl === "" ||
-      courseContentData[courseContentData.length - 1].links[0].title === "" ||
-      courseContentData[courseContentData.length - 1].links[0].url === "") {
+    const lastItem = courseContentData[courseContentData.length - 1];
+    if (!isContentComplete(lastItem)) {
       toast.error("Section is not completed yet.");
       return;
     } else {

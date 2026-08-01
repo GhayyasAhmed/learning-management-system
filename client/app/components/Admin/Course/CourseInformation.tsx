@@ -3,6 +3,9 @@ import { useGetHeroDataQuery } from "../../../../redux/features/layout/layoutApi
 import { styles } from "../../../styles/styles";
 import Image from "next/image";
 import React, { useState, useMemo } from "react";
+import { validateImageFile } from "../../../utils/validateFile";
+import toast from "react-hot-toast";
+
 
 export interface Category {
   _id: string;
@@ -55,6 +58,36 @@ const CourseInformation = ({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const name = courseInfo.name.trim();
+    const description = courseInfo.description.trim();
+    const price = Number(courseInfo.price);
+    const estimatedPrice = Number(courseInfo.estimatedPrice);
+
+    if (!name) {
+      toast.error("Course name is required.");
+      return;
+    }
+    if (!description) {
+      toast.error("Course description is required.");
+      return;
+    }
+    if (Number.isNaN(price) || price < 0) {
+      toast.error("Price must be a valid non-negative number.");
+      return;
+    }
+    if (Number.isNaN(estimatedPrice) || estimatedPrice < 0) {
+      toast.error("Estimated price must be a valid non-negative number.");
+      return;
+    }
+    if (estimatedPrice < price) {
+      toast.error("Estimated price cannot be less than the price.");
+      return;
+    }
+    if (!courseInfo.thumbnail) {
+      toast.error("Please upload a course thumbnail.");
+      return;
+    }
+    setCourseInfo({ ...courseInfo, name, description });
     setActive(active + 1);
   };
 
@@ -62,6 +95,11 @@ const CourseInformation = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const validationError = validateImageFile(file, { maxSizeMB: 5 });
+      if (validationError) {
+        toast.error(validationError);
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         if (reader.readyState === 2 && typeof reader.result === "string") {
@@ -93,6 +131,11 @@ const CourseInformation = ({
     setDragging(false);
     const file = e.dataTransfer.files?.[0];
     if (file) {
+      const validationError = validateImageFile(file, { maxSizeMB: 5 });
+      if (validationError) {
+        toast.error(validationError);
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         if (typeof reader.result === "string") {

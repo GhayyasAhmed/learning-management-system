@@ -27,16 +27,31 @@ const ChangePassword = () => {
 
     const passwordChangeHandler = async (e: any) => {
       e.preventDefault();
+      const trimmedOld = oldPassword.trim();
+      const trimmedNew = newPassword.trim();
+      const trimmedConfirm = confirmPassword.trim();
 
-      if (!oldPassword || !newPassword || !confirmPassword) {
+      if (!trimmedOld || !trimmedNew || !trimmedConfirm) {
         toast.error("Please fill in all password fields");
         return;
       }
-      if (newPassword !== confirmPassword) {
-        toast.error("New password and confirm password do not match");
-      } else {
-        await updatePassword({ oldPassword, newPassword, confirmPassword });
+      if (trimmedNew.length < 8) {
+        toast.error("New password must be at least 8 characters");
+        return;
       }
+      if (trimmedNew !== trimmedConfirm) {
+        toast.error("New password and confirm password do not match");
+        return;
+      }
+      if (trimmedNew === trimmedOld) {
+        toast.error("New password must be different from old password");
+        return;
+      }
+      await updatePassword({
+        oldPassword: trimmedOld,
+        newPassword: trimmedNew,
+        confirmPassword: trimmedConfirm,
+      });
     };
   
     return (
@@ -110,6 +125,7 @@ const ChangePassword = () => {
                 disabled={isLoading}
                 className={`w-[95%]! 800px:w-62.5 h-10 border border-[cyan] text-center dark:text-white text-black rounded-[3px] mt-8 cursor-pointer ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`}
                 value={isLoading ? "Updating..." : "Update"}
+                onClick={(e) => { if (isLoading) e.preventDefault(); }}
               />
             </div>
           </form>

@@ -49,10 +49,14 @@ const SignUp = ({ setRoute, setOpen }: Props) => {
   const formik = useFormik({
     initialValues: { name: "", email: "", password: "" },
     validationSchema: schema,
-    onSubmit: async ({name, email, password}) => {
-        const data= {name, email, password};
-        // console.log("data", data)
-        await register(data);
+    onSubmit: async ({ name, email, password }) => {
+      if (isLoading) return;
+      const data = {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+      };
+      await register(data);
     },
   });
   const { errors, handleChange, touched, values, handleSubmit } = formik;

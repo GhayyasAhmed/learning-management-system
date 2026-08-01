@@ -38,7 +38,11 @@ const Login = (props: Props) => {
     },
     validationSchema: schema,
     onSubmit: async (values) => {
-      login({ email: values.email, password: values.password });
+      if (isLoading) return;
+      login({
+        email: values.email.trim().toLowerCase(),
+        password: values.password,
+      });
     },
   });
 
