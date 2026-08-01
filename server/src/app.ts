@@ -14,11 +14,43 @@ import layoutRouter from "./routes/layout.routes.js";
 import notificationRouter from "./routes/notification.routes.js";
 import orderRouter from "./routes/order.routes.js";
 import userRouter from "./routes/userRoutes.js";
+import helmet from "helmet";
 
 const app = express();
 
 // Initialize Cloudinary SDK at application level (Required for Vercel Serverless)
 connectCloudinary();
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+      },
+    },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false,
+    frameguard: { action: "deny" },
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    hsts:
+      env.nodeEnv === "production"
+        ? {
+            maxAge: env.hstsMaxAge,
+            includeSubDomains: true,
+            preload: true,
+          }
+        : false,
+  }),
+);
+
+app.use((req, res, next) => {
+  res.setHeader(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+  );
+  next();
+});
 
 // CORS Configuration
 app.use(
@@ -34,6 +66,8 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    maxAge: 600,
+    optionsSuccessStatus: 204,
   }),
 );
 

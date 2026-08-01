@@ -66,4 +66,5 @@ export const env = {
   refreshTokenSecret: process.env.REFRESH_TOKEN as string,
   activationSecret: process.env.ACTIVATION_SECRET as string,
   redisUrl: process.env.REDIS_URL as string,
+  hstsMaxAge: readNumber(process.env.HSTS_MAX_AGE, 31536000),
 };
