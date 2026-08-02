@@ -147,7 +147,9 @@ const Verification = ({ setRoute }: Props) => {
 
   return (
     <div>
-      <h1 className={`${styles.title}`}>Verify Your Account</h1>
+      <h1 id="modal-modal-title" className={`${styles.title}`}>
+        Verify Your Account
+      </h1>
       <br />
 
       {/* Icon */}
@@ -160,7 +162,11 @@ const Verification = ({ setRoute }: Props) => {
       <br />
 
       {/* OTP Input Fields */}
-      <div className="m-auto flex items-center justify-around">
+      <div
+        className="m-auto flex items-center justify-around"
+        role="group"
+        aria-label="Verification code, 4 digits"
+      >
         {Object.keys(verifyNumber).map((key, index) => (
           <input
             type="text"
@@ -175,6 +181,7 @@ const Verification = ({ setRoute }: Props) => {
                 : "dark:border-white border-[#0000004a]"
             }`}
             maxLength={1}
+            aria-invalid={invalidError || isError}
             value={verifyNumber[key as keyof verifyNumberType]}
             onPaste={handlePaste}
             onChange={(e) => handleInputChange(index, e.target.value)}

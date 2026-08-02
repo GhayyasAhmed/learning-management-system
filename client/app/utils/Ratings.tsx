@@ -16,6 +16,7 @@ const Ratings = ({ rating }: Props) => {
           size={20}
           color="#f6b100"
           className="mr-2 cursor-pointer"
+          aria-hidden="true"
         />
       );
     } else if (i === Math.ceil(rating) && !Number.isInteger(rating)) {
@@ -25,6 +26,7 @@ const Ratings = ({ rating }: Props) => {
           size={17}
           color="#f6ba00"
           className="mr-2 cursor-pointer"
+          aria-hidden="true"
         />
       );
     } else {
@@ -34,11 +36,20 @@ const Ratings = ({ rating }: Props) => {
           size={20}
           color="#f6ba00"
           className="mr-2 cursor-pointer"
+          aria-hidden="true"
         />
       );
     }
   }
-  return <div className="flex mt-1 ml-2 800px:mt-0 800px:ml-0"> {stars}</div>;
+   return (
+    <div
+      className="flex mt-1 ml-2 800px:mt-0 800px:ml-0"
+      role="img"
+      aria-label={`Rating: ${rating} out of 5`}
+    >
+      {stars}
+    </div>
+  );
 };
 
 export default Ratings;

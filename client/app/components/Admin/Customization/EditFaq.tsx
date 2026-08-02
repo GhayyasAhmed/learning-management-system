@@ -159,12 +159,7 @@ const EditFaqForm = ({
                     q._id !== questions[0]?._id && "border-t"
                   } border-gray-200 pt-6`}
                 >
-                  <dt className="text-lg">
-                    <button
-                      type="button"
-                      className="flex items-start dark:text-white text-black justify-between w-full text-left focus:outline-none"
-                      onClick={() => toggleQuestion(q._id)}
-                    >
+                  <dt className="text-lg flex items-start justify-between w-full text-left">
                       <input
                         className={`${styles.input} border-none`}
                         value={q.question}
@@ -174,15 +169,19 @@ const EditFaqForm = ({
                         }
                         placeholder="Add your question..."
                       />
-
-                      <span className="ml-6 shrink-0">
+                      <button
+                        type="button"
+                        className="ml-6 shrink-0 bg-transparent border-0"
+                        aria-expanded={!!q.active}
+                        aria-label={q.active ? "Collapse answer" : "Expand answer"}
+                        onClick={() => toggleQuestion(q._id)}
+                      >
                         {q.active ? (
                           <HiMinus className="h-6 w-6" />
                         ) : (
                           <HiPlus className="h-6 w-6" />
                         )}
-                      </span>
-                    </button>
+                      </button>
                   </dt>
                   {q.active && (
                     <dd className="mt-2 pr-12 flex items-center justify-between">
@@ -196,8 +195,10 @@ const EditFaqForm = ({
                         placeholder="Add your answer..."
                       />
                       <span className="ml-6 shrink-0">
-                        <AiOutlineDelete
-                          className="dark:text-white text-black text-[18px] cursor-pointer"
+                        <button
+                          type="button"
+                          aria-label="Delete question"
+                          className="bg-transparent border-0"
                           onClick={() => {
                             setQuestions((prevQuestions) =>
                               prevQuestions.filter(
@@ -205,7 +206,9 @@ const EditFaqForm = ({
                               ),
                             );
                           }}
-                        />
+                        >
+                          <AiOutlineDelete className="dark:text-white text-black text-[18px] cursor-pointer" />
+                        </button>
                       </span>
                     </dd>
                   )}
@@ -214,10 +217,14 @@ const EditFaqForm = ({
             </dl>
             <br />
             <br />
-            <IoMdAddCircleOutline
-              className="dark:text-white text-black text-[25px] cursor-pointer"
+            <button
+              type="button"
+              aria-label="Add FAQ"
+              className="bg-transparent border-0"
               onClick={newFaqHandler}
-            />
+            >
+              <IoMdAddCircleOutline className="dark:text-white text-black text-[25px] cursor-pointer" />
+            </button>
           </div>
           <button
             type="button"

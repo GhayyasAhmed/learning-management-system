@@ -80,6 +80,8 @@ const CourseContentList = ({
                 <button
                   type="button"
                   className="mr-4 cursor-pointer text-black dark:text-white"
+                  aria-expanded={isSectionVisible}
+                  aria-label={`${isSectionVisible ? "Collapse" : "Expand"} ${section}`}
                   onClick={() => toggleSection(section)}
                 >
                   {isSectionVisible ? (
@@ -110,11 +112,26 @@ const CourseContentList = ({
                         videoIndex === activeVideo ? "bg-slate-800" : ""
                       } cursor-pointer transition-all p-2`}
                       key={item._id}
+                      role={!isDemo && setActiveVideo ? "button" : undefined}
+                      tabIndex={!isDemo && setActiveVideo ? 0 : undefined}
+                      aria-current={
+                        videoIndex === activeVideo ? "true" : undefined
+                      }
                       onClick={() =>
                         isDemo || !setActiveVideo
                           ? null
                           : setActiveVideo(videoIndex)
                       }
+                      onKeyDown={(e) => {
+                        if (
+                          !isDemo &&
+                          setActiveVideo &&
+                          (e.key === "Enter" || e.key === " ")
+                        ) {
+                          e.preventDefault();
+                          setActiveVideo(videoIndex);
+                        }
+                      }}
                     >
                       <div className="flex items-start">
                         <div>

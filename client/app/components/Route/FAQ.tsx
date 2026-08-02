@@ -67,6 +67,9 @@ const FAQ = () => {
                   <button
                     type="button"
                     className="flex items-start justify-between w-full text-left focus:outline-none"
+                    aria-expanded={activeQuestion === q._id}
+                    aria-controls={`faq-answer-${q._id}`}
+                    id={`faq-question-${q._id}`}
                     onClick={() => toggleQuestion(q._id)}
                   >
                     <span className="font-medium text-black dark:text-white">
@@ -82,7 +85,12 @@ const FAQ = () => {
                   </button>
                 </dt>
                 {activeQuestion === q._id && (
-                  <dd className="mt-2 pr-12">
+                  <dd
+                    className="mt-2 pr-12"
+                    id={`faq-answer-${q._id}`}
+                    role="region"
+                    aria-labelledby={`faq-question-${q._id}`}
+                  >
                     <br />
                     <p className="text-base font-Poppins text-black dark:text-white">
                       {q.answer}

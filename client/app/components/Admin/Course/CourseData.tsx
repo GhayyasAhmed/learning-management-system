@@ -123,18 +123,20 @@ const CourseData = ({
         />
       </div>
       <div className="w-full flex items-center justify-between">
-        <div
+        <button
+          type="button"
           className="w-full 800px:w-45 flex items-center justify-center h-10 bg-[#37a39a] text-center text-white rounded mt-8 m-5 cursor-pointer"
           onClick={() => prevButton()}
         >
           Prev
-        </div>
-        <div
+        </button>
+        <button
+          type="button"
           className="w-full 800px:w-45 flex items-center justify-center h-10 bg-[#37a39a] text-center text-white rounded mt-8 m-5 cursor-pointer"
           onClick={() => handleOptions()}
         >
           Next
-        </div>
+        </button>
       </div>
     </div>
   );

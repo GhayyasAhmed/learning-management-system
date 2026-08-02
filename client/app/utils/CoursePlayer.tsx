@@ -7,7 +7,7 @@ type Props = {
   title: string;
 };
 
-const CoursePlayer = ({ videoUrl }: Props) => {
+const CoursePlayer = ({ videoUrl, title }: Props) => {
   const [videoData, setVideoData] = useState({
     otp: "",
     playbackInfo: "",
@@ -44,6 +44,7 @@ const CoursePlayer = ({ videoUrl }: Props) => {
       {videoData.otp && videoData.playbackInfo !== "" && (
         <iframe
           src={`https://player.vdocipher.com/v2/?otp=${videoData.otp}&playbackInfo=${videoData.playbackInfo}&player=GzBf2RAWMqlXmTij`}
+          title={title || "Course video player"}
           style={{
             border: 0,
             maxWidth: "100%",

@@ -84,27 +84,31 @@ const CoursesContent = () => {
             </h1>
             <br />
             <div className="w-full flex items-center flex-wrap">
-              <div
+              <button
+                type="button"
+                aria-pressed={category === "All"}
                 className={`h-8.75 ${
                   category === "All" ? "bg-[crimson]" : "bg-[#5050cb]"
-                } m-3 px-3 rounded-[30px] flex items-center justify-center font-Poppins cursor-pointer`}
+                } m-3 px-3 rounded-[30px] flex items-center justify-center font-Poppins cursor-pointer text-white border-0`}
                 onClick={() => setCategory("All")}
               >
                 All
-              </div>
+              </button>
               {layoutCategories &&
                 layoutCategories.map((item: ICategoryItem, index: number) => (
                   <div key={index}>
-                    <div
+                    <button
+                      type="button"
+                      aria-pressed={category === item.title}
                       className={`h-8.75 ${
                         category === item.title
                           ? "bg-[crimson]"
                           : "bg-[#5050cb]"
-                      } m-3 px-3 rounded-[30px] flex items-center justify-center font-Poppins cursor-pointer`}
+                      } m-3 px-3 rounded-[30px] flex items-center justify-center font-Poppins cursor-pointer text-white border-0`}
                       onClick={() => setCategory(item.title)}
                     >
                       {item.title}
-                    </div>
+                    </button>
                   </div>
                 ))}
             </div>

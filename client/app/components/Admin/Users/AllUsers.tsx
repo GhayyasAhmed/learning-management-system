@@ -76,12 +76,13 @@ export const AllUsersPresenter = ({
     <div className="mt-22.5">
       <Box sx={{ margin: "0px" }}>
         <div className="w-full flex justify-end">
-          <div
+          <button
+            type="button"
             className={`${styles.button} w-55! dark:bg-[#57c7a3] h-8.75! dark:border-[#ffffffa8] cursor-pointer`}
             onClick={() => setActive(!active)}
           >
             Add New Member
-          </div>
+          </button>
         </div>
         <Box
           sx={{
@@ -157,11 +158,12 @@ export const AllUsersPresenter = ({
           <Modal
             open={active}
             onClose={() => setActive(false)}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
+            aria-labelledby="add-member-title"
+            // aria-labelledby="modal-modal-title"
+            // aria-describedby="modal-modal-description"
           >
             <Box className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-112.5 bg-white dark:bg-slate-900 rounded-lg shadow p-4 outline-none">
-              <h1 className={`${styles.title}`}>Add New Member</h1>
+              <h1 id="add-member-title" className={`${styles.title}`}>Add New Member</h1>
               <div className="mt-4">
                 <input
                   type="email"
@@ -181,12 +183,13 @@ export const AllUsersPresenter = ({
                   <option value="user">user</option>
                 </select>
                 <br />
-                <div
+                <button
+                  type="button"
                   className={`${styles.button} my-6 h-7.5! cursor-pointer`}
                   onClick={handleSubmit}
                 >
                   Submit
-                </div>
+                </button>
               </div>
             </Box>
           </Modal>
@@ -197,26 +200,29 @@ export const AllUsersPresenter = ({
           <Modal
             open={open}
             onClose={() => setOpen(false)}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
+            aria-labelledby="delete-user-title"
+            // aria-labelledby="modal-modal-title"
+            // aria-describedby="modal-modal-description"
           >
             <Box className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-112.5 bg-white dark:bg-slate-900 rounded-lg shadow p-4 outline-none">
-              <h1 className={`${styles.title}`}>
+              <h1 id="delete-user-title" className={`${styles.title}`}>
                 Are you sure you want to delete this User?
               </h1>
               <div className="flex w-full items-center justify-between mb-6 mt-4">
-                <div
+                <button
+                  type="button"
                   className={`${styles.button} w-30! h-7.5 bg-[#47d097] cursor-pointer`}
                   onClick={() => setOpen(false)}
                 >
                   Cancel
-                </div>
-                <div
+                </button>
+                <button
+                  type="button"
                   className={`${styles.button} w-30! h-7.5 bg-[#d63f3f] cursor-pointer`}
                   onClick={handleDelete}
                 >
                   Delete
-                </div>
+                </button>
               </div>
             </Box>
           </Modal>

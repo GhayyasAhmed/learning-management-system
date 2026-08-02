@@ -17,9 +17,11 @@ const CourseOptions = ({ active, setActive }: Props) => {
   return (
     <div>
       {options.map((option, index) => (
-        <div
+        <button
           key={index}
-          className={`w-full m-3.25 800px:m-0 800px:flex py-5`}
+          type="button"
+          aria-current={active === index ? "step" : undefined}
+          className={`w-full m-3.25 800px:m-0 800px:flex py-5 bg-transparent border-0 text-left`}
           onClick={() => setActive(index)}
         >
           <div
@@ -27,7 +29,7 @@ const CourseOptions = ({ active, setActive }: Props) => {
               active + 1 > index ? "bg-blue-500" : "bg-[#384766]"
             } relative`}
           >
-            <IoMdCheckmark className=" text-[25px]" />
+            <IoMdCheckmark className=" text-[25px]" aria-hidden="true" />
             {index !== options.length - 1 && (
               <>
                 <div
@@ -52,7 +54,7 @@ const CourseOptions = ({ active, setActive }: Props) => {
           >
             {option}
           </h5>
-        </div>
+        </button>
       ))}
     </div>
   );

@@ -56,11 +56,26 @@ export const DashboardHeaderPresenter = ({
   onMarkAllRead,
   onViewAll,
 }: DashboardHeaderProps) => {
+  const notifButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        notifButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, setOpen]);
+
   return (
     <div className="w-full flex items-center justify-end p-6 fixed top-5 right-0 z-9999">
       <ThemeSwitcher />
       <button
         type="button"
+        ref={notifButtonRef}
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
         className="relative cursor-pointer m-2 bg-transparent border-0 p-0"
         onClick={() => setOpen(!open)}
@@ -74,7 +89,12 @@ export const DashboardHeaderPresenter = ({
       </button>
 
       {open && (
-        <div className="w-87.5 max-h-[60vh] dark:bg-[#111C43] bg-white shadow-2xl absolute top-16 right-2 z-10000 rounded overflow-hidden border border-[#00000014] dark:border-[#ffffff1a] flex flex-col">
+        <div
+          className="w-87.5 max-h-[60vh] dark:bg-[#111C43] bg-white shadow-2xl absolute top-16 right-2 z-10000 rounded overflow-hidden border border-[#00000014] dark:border-[#ffffff1a] flex flex-col"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Notifications"
+        >
           <div className="sticky top-0 z-10 dark:bg-[#111C43] bg-white border-b border-[#00000014] dark:border-[#ffffff1a]">
             <div className="flex items-center justify-between p-3">
               <h5 className="text-[18px] font-Poppins text-black dark:text-white">
@@ -105,7 +125,15 @@ export const DashboardHeaderPresenter = ({
                 <div
                   key={item?._id || index}
                   className="dark:bg-[#2d3a4ea1] bg-[#00000013] font-Poppins border-b dark:border-b-[#ffffff47] border-b-[#0000000f] cursor-pointer"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onNotificationClick(item)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onNotificationClick(item);
+                    }
+                  }}
                 >
                   <div className="w-full flex items-center justify-between gap-3 p-2">
                     <p className="text-black dark:text-white font-semibold truncate">

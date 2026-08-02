@@ -62,7 +62,7 @@ const Login = (props: Props) => {
 
   return (
     <div className="w-full">
-      <h1 className={`${styles.title}`}>Login With ELearning</h1>
+      <h1 id="modal-modal-title" className={`${styles.title}`}>Login With ELearning</h1>
       <form onSubmit={handleSubmit}>
         <label className={`${styles.label}`} htmlFor="email">
           Enter Your Email
@@ -73,13 +73,15 @@ const Login = (props: Props) => {
           value={values.email}
           onChange={handleChange}
           id="email"
+          aria-invalid={!!(errors.email && touched.email)}
+          aria-describedby={errors.email && touched.email ? "email-error" : undefined}
           placeholder="loginemail@gmail.com"
           className={`${errors.email && touched.email && "border-red-500"} ${
             styles.input
           }`}
         />
         {errors.email && touched.email && (
-          <span className="text-red-500 pt-2 block">{errors.email}</span>
+          <span id="email-error" role="alert" className="text-red-500 pt-2 block">{errors.email}</span>
         )}
         <div className="w-full mt-5 relative mb-1">
           <label className={`${styles.label}`} htmlFor="password">
@@ -91,26 +93,34 @@ const Login = (props: Props) => {
             value={values.password}
             onChange={handleChange}
             id="password"
+            aria-invalid={!!(errors.password && touched.password)}
+            aria-describedby={errors.password && touched.password ? "password-error" : undefined}
             placeholder="passwords!@#%"
             className={`${
               errors.password && touched.password && "border-red-500"
             } ${styles.input}`}
           />
           {!show ? (
-            <AiOutlineEyeInvisible
-              className="absolute bottom-3 right-2 z-1 cursor-pointer"
-              size={20}
+            <button
+              type="button"
+              aria-label="Show password"
+              className="absolute bottom-3 right-2 z-1 bg-transparent border-0"
               onClick={() => setShow(true)}
-            />
+            >
+              <AiOutlineEyeInvisible size={20} />
+            </button>
           ) : (
-            <AiOutlineEye
-              className="absolute bottom-3 right-2 z-1 cursor-pointer"
-              size={20}
+            <button
+              type="button"
+              aria-label="Hide password"
+              className="absolute bottom-3 right-2 z-1 bg-transparent border-0"
               onClick={() => setShow(false)}
-            />
+            >
+              <AiOutlineEye size={20} />
+            </button>
           )}
           {errors.password && touched.password && (
-            <span className="text-red-500 pt-2 block">{errors.password}</span>
+            <span id="password-error" role="alert" className="text-red-500 pt-2 block">{errors.password}</span>
           )}
         </div>
         <div className="w-full mt-5">

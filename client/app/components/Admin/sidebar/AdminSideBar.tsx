@@ -153,7 +153,12 @@ const AdminSideBar = () => {
           {/* LOGO AND MENU ICON */}
           <MenuItem
             onClick={() => setIsCollapsed(!isCollapsed)}
-            icon={isCollapsed ? <ArrowForwardIosIcon /> : undefined}
+            // icon={isCollapsed ? <ArrowForwardIosIcon /> : undefined}
+            icon={
+              isCollapsed ? (
+                <ArrowForwardIosIcon titleAccess="Expand sidebar" />
+              ) : undefined
+            }
             style={{
               margin: "10px 0 20px 0",
             }}
@@ -174,6 +179,7 @@ const AdminSideBar = () => {
                 </Link>
                 <IconButton
                   onClick={() => setIsCollapsed(!isCollapsed)}
+                  aria-label="Collapse sidebar"
                   className="inline-block"
                 >
                   <ArrowBackIosIcon className="text-black dark:text-[#ffffffc1]" />
@@ -212,6 +218,7 @@ const AdminSideBar = () => {
                 <Box sx={{ textAlign: "center" }}>
                   <Typography
                     variant="h4"
+                    component="p"
                     className="text-[20px]! text-black dark:text-[#ffffffc1]"
                     sx={{ m: "10px 0 0 0" }}
                   >
@@ -219,6 +226,7 @@ const AdminSideBar = () => {
                   </Typography>
                   <Typography
                     variant="h6"
+                    component="p"
                     sx={{ m: "10px 0 0 0" }}
                     className="text-[20px]! text-black dark:text-[#ffffffc1] capitalize"
                   >
@@ -248,6 +256,7 @@ const AdminSideBar = () => {
 
             <Typography
               variant="h5"
+              component="p"
               sx={{ m: "15px 0 5px 25px" }}
               className="text-[18px]! text-black dark:text-[#ffffffc1] capitalize font-normal!"
             >
@@ -278,6 +287,7 @@ const AdminSideBar = () => {
 
             <Typography
               variant="h5"
+              component="p"
               className="text-[18px]! text-black dark:text-[#ffffffc1] capitalize font-normal!"
               sx={{ m: "15px 0 5px 20px" }}
             >
@@ -300,6 +310,7 @@ const AdminSideBar = () => {
 
             <Typography
               variant="h5"
+              component="p"
               className="text-[18px]! text-black dark:text-[#ffffffc1] capitalize font-normal!"
               sx={{ m: "15px 0 5px 20px" }}
             >
@@ -329,6 +340,7 @@ const AdminSideBar = () => {
 
             <Typography
               variant="h5"
+              component="p"
               className="text-[18px]! text-black dark:text-[#ffffffc1] capitalize font-normal!"
               sx={{ m: "15px 0 5px 20px" }}
             >
@@ -344,6 +356,7 @@ const AdminSideBar = () => {
 
             <Typography
               variant="h6"
+              component="p"
               className="text-[18px]! text-black dark:text-[#ffffffc1] capitalize font-normal!"
               sx={{ m: "15px 0 5px 20px" }}
             >
@@ -374,6 +387,7 @@ const AdminSideBar = () => {
 
             <Typography
               variant="h6"
+              component="p"
               className="text-[18px]! text-black dark:text-[#ffffffc1] capitalize font-normal!"
               sx={{ m: "15px 0 5px 20px" }}
             >

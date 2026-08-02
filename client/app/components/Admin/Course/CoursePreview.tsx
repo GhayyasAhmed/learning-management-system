@@ -87,15 +87,17 @@ const CoursePreview = ({
           <input
             type="text"
             name=""
-            id=""
+            id="discount-code"
+            aria-label="Discount code"
             placeholder="Discount code..."
             className={`${styles.input} 1500px:w-[50%]! 1100px:w-[60%] ml-3 mt-0! dark:bg-[#1a2236]! dark:text-white! dark:border-[#2d3a4e]!`}
           />
-          <div
+          <button
+            type="button"
             className={`${styles.button} w-30! my-3 ml-4 font-Poppins cursor-pointer dark:bg-[#37a39a]! dark:text-white!`}
           >
             Apply
-          </div>
+          </button>
         </div>
         <p className="pb-1 dark:text-[#b5e3d8] text-[#222]">
           • Source code included
@@ -164,18 +166,20 @@ const CoursePreview = ({
       </div>
 
       <div className="w-full flex items-center justify-between">
-        <div
+        <button
+          type="button"
           className="w-full 800px:w-45 flex items-center justify-center h-10 bg-[#37a39a] text-center text-white rounded mt-8 m-5 cursor-pointer"
           onClick={prevButton}
         >
           Prev
-        </div>
-        <div
+        </button>
+        <button
+          type="button"
           className="w-full 800px:w-45 flex items-center justify-center h-10 bg-[#37a39a] text-center text-white rounded mt-8 m-5 cursor-pointer"
           onClick={createCourse}
         >
           {isEdit ? "Update" : "Create"}
-        </div>
+        </button>
       </div>
     </div>
   );

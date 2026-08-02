@@ -94,11 +94,13 @@ const AllNotifications = () => {
         </button>
       </div>
 
-      <div className="flex items-center gap-3 mb-5">
+      <div className="flex items-center gap-3 mb-5" role="tablist" aria-label="Notification filter">
         {TABS.map((t) => (
           <button
             key={t.value}
             type="button"
+            role="tab"
+            aria-selected={tab === t.value}
             className={`px-4 py-2 rounded-full font-Poppins cursor-pointer ${
               tab === t.value ? "bg-[crimson] text-white" : "bg-[#5050cb] text-white"
             }`}
@@ -126,6 +128,14 @@ const AllNotifications = () => {
               <div
                 key={item._id}
                 onClick={() => handleClick(item)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleClick(item);
+                  }
+                }}
                 className={`w-full p-4 rounded border cursor-pointer font-Poppins dark:border-[#ffffff1a] border-[#00000014] ${
                   item.status === "unread"
                     ? "dark:bg-[#2d3a4ea1] bg-[#00000013]"
@@ -169,7 +179,7 @@ const AllNotifications = () => {
               >
                 Prev
               </button>
-              <span className="text-black dark:text-white font-Poppins">
+              <span className="text-black dark:text-white font-Poppins" aria-live="polite">
                 Page {pagination.page} of {pagination.totalPages}
               </span>
               <button

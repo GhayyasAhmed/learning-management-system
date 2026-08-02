@@ -181,26 +181,29 @@ export const AllCoursesPresenter: FC<AllCoursesPresenterProps> = ({
           <Modal
             open={open}
             onClose={() => setOpen(false)}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
+            aria-labelledby="delete-course-title"
+            // aria-labelledby="modal-modal-title"
+            // aria-describedby="modal-modal-description"
           >
             <Box className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-112.5 bg-white dark:bg-slate-900 rounded-lg shadow p-4 outline-none">
-              <h1 className={`${styles.title}`}>
+              <h1 id="delete-course-title" className={`${styles.title}`}>
                 Are you sure you want to delete this course?
               </h1>
               <div className="flex w-full items-center justify-between mb-6 mt-4">
-                <div
+                <button
+                  type="button"
                   className={`${styles.button} w-30! h-7.5 bg-[#47d097] cursor-pointer`}
                   onClick={() => setOpen(false)}
                 >
                   Cancel
-                </div>
-                <div
+                </button>
+                <button
+                  type="button"
                   className={`${styles.button} w-30! h-7.5 bg-[#d63f3f] cursor-pointer`}
                   onClick={handleDelete}
                 >
                   Delete
-                </div>
+                </button>
               </div>
             </Box>
           </Modal>

@@ -44,9 +44,9 @@ export const CourseCardPresenter = ({
           alt={item.name ? `${item.name} course thumbnail` : "Course thumbnail"}
         />
         <br />
-        <h1 className="font-Poppins text-[16px] text-black dark:text-white">
+        <h3 className="font-Poppins text-[16px] text-black dark:text-white">
           {item.name}
-        </h1>
+        </h3>
         <div className="w-full flex items-center justify-between pt-2">
           <Ratings rating={item.rating || 0} />
           <h5

@@ -207,9 +207,13 @@ const CourseContent = ({
                 )}
                 {/* Arrow Button  for collapsed video content*/}
                 <div className="flex items-center">
-                  <AiOutlineDelete
-                    className={`dark:text-white text-[20px] mr-2 text-black ${index > 0 ? "cursor-pointer" : "cursor-no-drop"
-                      }`}
+                  <button
+                    type="button"
+                    aria-label="Delete section"
+                    disabled={index === 0}
+                    className={`bg-transparent border-0 mr-2 ${
+                      index > 0 ? "cursor-pointer" : "cursor-no-drop"
+                    }`}
                     onClick={() => {
                       if (index > 0) {
                         const updatedData = [...courseContentData];
@@ -217,17 +221,26 @@ const CourseContent = ({
                         setCourseContentData(updatedData);
                       }
                     }}
-                  />
-                  <MdOutlineKeyboardArrowDown
-                    fontSize="large"
-                    className="dark:text-white text-black"
-                    style={{
-                      transform: isCollapsed[index]
-                        ? "rotate(180deg)"
-                        : "rotate(0deg)",
-                    }}
+                  >
+                    <AiOutlineDelete className="dark:text-white text-[20px] text-black" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-expanded={!isCollapsed[index]}
+                    aria-label={isCollapsed[index] ? "Expand content" : "Collapse content"}
+                    className="bg-transparent border-0"
                     onClick={() => handleCollapseToggle(index)}
-                  />
+                  >
+                    <MdOutlineKeyboardArrowDown
+                      fontSize="large"
+                      className="dark:text-white text-black"
+                      style={{
+                        transform: isCollapsed[index]
+                          ? "rotate(180deg)"
+                          : "rotate(0deg)",
+                      }}
+                    />
+                  </button>
                 </div>
               </div>
 
@@ -307,17 +320,21 @@ const CourseContent = ({
                           Link {linkIndex + 1}
                         </label>
 
-                        <AiOutlineDelete
-                          className={`${linkIndex === 0
-                            ? "cursor-no-drop"
-                            : "cursor-pointer"
-                            } text-black dark:text-white text-[20px]`}
+                        <button
+                          type="button"
+                          aria-label="Delete link"
+                          disabled={linkIndex === 0}
+                          className={`bg-transparent border-0 ${
+                            linkIndex === 0 ? "cursor-no-drop" : "cursor-pointer"
+                          }`}
                           onClick={() =>
                             linkIndex === 0
                               ? null
                               : handleRemoveLink(index, linkIndex)
                           }
-                        />
+                        >
+                          <AiOutlineDelete className="text-black dark:text-white text-[20px]" />
+                        </button>
                       </div>
                       <input
                         type="text"
@@ -349,13 +366,13 @@ const CourseContent = ({
                   <br />
                   {/* Add new Link */}
                   <div className="inline-block mb-4">
-                    <p
-                      className="flex items-center text-[18px] dark:text-white text-black
-                          cursor-pointer"
+                    <button
+                      type="button"
+                      className="flex items-center text-[18px] dark:text-white text-black cursor-pointer bg-transparent border-0"
                       onClick={() => handleAddLink(index)}
                     >
                       <BsLink45Deg className="mr-2" /> Add Link
-                    </p>
+                    </button>
                   </div>
                 </>
               )}
@@ -364,39 +381,43 @@ const CourseContent = ({
               {/* add new content */}
               {index === courseContentData.length - 1 && (
                 <div>
-                  <p
-                    className="flex items-center text-[18px] dark:text-white text-black cursor-pointer"
+                  <button
+                    type="button"
+                    className="flex items-center text-[18px] dark:text-white text-black cursor-pointer bg-transparent border-0"
                     onClick={() => newContentHandler(item)}
                   >
                     <AiOutlinePlusCircle className="mr-2" /> Add New Content
-                  </p>
+                  </button>
                 </div>
               )}
             </div>
           );
         })}
         <br />
-        <div
-          className="flex items-center text-[20px] dark:text-white text-black cursor-pointer"
+        <button
+          type="button"
+          className="flex items-center text-[20px] dark:text-white text-black cursor-pointer bg-transparent border-0"
           onClick={() => addNewSection()}
         >
           <AiOutlinePlusCircle className="mr-2" /> Add new Section
-        </div>
+        </button>
       </form>
       <br />
       <div className="w-full flex items-center justify-between">
-        <div
+        <button
+          type="button"
           className="w-full 800px:w-45 flex items-center justify-center h-10 bg-[#37a39a] text-center text-white rounded mt-8 m-5 cursor-pointer"
           onClick={() => prevButton()}
         >
           Prev
-        </div>
-        <div
+        </button>
+        <button
+          type="button"
           className="w-full 800px:w-45 flex items-center justify-center h-10 bg-[#37a39a] text-center text-white rounded mt-8 m-5 cursor-pointer"
           onClick={() => handleOptions()}
         >
           Next
-        </div>
+        </button>
       </div>
       <br />
       <br />

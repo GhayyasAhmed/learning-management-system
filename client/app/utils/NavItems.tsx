@@ -38,7 +38,7 @@ const NavItems = ({ activeItem, isMobile }: Props) => {
       <div className="hidden 800px:flex">
         {navItemsData &&
           navItemsData.map((i, index) => (
-            <Link href={`${i.url}`} key={index}>
+            <Link href={`${i.url}`} key={index} aria-current={activeItem === index ? "page" : undefined}>
               <span
                 className={`${
                   activeItem === index
@@ -66,7 +66,7 @@ const NavItems = ({ activeItem, isMobile }: Props) => {
           {/* Mobile Nav Items */}
           {navItemsData &&
             navItemsData.map((i, index) => (
-              <Link href={`${i.url}`} key={index}>
+              <Link href={`${i.url}`} key={index} aria-current={activeItem === index ? "page" : undefined}>
                 <span
                   className={`${
                     activeItem === index

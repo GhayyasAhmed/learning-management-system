@@ -3,7 +3,7 @@ import { RootState } from "@/redux/store";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import toast from "react-hot-toast";
 import { HiOutlineMenuAlt3, HiOutlineUserCircle } from "react-icons/hi";
 import { MdOutlineAdminPanelSettings } from "react-icons/md";
@@ -70,6 +70,22 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
   const sessionAccessToken = customSession?.accessToken;
   const sessionProvider = customSession?.provider;
 
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileDrawerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!openSidebar) return;
+    mobileDrawerRef.current?.focus();
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpenSidebar(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [openSidebar]);
+
   // Trigger social auth only when the session identity itself changes (a
   // fresh NextAuth sign-in). Deliberately does NOT depend on isSuccess/error
   // — those reflect the outcome of an attempt, not a new attempt to make.
@@ -128,13 +144,14 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
 
   const handleClose = () => {
     setOpenSidebar(false);
+    menuButtonRef.current?.focus();
   };
 
   return (
     <header className="w-full relative">
       <div className="w-full h-20" aria-hidden="true" />
       <div
-         className={`fixed top-0 left-0 w-full h-20 z-80 bg-white border-b border-gray-200 transition duration-500 dark:border-gray-700 ${
+        className={`fixed top-0 left-0 w-full h-20 z-80 bg-white border-b border-gray-200 transition duration-500 dark:border-gray-700 ${
           active
             ? "shadow-xl dark:bg-opacity-50 dark:bg-linear-to-b dark:from-gray-900 dark:to-black"
             : "dark:bg-transparent dark:border-[#ffffff1c] dark:shadow"
@@ -167,9 +184,10 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
                 )}
 
               <div className="800px:hidden">
-                 <button
+                <button
                   type="button"
                   aria-label="Open menu"
+                  ref={menuButtonRef}
                   className="cursor-pointer dark:text-white text-black bg-transparent border-0 p-0 flex items-center"
                   onClick={() => setOpenSidebar(true)}
                 >
@@ -214,7 +232,23 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
             onClick={handleClose}
             id="screen"
           >
-            <div className="w-[70%] fixed z-999999999 h-screen bg-white top-0 right-0 dark:bg-slate-900 dark:bg-opacity-90">
+            <div
+              className="w-[70%] fixed z-999999999 h-screen bg-white top-0 right-0 dark:bg-slate-900 dark:bg-opacity-90"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Mobile menu"
+              tabIndex={-1}
+              ref={mobileDrawerRef}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                aria-label="Close menu"
+                className="absolute top-4 right-4 dark:text-white text-black bg-transparent border-0 text-2xl"
+                onClick={handleClose}
+              >
+                &times;
+              </button>
               <NavItems activeItem={activeItem} isMobile={true} />
               {mounted && user ? (
                 <Link href={"/profile"}>

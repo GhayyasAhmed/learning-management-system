@@ -100,7 +100,10 @@ interface UserNameBadgeProps {
   currentUserRole?: string;
 }
 
-const UserNameBadge: FC<UserNameBadgeProps> = ({ userObj, currentUserRole }) => {
+const UserNameBadge: FC<UserNameBadgeProps> = ({
+  userObj,
+  currentUserRole,
+}) => {
   const isDeleted = !userObj || !userObj.name;
 
   if (isDeleted) {
@@ -114,7 +117,11 @@ const UserNameBadge: FC<UserNameBadgeProps> = ({ userObj, currentUserRole }) => 
         </span>
       );
     }
-    return <span className="text-gray-500 dark:text-gray-400 italic">Anonymous User</span>;
+    return (
+      <span className="text-gray-500 dark:text-gray-400 italic">
+        Anonymous User
+      </span>
+    );
   }
 
   return <span>{userObj.name}</span>;
@@ -130,7 +137,7 @@ const CourseContentMedia: FC<Props> = ({
   refetch,
   initialTab,
 }) => {
-  const [active, setActive] = useState<number>(initialTab  ?? 0);
+  const [active, setActive] = useState<number>(initialTab ?? 0);
   const [question, setQuestion] = useState<string>("");
   const [rating, setRating] = useState<number>(1);
   const [review, setReview] = useState<string>("");
@@ -299,11 +306,20 @@ const CourseContentMedia: FC<Props> = ({
         title={data[activeVideo]?.title}
         videoUrl={data[activeVideo]?.videoUrl}
       />
-      <div className="w-full flex items-center justify-between bg-[#1e1e2d] p-4 rounded-md shadow">
+      <div
+        className="w-full flex items-center justify-between bg-[#1e1e2d] p-4 rounded-md shadow"
+        role="tablist"
+        aria-label="Course content sections"
+      >
         {["Overview", "Resources", "Q&A", "Reviews"].map((text, index) => (
-          <h5
+          <button
             key={text}
-            className={`cursor-pointer font-Poppins ${
+            type="button"
+            role="tab"
+            id={`tab-${index}`}
+            aria-selected={active === index}
+            aria-controls={`tabpanel-${index}`}
+            className={`cursor-pointer font-Poppins bg-transparent border-0 ${
               active === index
                 ? "text-red-500 font-semibold"
                 : "dark:text-white text-black"
@@ -311,13 +327,18 @@ const CourseContentMedia: FC<Props> = ({
             onClick={() => setActive(index)}
           >
             {text}
-          </h5>
+          </button>
         ))}
       </div>
 
       {/* Tab 0: Overview */}
       {active === 0 && (
-        <div className="my-5 text-white">
+        <div
+          className="my-5 text-white"
+          role="tabpanel"
+          id="tabpanel-0"
+          aria-labelledby="tab-0"
+        >
           <p className="text-[18px] whitespace-pre-line leading-8">
             {data[activeVideo]?.description ||
               "No description provided for this lesson."}
@@ -327,7 +348,12 @@ const CourseContentMedia: FC<Props> = ({
 
       {/* Tab 1: Resources */}
       {active === 1 && (
-        <div className="my-5">
+        <div
+          className="my-5"
+          role="tabpanel"
+          id="tabpanel-1"
+          aria-labelledby="tab-1"
+        >
           {data[activeVideo]?.links?.map((item: CourseLink, index: number) => (
             <div className="mb-5" key={index}>
               <h2 className="800px:text-[20px] text-[16px] dark:text-white text-black">
@@ -349,7 +375,12 @@ const CourseContentMedia: FC<Props> = ({
       {/* Tab 2: Q&A */}
       {active === 2 && (
         <>
-          <div className="flex w-full my-5">
+          <div
+            // className="flex w-full my-5"
+            role="tabpanel"
+            id="tabpanel-2"
+            aria-labelledby="tab-2"
+          >
             <Image
               src={
                 user?.avatar?.url
@@ -411,7 +442,12 @@ const CourseContentMedia: FC<Props> = ({
 
       {/* Tab 3: Reviews */}
       {active === 3 && (
-        <div className="w-full my-5">
+        <div
+          className="w-full my-5"
+          role="tabpanel"
+          id="tabpanel-3"
+          aria-labelledby="tab-3"
+        >
           {!isReviewed && (
             <>
               <div className="flex w-full">
@@ -431,25 +467,30 @@ const CourseContentMedia: FC<Props> = ({
                     Give a Rating <span className="text-red-500">*</span>
                   </h5>
                   <div className="flex w-full ml-2 pb-3">
-                    {[1, 2, 3, 4, 5].map((i) =>
-                      rating >= i ? (
-                        <AiFillStar
-                          key={i}
-                          className="mr-1 cursor-pointer"
-                          color="rgb(246,186,0)"
-                          size={25}
-                          onClick={() => setRating(i)}
-                        />
-                      ) : (
-                        <AiOutlineStar
-                          key={i}
-                          className="mr-1 cursor-pointer"
-                          color="rgb(246,186,0)"
-                          size={25}
-                          onClick={() => setRating(i)}
-                        />
-                      ),
-                    )}
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        aria-label={`Rate ${i} star${i > 1 ? "s" : ""}`}
+                        aria-pressed={rating === i}
+                        className="mr-1 bg-transparent border-0 p-0"
+                        onClick={() => setRating(i)}
+                      >
+                        {rating >= i ? (
+                          <AiFillStar
+                            color="rgb(246,186,0)"
+                            size={25}
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <AiOutlineStar
+                            color="rgb(246,186,0)"
+                            size={25}
+                            aria-hidden="true"
+                          />
+                        )}
+                      </button>
+                    ))}
                   </div>
                   <textarea
                     name=""
@@ -531,8 +572,10 @@ const CourseContentMedia: FC<Props> = ({
                     {/* Admin Reply Action Button */}
                     {user?.role === "admin" && (
                       <div className="w-full flex justify-end">
-                        <span
-                          className="text-[14px] cursor-pointer text-[#37a39a] flex items-center"
+                        <button
+                          type="button"
+                          className="text-[14px] cursor-pointer text-[#37a39a] flex items-center bg-transparent border-0"
+                          aria-expanded={isReviewReply && reviewId === item._id}
                           onClick={() => {
                             setIsReviewReply(!isReviewReply);
                             setReviewId(item._id);
@@ -540,7 +583,7 @@ const CourseContentMedia: FC<Props> = ({
                         >
                           <BiMessage size={18} className="mr-1" />
                           Reply
-                        </span>
+                        </button>
                       </div>
                     )}
 
@@ -709,8 +752,10 @@ const CommentItem: FC<CommentItemProps> = ({
       </div>
 
       <div className="w-full flex items-center">
-        <span
-          className="800px:pl-16 text-[#000000b8] dark:text-[#ffffff83] cursor-pointer mr-2 flex items-center"
+        <button
+          type="button"
+          className="800px:pl-16 text-[#000000b8] dark:text-[#ffffff83] cursor-pointer mr-2 flex items-center bg-transparent border-0"
+          aria-expanded={replyActive && questionId === item._id}
           onClick={() => {
             setReplyActive(!replyActive);
             setQuestionId(item._id);
@@ -730,7 +775,7 @@ const CommentItem: FC<CommentItemProps> = ({
           ) : (
             "Hide Replies"
           )}
-        </span>
+        </button>
       </div>
 
       {replyActive && questionId === item._id && (

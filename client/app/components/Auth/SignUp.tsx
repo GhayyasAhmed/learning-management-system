@@ -63,10 +63,10 @@ const SignUp = ({ setRoute, setOpen }: Props) => {
 
   return (
     <div className="w-full">
-      <h1 className={`${styles.title}`}>Join to ELarning</h1>
+      <h1 id="modal-modal-title" className={`${styles.title}`}>Join to ELearning</h1>
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label className={`${styles.label}`} htmlFor="name">
+          <label className={`${styles.label}`} htmlFor="name">e
             Enter Your Name
           </label>
           <input
@@ -75,13 +75,15 @@ const SignUp = ({ setRoute, setOpen }: Props) => {
             value={values.name}
             onChange={handleChange}
             id="name"
+            aria-invalid={!!(errors.name && touched.name)}
+            aria-describedby={errors.name && touched.name ? "name-error" : undefined}
             placeholder="User Name"
             className={`${errors.name && touched.name && "border-red-500"} ${
               styles.input
             }`}
           />
           {errors.name && touched.name && (
-            <span className="text-red-500 pt-2 block">{errors.name}</span>
+            <span id="name-error" role="alert" className="text-red-500 pt-2 block">{errors.name}</span>
           )}
         </div>
         <label className={`${styles.label}`} htmlFor="email">
@@ -93,13 +95,15 @@ const SignUp = ({ setRoute, setOpen }: Props) => {
           value={values.email}
           onChange={handleChange}
           id="email"
+          aria-invalid={!!(errors.email && touched.email)}
+          aria-describedby={errors.email && touched.email ? "email-error" : undefined}
           placeholder="loginemail@gmail.com"
           className={`${errors.email && touched.email && "border-red-500"} ${
             styles.input
           }`}
         />
         {errors.email && touched.email && (
-          <span className="text-red-500 pt-2 block">{errors.email}</span>
+          <span id="email-error" role="alert" className="text-red-500 pt-2 block">{errors.email}</span>
         )}
         <div className="w-full mt-5 relative mb-1">
           <label className={`${styles.label}`} htmlFor="password">
@@ -111,26 +115,34 @@ const SignUp = ({ setRoute, setOpen }: Props) => {
             value={values.password}
             onChange={handleChange}
             id="password"
+            aria-invalid={!!(errors.password && touched.password)}
+            aria-describedby={errors.password && touched.password ? "password-error" : undefined}
             placeholder="passwords!@#%"
             className={`${
               errors.password && touched.password && "border-red-500"
             } ${styles.input}`}
           />
           {!show ? (
-            <AiOutlineEyeInvisible
-              className="absolute bottom-3 right-2 z-1 cursor-pointer"
-              size={20}
+            <button
+              type="button"
+              aria-label="Show password"
+              className="absolute bottom-3 right-2 z-1 bg-transparent border-0"
               onClick={() => setShow(true)}
-            />
+            >
+              <AiOutlineEyeInvisible size={20} />
+            </button>
           ) : (
-            <AiOutlineEye
-              className="absolute bottom-3 right-2 z-1 cursor-pointer"
-              size={20}
+            <button
+              type="button"
+              aria-label="Hide password"
+              className="absolute bottom-3 right-2 z-1 bg-transparent border-0"
               onClick={() => setShow(false)}
-            />
+            >
+              <AiOutlineEye size={20} />
+            </button>
           )}
           {errors.password && touched.password && (
-            <span className="text-red-500 pt-2 block">{errors.password}</span>
+            <span id="password-error" role="alert" className="text-red-500 pt-2 block">{errors.password}</span>
           )}
         </div>
         <div className="w-full mt-5">

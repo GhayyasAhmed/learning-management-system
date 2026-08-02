@@ -149,14 +149,18 @@ const EditCategoriesForm = ({
                     }
                     placeholder="Enter category title..."
                   />
-                  <AiOutlineDelete
-                    className="dark:text-white text-black text-[18px] cursor-pointer"
+                  <button
+                    type="button"
+                    aria-label="Delete category"
+                    className="bg-transparent border-0"
                     onClick={() => {
                       setCategories((prevCategory) =>
                         prevCategory.filter((i) => i._id !== item._id)
                       );
                     }}
-                  />
+                  >
+                    <AiOutlineDelete className="dark:text-white text-black text-[18px] cursor-pointer" />
+                  </button>
                 </div>
               </div>
             );
@@ -165,10 +169,14 @@ const EditCategoriesForm = ({
           <br />
           <br />
           <div className="w-full flex justify-center">
-            <IoMdAddCircleOutline
-              className="dark:text-white text-black text-[25px] cursor-pointer"
+            <button
+              type="button"
+              aria-label="Add category"
+              className="bg-transparent border-0"
               onClick={newCategoriesHandler}
-            />
+            >
+              <IoMdAddCircleOutline className="dark:text-white text-black text-[25px] cursor-pointer" />
+            </button>
           </div>
           <button
             type="button"

@@ -106,7 +106,6 @@ const AllInvoices = ({ isDashboard }: Props) => {
     });
   }, [orders, users, courses]);
 
-
   const handleViewDetails = (orderId: string) => {
     const order = orders.find((o) => o._id === orderId);
     if (!order) return;
@@ -163,8 +162,11 @@ const AllInvoices = ({ isDashboard }: Props) => {
               headerName: "Email",
               flex: 0.2,
               renderCell: (params: GridRenderCellParams<IInvoiceRow>) => (
-                 <div className="flex items-center justify-center w-full h-full">
-                  <a href={`mailto:${params.row.userEmail}`} aria-label="Email customer">
+                <div className="flex items-center justify-center w-full h-full">
+                  <a
+                    href={`mailto:${params.row.userEmail}`}
+                    aria-label="Email customer"
+                  >
                     <AiOutlineMail
                       className="dark:text-white text-black"
                       size={20}
@@ -305,7 +307,12 @@ const AllInvoices = ({ isDashboard }: Props) => {
           aria-labelledby="invoice-details-title"
         >
           <Box className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-137.5 max-h-[85vh] overflow-y-auto bg-white dark:bg-slate-900 rounded-lg shadow p-4 800px:p-6 outline-none">
-            <h1 className={`${styles.title} text-start!`}>Invoice Details</h1>
+            <h1
+              id="invoice-details-title"
+              className={`${styles.title} text-start!`}
+            >
+              Invoice Details
+            </h1>
             <div className="font-Poppins text-black dark:text-white space-y-2 mt-4 text-[15px]">
               <p>
                 <span className="font-semibold">Order ID:</span>{" "}
@@ -343,12 +350,13 @@ const AllInvoices = ({ isDashboard }: Props) => {
               </div>
             )}
             <div className="w-full flex justify-end mt-6">
-              <div
+              <button
+                type="button"
                 className={`${styles.button} w-30! h-8.75 cursor-pointer`}
                 onClick={() => setSelectedInvoice(null)}
               >
                 Close
-              </div>
+              </button>
             </div>
           </Box>
         </Modal>
