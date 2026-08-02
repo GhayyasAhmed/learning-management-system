@@ -16,7 +16,7 @@ const AdminProtected= ({children}: AdminProtectedProps) => {
     const { status } = useSession();
 
     // If Redux already has a user, no need to refetch here.
-    const { data, isFetching } = useLoadUserQuery(undefined, {
+    const { data, isFetching } = useLoadUserQuery({}, {
       skip: isAuthenticated,
     });
 

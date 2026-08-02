@@ -1,13 +1,12 @@
 "use client";
 
 import { ThemeProvider } from "@/app/utils/theme-provide";
-import { useLoadUserQuery } from "@/redux/features/api/apiSlice";
-import { store } from "@/redux/store";
+import { apiSlice } from "@/redux/features/api/apiSlice";
+import { AppDispatch, store } from "@/redux/store"; // Import AppDispatch
 import { SessionProvider } from "next-auth/react";
 import React, { useEffect, useRef, useSyncExternalStore } from "react";
-import { Provider } from "react-redux";
+import { Provider, useDispatch } from "react-redux";
 import socketIO, { Socket } from "socket.io-client";
-import Loader from "./components/Loader/Loader";
 
 // Helper subscriptions for useSyncExternalStore to prevent SSR hydration mismatch
 const emptySubscribe = () => () => {};
@@ -38,9 +37,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
 const Custom = ({ children }: { children: React.ReactNode }) => {
   const isMounted = useIsMounted();
   const socketRef = useRef<Socket | null>(null);
+  
+  // Use typed AppDispatch to allow Thunk actions like .initiate()
+  const dispatch = useDispatch<AppDispatch>();
+  const bootstrapped = useRef(false);
 
-  // Load current user details once mounted on client
-  const { isLoading } = useLoadUserQuery({}, { skip: !isMounted });
+  // Refresh session then load user once, without blocking render.
+  useEffect(() => {
+    if (!isMounted || bootstrapped.current) return;
+    bootstrapped.current = true;
+
+    (async () => {
+      await dispatch(apiSlice.endpoints.refreshToken.initiate({}));
+      dispatch(apiSlice.endpoints.loadUser.initiate({}));
+    })();
+  }, [isMounted, dispatch]);
 
   useEffect(() => {
     if (!isMounted) return;
@@ -69,7 +80,6 @@ const Custom = ({ children }: { children: React.ReactNode }) => {
     socket.on("disconnect", onDisconnect);
     socket.on("connect_error", onConnectError);
 
-    // If the socket connected before this effect ran, "connect" won't fire again.
     if (socket.connected) {
       onConnect();
     }
@@ -83,10 +93,5 @@ const Custom = ({ children }: { children: React.ReactNode }) => {
     };
   }, [isMounted]);
 
-  // Ensure SSR and first client render match
-  if (!isMounted) {
-    return <>{children}</>;
-  }
-
-  return <>{isLoading ? <Loader /> : children}</>;
+  return <>{children}</>;
 };

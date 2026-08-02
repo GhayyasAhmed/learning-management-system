@@ -12,7 +12,7 @@ type ProtectedProps = {
 const Protected= ({children}: ProtectedProps) => {
     const isAuthenticated = useAuth();
     const { status } = useSession();
-    const { isFetching } = useLoadUserQuery(undefined, {
+    const { isFetching } = useLoadUserQuery({}, {
       skip: isAuthenticated,
     });
 

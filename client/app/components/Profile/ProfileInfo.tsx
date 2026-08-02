@@ -26,7 +26,7 @@ const ProfileInfo = ({ user, avatar }: ProfileInfoProps) => {
   const [editProfile, { isLoading: isEditLoading }] = useEditProfileMutation();
 
   // Directly trigger refetch if needed, or rely on tag invalidation in userApi/apiSlice
-  const { refetch } = useLoadUserQuery(undefined);
+  const { refetch } = useLoadUserQuery({});
 
   const imageHandler = (e: any) => {
     if (isAvatarLoading) return;

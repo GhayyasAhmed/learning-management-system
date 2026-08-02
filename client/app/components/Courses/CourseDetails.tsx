@@ -106,7 +106,7 @@ const CourseDetails: FC<Props> = ({
     isLoading: isLoadingUser,
     isFetching: isFetchingUser,
     refetch,
-  } = useLoadUserQuery(undefined, { skip: !!reduxUser });
+  } = useLoadUserQuery({}, { skip: !!reduxUser });
   const [open, setOpen] = useState(false);
 
   const user = reduxUser || userData?.user;
