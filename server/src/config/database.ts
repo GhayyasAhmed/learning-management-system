@@ -21,8 +21,8 @@ export async function connectDatabase() {
     isConnected = true;
     console.log("MongoDB connected successfully");
 
-    mongoose.connection.on("error", (err) => {
-      console.error("MongoDB connection error:", err);
+     mongoose.connection.on("error", (err: any) => {
+      console.error("MongoDB connection error:", err?.message || "Unknown error");
       isConnected = false;
     });
 
@@ -32,8 +32,11 @@ export async function connectDatabase() {
     });
 
     return db;
-  } catch (error) {
-    console.error("Failed to connect to MongoDB:", error);
+  } catch (error: any) {
+    const message = typeof error?.message === "string"
+      ? error.message.replace(/:\/\/[^@]+@/, "://****@")
+      : "Unknown error";
+    console.error("Failed to connect to MongoDB:", message);
     throw error;
   }
 }

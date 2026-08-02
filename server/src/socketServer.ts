@@ -6,7 +6,6 @@ export const initSocketServer = (server: http.Server) => {
     const io = new SocketIOServer(server);
   
     io.on("connection", (socket) => {
-    console.log("User Connected!");
  
     //Listen for Notification Event from the Server
     socket.on("notification", (data) => {
@@ -16,7 +15,6 @@ export const initSocketServer = (server: http.Server) => {
     });
   
     socket.on("disconnect", () => {
-      console.log("User Disconnected!");
     });
   });
 };

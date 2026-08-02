@@ -26,19 +26,26 @@ const sendEmail = async (options: EmailOptions): Promise<void> => {
     },
   });
 
-  // 👇 FIX: Resolves to 'dist/mails/<template>' in production and 'src/mails/<template>' in dev
   const templatePath = path.join(__dirname, "../mails", options.template);
 
-  const html: string = await ejs.renderFile(templatePath, options.data);
+  try {
+    const html: string = await ejs.renderFile(templatePath, options.data);
 
-  const mailOptions = {
-    from: process.env.SMTP_MAIL,
-    to: options.email,
-    subject: options.subject,
-    html,
-  };
+    const mailOptions = {
+      from: process.env.SMTP_MAIL,
+      to: options.email,
+      subject: options.subject,
+      html,
+    };
 
-  await transporter.sendMail(mailOptions);
+    await transporter.sendMail(mailOptions);
+  } catch (error: any) {
+    console.error(
+      `Email send failed (template: ${options.template}):`,
+      error?.message
+    );
+    throw error;
+  }
 };
 
 export default sendEmail;

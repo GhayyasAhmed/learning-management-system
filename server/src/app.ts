@@ -81,6 +81,7 @@ const ensureDatabaseConnection = async (
     await connectDatabase();
     next();
   } catch (error) {
+    console.error(`DB unavailable for ${req.method} ${req.originalUrl}`);
     res.status(500).json({
       success: false,
       message: "Database connection fail: Please check MONGO_URI string or network status.",

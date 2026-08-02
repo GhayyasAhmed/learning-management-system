@@ -268,6 +268,7 @@ export const stripeWebhook = catchAsyncError(
         STRIPE_WEBHOOK_SECRET
       );
     } catch (error: any) {
+      console.error("Stripe webhook signature verification failed:", error?.message);
       return next(
         new ErrorHandler(`Invalid webhook signature: ${error.message}`, 400)
       );
@@ -391,6 +392,7 @@ export const newPayment = catchAsyncError(
         success: true,
       });
     } catch (error: any) {
+      console.error("Stripe payment intent creation failed:", error?.message);
       return next(new ErrorHandler(error.message, 500));
     }
   }

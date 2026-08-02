@@ -25,7 +25,7 @@ export const registerUser = catchAsyncError(async (req: Request, res: Response, 
     try {
         const { name, email, password } = req.body;
 
-         if (!isNonEmptyString(name) || name.trim().length < 2) {
+        if (!isNonEmptyString(name) || name.trim().length < 2) {
             return next(new ErrorHandler("Please enter a valid name", 400));
         }
 
@@ -237,7 +237,7 @@ export const loginUser = catchAsyncError(async (req: Request, res: Response, nex
             return next(new ErrorHandler("Invalid email or password", 401))
         }
 
-        sendToken(user, 200, res, "Login successful")
+        await sendToken(user, 200, res, "Login successful")
     }
     catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
@@ -251,7 +251,7 @@ export const logoutUser = catchAsyncError(async (req: Request, res: Response, ne
         res.cookie("accessToken", null, { expires: new Date(Date.now()), httpOnly: true })
         res.cookie("refreshToken", null, { expires: new Date(Date.now()), httpOnly: true })
 
-        redis.del(req.user?._id.toString() || "")
+        await redis.del(req.user?._id.toString() || "")
 
         res.status(200).json({ success: true, message: "Logged out successfully" })
     }
@@ -313,6 +313,7 @@ export const getUserInfo = catchAsyncError(async (req: Request, res: Response, n
                 success: true,
                 user: userData
             });
+            return next(new ErrorHandler("User session not found. Please login again.", 401));
         }
     }
     catch (error: any) {
@@ -385,7 +386,8 @@ const verifySocialIdentity = async (
         }
 
         return null;
-    } catch {
+    } catch (error: any) {
+        console.error(`Social identity verification failed for ${provider}:`, error?.message);
         return null;
     }
 };
@@ -434,10 +436,10 @@ export const socialAuth = catchAsyncError(async (req: Request, res: Response, ne
                 isVerified: true,
             });
 
-            sendToken(newUser, 201, res, "User registered successfully");
+            await sendToken(newUser, 201, res, "User registered successfully");
         }
         else {
-            sendToken(user, 200, res, "Login successful")
+            await sendToken(user, 200, res, "Login successful")
         }
 
     }
@@ -520,7 +522,7 @@ export const updateUserPassword = catchAsyncError(async (req: Request, res: Resp
         user.password = newPassword;
         await user.save();
 
-        sendToken(user, 200, res, "Password updated successfully")
+        await sendToken(user, 200, res, "Password updated successfully")
 
     }
     catch (error: any) {
@@ -631,7 +633,7 @@ export const deleteUser = catchAsyncError(async (req: Request, res: Response, ne
         if (!isValidObjectId(userId)) {
             return next(new ErrorHandler("Invalid user id", 400));
         }
-        
+
         const user = await UserModel.findById(userId)
         if (!user) {
             return next(new ErrorHandler("User not found", 404))

@@ -31,15 +31,27 @@ const errorMiddleware = (err: any,req: Request,res: Response,next: NextFunction)
         err = new ErrorHandler(message, 400)
     }
 
-    // mongoose validation error
-    if(err.name === "ValidationError"){
-        const message = Object.values(err.errors).map((val: any) => val.message).join(", ")
-        err = new ErrorHandler(message, 400)
+    const isOperational = err.isOperational === true;
+
+    if (err.statusCode >= 500 || !isOperational) {
+        console.error(
+            `[${req.method}] ${req.originalUrl} ->`,
+            err.stack || err.message
+        );
+    } else {
+        console.warn(
+            `[${req.method}] ${req.originalUrl} -> ${err.statusCode}: ${err.message}`
+        );
     }
+
+    const responseMessage =
+        !isOperational && err.statusCode >= 500
+            ? "Something went wrong. Please try again later."
+            : err.message;
 
     res.status(err.statusCode).json({
         success: false,
-        message: err.message
+        message: responseMessage
     })
 }
 
