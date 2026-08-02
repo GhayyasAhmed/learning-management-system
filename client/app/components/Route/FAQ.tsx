@@ -51,9 +51,9 @@ const FAQ = () => {
         />
       )}
       <div className="w-[90%] 800px:w-[80%] m-auto">
-        <h2 className={`${styles.title} 800px:text-[40px]`}>
+        {/* <h2 className={`${styles.title} 800px:text-[40px]`}>
           Frequently Asked Questions
-        </h2>
+        </h2> */}
         <div className="mt-12">
           <div className="space-y-8">
             {questions.map((q: IQuestionItem) => (
