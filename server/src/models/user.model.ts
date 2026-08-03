@@ -103,6 +103,8 @@ userSchema.methods.comparePassword = async function(enteredPassword: string): Pr
 }
 
 
+userSchema.index({ createdAt: -1 });
+
 const UserModel:Model<IUser> = mongoose.model("User", userSchema)
 
 export default UserModel;

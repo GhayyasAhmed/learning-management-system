@@ -38,6 +38,8 @@ interface IFulfillOrderParams {
   courseId: string;
   userId: string;
   paymentIntent: Stripe.PaymentIntent;
+  course?: any;
+  user?: any;
 }
 
 interface IFulfillOrderResult {
@@ -50,6 +52,8 @@ const fulfillCourseOrder = async ({
   courseId,
   userId,
   paymentIntent,
+  course: preloadedCourse,
+  user: preloadedUser,
 }: IFulfillOrderParams): Promise<IFulfillOrderResult> => {
   if (!isValidObjectId(courseId)) {
     throw new ErrorHandler("Invalid course ID", 400);
@@ -67,12 +71,12 @@ const fulfillCourseOrder = async ({
     return { alreadyProcessed: true, order: existingOrder };
   }
 
-  const course = await CourseModel.findById(courseId);
+  const course = preloadedCourse ?? await CourseModel.findById(courseId);
   if (!course) {
     throw new ErrorHandler("Course not found.", 404);
   }
 
-  const user = await UserModel.findById(userId);
+  const user = preloadedUser ?? await UserModel.findById(userId);
   if (!user) {
     throw new ErrorHandler("User not found.", 404);
   }
@@ -228,6 +232,8 @@ export const createOrder = catchAsyncError(
         courseId: normalizedCourseId,
         userId,
         paymentIntent,
+        course,
+        user,
       });
 
       res.status(201).json({
@@ -313,7 +319,7 @@ export const stripeWebhook = catchAsyncError(
 export const getAllOrders = catchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const orders = await OrderModel.find().sort({ createdAt: -1 });
+      const orders = await OrderModel.find().sort({ createdAt: -1 }).lean();
 
       res.status(201).json({
         success: true,

@@ -29,6 +29,9 @@ const notificationSchema: Schema<INotification> = new mongoose.Schema({
     reviewId: { type: String },
 }, { timestamps: true })
 
+notificationSchema.index({ createdAt: -1 });
+notificationSchema.index({ status: 1, createdAt: -1 });
+
 const NotificationModel: Model<INotification> = mongoose.model("Notification", notificationSchema)
 
 export default NotificationModel;

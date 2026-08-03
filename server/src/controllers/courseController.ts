@@ -28,13 +28,16 @@ export const updatePublicCourseCache = async (courseId: string) => {
             .populate({
                 path: "reviews.reviewReplies.user",
                 select: "name avatar role",
-            });
+            })
+            .lean();
 
         if (course) {
             await redis.set(courseId, JSON.stringify(course), "EX", 604800);
         }
+        return course;
     } catch (error) {
         console.error("Failed to update public course Redis cache:", error);
+        return null;
     }
 };
 
@@ -158,7 +161,8 @@ export const getSingleCourseWithoutPurchase = catchAsyncError(
                 .populate({
                     path: "reviews.reviewReplies.user",
                     select: "name avatar role",
-                });
+                })
+                .lean();
 
             if (!course) {
                 return next(new ErrorHandler("Course not found", 404));
@@ -181,7 +185,8 @@ export const getAllCourseWithoutPurchase = catchAsyncError(
         try {
             const courses = await CourseModel.find({}).select(
                 "-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links"
-            );
+            )
+            .lean();
 
             res.status(200).json({
                 success: true,
@@ -219,7 +224,7 @@ export const getCourseByUser = catchAsyncError(
                     path: "courseData.questions.questionReplies.user",
                     select: "name avatar role email",
                 },
-            ]);
+            ]).lean();
 
             if (!course) {
                 return next(new ErrorHandler("Invalid course id", 404));
@@ -280,7 +285,8 @@ export const addQuestion = catchAsyncError(
                 .populate({
                     path: "courseData.questions.questionReplies.user",
                     select: "name avatar role email",
-                });
+                })
+                .lean();
 
             if (!updatedCourse) {
                 return next(new ErrorHandler("Course or content module not found", 404));
@@ -371,7 +377,8 @@ export const addAnswer = catchAsyncError(
                 .populate({
                     path: "courseData.questions.questionReplies.user",
                     select: "name email avatar role",
-                });
+                })
+                .lean();
 
             if (!updatedCourse) {
                 return next(new ErrorHandler("Course, content, or question not found", 404));
@@ -572,7 +579,8 @@ export const addReviewReply = catchAsyncError(
                 .populate({
                     path: "reviews.reviewReplies.user",
                     select: "name avatar role",
-                });
+                })
+                .lean();
 
             if (!updatedCourse) {
                 return next(new ErrorHandler("Course or reviews module not found", 404));
@@ -596,7 +604,7 @@ export const addReviewReply = catchAsyncError(
 export const getAllCourses = catchAsyncError(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const courses = await CourseModel.find().sort({ createdAt: -1 });
+            const courses = await CourseModel.find().sort({ createdAt: -1 }).lean();
 
             res.status(201).json({
                 success: true,

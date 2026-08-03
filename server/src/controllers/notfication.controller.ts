@@ -28,6 +28,7 @@ export const getAllNotifications = catchAsyncError(async (req: Request, res: Res
                 .sort({ createdAt: -1 })
                 .skip((page - 1) * limit)
                 .limit(limit),
+                // .lean(),
             NotificationModel.countDocuments(query),
             NotificationModel.countDocuments({ status: "unread" }),
         ]);

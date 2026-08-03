@@ -35,6 +35,8 @@ const orderSchema: Schema<IOrder> = new mongoose.Schema({
     }
 }, {timestamps: true})
 
+orderSchema.index({ createdAt: -1 });
+
 const OrderModel: Model<IOrder>= mongoose.model("Order", orderSchema)
 
 export default OrderModel;

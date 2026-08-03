@@ -583,7 +583,7 @@ export const updateProfilePicture = catchAsyncError(async (req: Request, res: Re
 
 export const getAllUsers = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const users = await UserModel.find().sort({ createdAt: -1 })
+        const users = await UserModel.find().sort({ createdAt: -1 }).lean()
 
         res.status(201).json({
             success: true,
