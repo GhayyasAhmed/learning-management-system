@@ -8,7 +8,8 @@ import {
     updateAccessToken,
     updateProfilePicture,
     updateUserInfo, updateUserPassword,
-    updateUserRole
+    updateUserRole,
+    refreshTokenHandler 
 } from "../controllers/userController.js";
 import { authorizeRoles, isAuthenticated } from "../middlewares/auth.js";
 import {
@@ -24,7 +25,8 @@ userRouter.post("/register", strictAuthLimiter, registerUser)
 userRouter.post("/activate", strictAuthLimiter, activateUser)
 userRouter.post("/login", strictAuthLimiter, loginUser)
 userRouter.get("/logout",updateAccessToken, isAuthenticated, logoutUser)
-userRouter.get("/refreshtoken", authLimiter, updateAccessToken)
+// userRouter.get("/refreshtoken", authLimiter, updateAccessToken)
+userRouter.get("/refreshtoken", authLimiter, updateAccessToken, refreshTokenHandler)
 userRouter.get("/me",updateAccessToken, isAuthenticated, getUserInfo)
 userRouter.post("/social-auth", strictAuthLimiter, socialAuth)
 userRouter.patch("/me/update",updateAccessToken, isAuthenticated, updateUserInfo)

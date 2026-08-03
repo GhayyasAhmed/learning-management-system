@@ -302,6 +302,15 @@ export const updateAccessToken = catchAsyncError(async (req: Request, res: Respo
 });
 
 
+export const refreshTokenHandler = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
+    res.status(200).json({
+        success: true,
+        accessToken: res.locals.accessToken
+        // ,
+        // user: res.locals.user
+    });
+});
+
 export const getUserInfo = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         // get user info from redis cache without password
