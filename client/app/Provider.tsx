@@ -53,19 +53,25 @@ const Custom = ({ children }: { children: React.ReactNode }) => {
     socketRef.current = socket;
 
     const onConnect = () => {
-      console.log("Connected to socket");
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Connected to socket");
+      }
     };
 
     const onDisconnect = (reason: unknown) => {
-      console.log("Socket disconnected:", reason);
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Socket disconnected:", reason);
+      }
     };
 
     const onConnectError = (err: unknown) => {
-      const msg =
-        typeof err === "object" && err && "message" in err
-          ? (err as { message?: unknown }).message
-          : err;
-      console.log("Socket connect_error:", msg);
+      if (process.env.NODE_ENV !== "production") {
+        const msg =
+          typeof err === "object" && err && "message" in err
+            ? (err as { message?: unknown }).message
+            : err;
+        console.log("Socket connect_error:", msg);
+      }
     };
 
     socket.on("connect", onConnect);

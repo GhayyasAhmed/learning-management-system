@@ -53,7 +53,9 @@ const Profile = ({ user }: Props) => {
       //   await signOut();
       // }
     } catch (err) {
-      toast.error(`Logout request failed (continuing local logout):, ${err}`);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Logout request failed:", err);
+      }
     }
   };
 

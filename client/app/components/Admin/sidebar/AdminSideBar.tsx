@@ -75,22 +75,15 @@ const AdminSideBar = () => {
 
   const logoutHandler = async () => {
     setLogout(true);
-    if (session) {
-      await signOut();
+    try {
+      if (session) {
+        await signOut();
+      }
+    } catch (err) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Sign out failed:", err);
+      }
     }
-    // dispatch(userLoggedOut());
-    // toast.success("Logged out successfully!");
-    // toast.success("Logged out successfully!");
-    // try {
-    //   await logoutUser(undefined).unwrap();
-    // } catch (err) {
-    //   console.log("Logout request failed (continuing local logout):", err);
-    // } finally {
-    //   dispatch(userLoggedOut());
-    //   toast.success("Logged out successfully!");
-    //   // End NextAuth session too (prevents automatic re-login on refresh)
-    //   await signOut({ redirect: true, callbackUrl: "/" });
-    // }
   };
 
   useEffect(() => {

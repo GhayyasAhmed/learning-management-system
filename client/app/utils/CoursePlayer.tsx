@@ -14,6 +14,7 @@ const CoursePlayer = ({ videoUrl, title }: Props) => {
   });
 
   useEffect(() => {
+    let ignore = false;
     const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL;
     if (!baseUrl) {
       toast.error("Failed to upload video. Try again");
@@ -24,14 +25,15 @@ const CoursePlayer = ({ videoUrl, title }: Props) => {
         videoId: videoUrl,
       })
       .then((res) => {
-        setVideoData(res.data);
+        if (!ignore) setVideoData(res.data);
       })
       .catch(() => {
-        toast.error("Failed to upload video. Try again");
-        // console.error("VdoCipher OTP API Error:", err?.response?.data || err);
+        if (!ignore) toast.error("Failed to upload video. Try again");
       });
+    return () => {
+      ignore = true;
+    };
   }, [videoUrl]);
-
   return (
     <div
       style={{ position: "relative", paddingTop: "56.25%", overflow: "hidden" }}

@@ -26,7 +26,9 @@ export const authApi = apiSlice.injectEndpoints({
           const result = await queryFulfilled;
           dispatch(userRegistration({ token: result.data.activationToken }));
         } catch (error) {
-          console.log("Error occurred in registration API", error);
+          if (process.env.NODE_ENV !== "production") {
+            console.log("Error occurred in registration API", error);
+          }
         }
       },
     }),
@@ -57,7 +59,9 @@ export const authApi = apiSlice.injectEndpoints({
             })
           );
         } catch (error) {
-          console.log("Error occurred in login API", error);
+          if (process.env.NODE_ENV !== "production") {
+            console.log("Error occurred in login API", error);
+          }
         }
       },
     }),
@@ -80,7 +84,9 @@ export const authApi = apiSlice.injectEndpoints({
             })
           );
         } catch (error) {
-          console.log("Error occurred in socialAuth API", error);
+          if (process.env.NODE_ENV !== "production") {
+            console.log("Error occurred in socialAuth API", error);
+          }
         }
       },
     }),
@@ -96,8 +102,9 @@ export const authApi = apiSlice.injectEndpoints({
           await queryFulfilled;
           dispatch(userLoggedOut());
         } catch (error) {
-          console.log("Error occurred in logoutUser API", error);
-          // dispatch(userLoggedOut());
+          if (process.env.NODE_ENV !== "production") {
+            console.log("Error occurred in logoutUser API", error);
+          }
         }
       },
     }),

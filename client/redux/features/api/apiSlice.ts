@@ -7,6 +7,9 @@ const rawBaseQuery = fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_SERVER_URL,
 });
 
+let isHandlingUnauthorized = false;
+
+
 // Added missing '<' before string
 const baseQueryWithAuthHandling: BaseQueryFn<
     string | FetchArgs,
@@ -16,13 +19,17 @@ const baseQueryWithAuthHandling: BaseQueryFn<
     const result = await rawBaseQuery(args, api, extraOptions);
 
     if (result.error && result.error.status === 401) {
-        const state = api.getState() as { auth?: { user?: unknown } };
-        // Only notify if a session actually existed — avoids toasting on
-        // routine guest 401s (e.g. unauthenticated pages hitting protected data).
-        if (state?.auth?.user) {
-            toast.error("Session expired. Please login again.");
+        if (!isHandlingUnauthorized) {
+            isHandlingUnauthorized = true;
+            const state = api.getState() as { auth?: { user?: unknown } };
+            if (state?.auth?.user) {
+                toast.error("Session expired. Please login again.");
+            }
+            api.dispatch(userLoggedOut());
+            setTimeout(() => {
+                isHandlingUnauthorized = false;
+            }, 2000);
         }
-        api.dispatch(userLoggedOut());
     }
 
     return result;
@@ -65,7 +72,9 @@ export const apiSlice = createApi({
                         dispatch(userLoggedOut());
                     }
                 } catch (error: unknown) {
-                    console.log("Error occured in loadUser api", error);
+                    if (process.env.NODE_ENV !== "production") {
+                        console.log("Error occured in loadUser api", error);
+                    }
                 }
             },
         }),
