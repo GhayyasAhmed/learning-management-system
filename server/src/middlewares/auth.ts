@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { env } from "../config/env.js";
-import { redis } from "../config/redis.js";
+import { redis, sessionKey } from "../config/redis.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import CatchAsyncError from "./catchAsyncError.js";
 
@@ -21,7 +21,7 @@ export const isAuthenticated = CatchAsyncError(async (req: Request, res: Respons
         return next(new ErrorHandler("Invalid access token", 401))
     }
 
-    const user = await redis.get(decodedData.id)
+    const user = await redis.get(sessionKey(decodedData.id))
 
     if(!user){
         return next(new ErrorHandler("Session expired. Please login again", 401))

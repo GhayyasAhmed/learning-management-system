@@ -5,6 +5,7 @@ import ErrorHandler from "../utils/errorhandler.js";
 import cloudinary from "cloudinary"
 import LayoutModel from "../models/layout.model.js";
 import { isNonEmptyString } from "../utils/validators.js";
+import { cacheDel, cacheGet, cacheSet, layoutCacheKey } from "../config/redis.js";
 
 export const createLayout = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -61,7 +62,9 @@ export const createLayout = catchAsyncError(async (req: Request, res: Response, 
         } else {
             return next(new ErrorHandler("Invalid layout type", 400));
         }
-
+        
+        await cacheDel(layoutCacheKey(type));
+        
         res.status(201).json({
             success: true,
             message: "Layout created successfully",
@@ -146,6 +149,8 @@ export const editLayout = catchAsyncError(async (req: Request, res: Response, ne
             );
         }
 
+        await cacheDel(layoutCacheKey(type));
+
         res.status(201).json({
             success: true,
             message: "Layout updated successfully"
@@ -164,10 +169,21 @@ export const getLayoutByType = catchAsyncError(async (req: Request, res: Respons
             return next(new ErrorHandler("Layout type is required", 400));
         }
 
-        const layout = await LayoutModel.findOne({ type: type.toLowerCase() });
-        // const layout = await LayoutModel.findOne({
-        //     type: { $regex: new RegExp(`^${type}$`, "i") }
-        // });
+        const normalizedType = type.toLowerCase();
+        const cacheKey = layoutCacheKey(normalizedType);
+        const cached = await cacheGet(cacheKey);
+        if (cached) {
+            return res.status(200).json({
+                success: true,
+                layout: JSON.parse(cached),
+            });
+        }
+
+        const layout = await LayoutModel.findOne({ type: normalizedType });
+
+        if (layout) {
+            await cacheSet(cacheKey, JSON.stringify(layout), 86400);
+        }
 
         res.status(200).json({
             success: true,

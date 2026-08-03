@@ -8,8 +8,8 @@ import UserModel from "../models/user.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import sendEmail from "../utils/sendEmail.js";
 import Stripe from "stripe";
-import { redis } from "../config/redis.js";
 import { isValidObjectId, isNonEmptyString } from "../utils/validators.js";
+import { redis, sessionKey, cacheDel, courseCacheKey, courseListCacheKey } from "../config/redis.js";
 
 const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || "";
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
@@ -104,11 +104,14 @@ const fulfillCourseOrder = async ({
 
   if (!courseExistInUser) {
     user.courses.push({ courseId: course._id.toString() } as any);
-    await redis.set(String(user._id), JSON.stringify(user));
+    const sessionTtlSeconds = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "24", 10) * 60 * 60;
+    await redis.set(sessionKey(String(user._id)), JSON.stringify(user), "EX", sessionTtlSeconds);
     await user.save();
 
     course.purchased = (course.purchased || 0) + 1;
     await course.save();
+    await cacheDel(courseCacheKey(String(course._id)));
+    await cacheDel(courseListCacheKey());
   }
 
   // Best-effort side effects

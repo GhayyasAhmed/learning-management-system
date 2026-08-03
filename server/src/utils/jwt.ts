@@ -1,8 +1,7 @@
 import "dotenv/config";
 import { Response } from "express";
 import { IUser } from "../models/user.model.js";
-import { redis } from "../config/redis.js";
-
+import { redis, sessionKey } from "../config/redis.js";
 
 interface ITokenOptions {
     expires: Date;
@@ -38,8 +37,7 @@ export const sendToken = async (user: IUser, statusCode: number, res: Response, 
     const refreshToken = user.signRefreshToken()
 
     // upload session to redis
-    await redis.set(user._id.toString(), JSON.stringify(user), "EX", refreshTokenExpiresIn / 1000)
-
+    await redis.set(sessionKey(user._id.toString()), JSON.stringify(user), "EX", refreshTokenExpiresIn / 1000)
 
     res.status(statusCode).cookie("accessToken", accessToken, accessTokenOptions)
         .cookie("refreshToken", refreshToken, refreshTokenOptions)

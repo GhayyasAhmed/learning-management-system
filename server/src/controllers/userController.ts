@@ -5,7 +5,7 @@ import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { env } from "../config/env.js";
-import { redis } from "../config/redis.js";
+import { redis, sessionKey } from "../config/redis.js";
 import catchAsyncError from "../middlewares/catchAsyncError.js";
 import UserModel, { IUser, emailRegexPattern } from "../models/user.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
@@ -251,7 +251,7 @@ export const logoutUser = catchAsyncError(async (req: Request, res: Response, ne
         res.cookie("accessToken", null, { expires: new Date(Date.now()), httpOnly: true })
         res.cookie("refreshToken", null, { expires: new Date(Date.now()), httpOnly: true })
 
-        await redis.del(req.user?._id.toString() || "")
+        await redis.del(sessionKey(req.user?._id.toString() || ""))
 
         res.status(200).json({ success: true, message: "Logged out successfully" })
     }
@@ -271,7 +271,8 @@ export const updateAccessToken = catchAsyncError(async (req: Request, res: Respo
             return next(new ErrorHandler("Invalid refresh token", 401));
         }
 
-        const session = await redis.get(decodedRefreshToken.id as string);
+        const session = await redis.get(sessionKey(decodedRefreshToken.id as string));
+
         if (!session) {
             return next(new ErrorHandler("Session expired. Please log in again.", 401));
         }
@@ -292,8 +293,9 @@ export const updateAccessToken = catchAsyncError(async (req: Request, res: Respo
 
         // Update Redis TTL to match 24 hours in seconds (24 * 60 * 60)
         const refreshTokenExpireInSeconds = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "24", 10) * 60 * 60;
-        await redis.set(user._id.toString(), JSON.stringify(user), "EX", refreshTokenExpireInSeconds);
-
+        
+        await redis.set(sessionKey(user._id.toString()), JSON.stringify(user), "EX", refreshTokenExpireInSeconds);
+        
         next();
     }
     catch (error: any) {
@@ -314,16 +316,16 @@ export const refreshTokenHandler = catchAsyncError(async (req: Request, res: Res
 export const getUserInfo = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
     try {
         // get user info from redis cache without password
-        const user = await redis.get(req.user?._id.toString() || "") as string | null;
-        if (user) {
-            const userData = JSON.parse(user);
-            delete userData.password; // Remove password from the user object before sending the response
-            return res.status(200).json({
-                success: true,
-                user: userData
-            });
+        const user = await redis.get(sessionKey(req.user?._id.toString() || "")) as string | null;
+        if (!user) {
             return next(new ErrorHandler("User session not found. Please login again.", 401));
         }
+        const userData = JSON.parse(user);
+        delete userData.password; // Remove password from the user object before sending the response
+        return res.status(200).json({
+            success: true,
+            user: userData
+        });
     }
     catch (error: any) {
         return next(new ErrorHandler(error.message, 400))
@@ -488,8 +490,8 @@ export const updateUserInfo = catchAsyncError(async (req: Request, res: Response
 
         await user.save();
 
-        await redis.set(user._id.toString(), JSON.stringify(user), "EX", parseInt(process.env.REFRESH_TOKEN_EXPIRE || "59", 10) * 60);
-
+        await redis.set(sessionKey(user._id.toString()), JSON.stringify(user), "EX", parseInt(process.env.REFRESH_TOKEN_EXPIRE || "24", 10) * 60 * 60);
+        
         res.status(200).json({
             success: true,
             message: "User info updated successfully",
@@ -575,7 +577,7 @@ export const updateProfilePicture = catchAsyncError(async (req: Request, res: Re
 
         await user.save();
 
-        await redis.set(user._id.toString(), JSON.stringify(user), "EX", parseInt(process.env.REFRESH_TOKEN_EXPIRE || "59", 10) * 60);
+        await redis.set(sessionKey(user._id.toString()), JSON.stringify(user), "EX", parseInt(process.env.REFRESH_TOKEN_EXPIRE || "24", 10) * 60 * 60);
 
         res.status(200).json({
             success: true,
@@ -649,8 +651,8 @@ export const deleteUser = catchAsyncError(async (req: Request, res: Response, ne
         }
 
         await user.deleteOne({ userId })
-        await redis.del(userId)
-
+        await redis.del(sessionKey(userId))
+        
         res.status(200).json({
             success: true,
             message: "User deleted successfully",

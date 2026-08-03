@@ -3,13 +3,19 @@ import cloudinary from "cloudinary";
 import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
-import { redis } from "../config/redis.js";
 import catchAsyncError from "../middlewares/catchAsyncError.js";
 import CourseModel, { ICourse, IReview } from "../models/course.model.js";
 import NotificationModel from "../models/notification.models.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import sendEmail from "../utils/sendEmail.js";
 import { isNonEmptyString, isValidObjectId } from "../utils/validators.js";
+import {
+    cacheDel,
+    cacheGet,
+    cacheSet,
+    courseCacheKey,
+    courseListCacheKey,
+} from "../config/redis.js";
 
 interface IStoredThumbnail {
     public_id: string;
@@ -32,7 +38,7 @@ export const updatePublicCourseCache = async (courseId: string) => {
             .lean();
 
         if (course) {
-            await redis.set(courseId, JSON.stringify(course), "EX", 604800);
+            await cacheSet(courseCacheKey(courseId), JSON.stringify(course), 604800)
         }
         return course;
     } catch (error) {
@@ -45,6 +51,7 @@ export const createCourse = catchAsyncError(
     async (data: ICourse, res: Response, next: NextFunction) => {
         try {
             const course = await CourseModel.create(data);
+            await cacheDel(courseListCacheKey());
             res.status(201).json({
                 success: true,
                 course,
@@ -122,7 +129,8 @@ export const editCourse = catchAsyncError(
             await course.save();
 
             await updatePublicCourseCache(id as string);
-
+            await cacheDel(courseListCacheKey());
+            
             res.status(200).json({
                 success: true,
                 message: "Course updated successfully",
@@ -143,7 +151,9 @@ export const getSingleCourseWithoutPurchase = catchAsyncError(
                 return next(new ErrorHandler("Invalid course id", 400));
             }
 
-            const isCacheExist = await redis.get(id);
+            // const isCacheExist = await redis.get(id);
+            const cacheKey = courseCacheKey(id);
+            const isCacheExist = await cacheGet(cacheKey);
             if (isCacheExist) {
                 const course = JSON.parse(isCacheExist);
                 return res.status(200).json({
@@ -168,7 +178,7 @@ export const getSingleCourseWithoutPurchase = catchAsyncError(
                 return next(new ErrorHandler("Course not found", 404));
             }
 
-            await redis.set(id, JSON.stringify(course), "EX", 604800);
+            await cacheSet(cacheKey, JSON.stringify(course), 604800);
 
             res.status(200).json({
                 success: true,
@@ -183,10 +193,21 @@ export const getSingleCourseWithoutPurchase = catchAsyncError(
 export const getAllCourseWithoutPurchase = catchAsyncError(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
+            const cacheKey = courseListCacheKey();
+            const cached = await cacheGet(cacheKey);
+            if (cached) {
+                return res.status(200).json({
+                    success: true,
+                    courses: JSON.parse(cached),
+                });
+            }
+
             const courses = await CourseModel.find({}).select(
                 "-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links"
             )
             .lean();
+
+            await cacheSet(cacheKey, JSON.stringify(courses), 120);
 
             res.status(200).json({
                 success: true,
@@ -586,8 +607,7 @@ export const addReviewReply = catchAsyncError(
                 return next(new ErrorHandler("Course or reviews module not found", 404));
             }
 
-            // Flush Redis cache for this course ID to ensure fresh data fetch
-            await redis.del(courseId);
+            await cacheDel(courseCacheKey(courseId));
             await updatePublicCourseCache(courseId);
 
             res.status(200).json({
@@ -631,7 +651,8 @@ export const deleteCourse = catchAsyncError(
             }
 
             await course.deleteOne();
-            await redis.del(courseId);
+            await cacheDel(courseCacheKey(courseId));
+            await cacheDel(courseListCacheKey());
 
             res.status(200).json({
                 success: true,
