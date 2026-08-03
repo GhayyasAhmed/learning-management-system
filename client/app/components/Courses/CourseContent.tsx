@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useGetCourseContentQuery } from "../../../redux/features/courses/courseApi";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 import Heading from "../../utils/Heading";
@@ -123,7 +123,6 @@ const CourseContent = ({ id, user, initialTab, initialContentId }: Props) => {
                   id={id}
                   user={user}
                   activeVideo={activeVideo}
-                  // setActiveVideo={setActiveVideo}
                   refetch={refetch}
                   initialTab={initialTab}
                 />

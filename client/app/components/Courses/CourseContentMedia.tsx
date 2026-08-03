@@ -1,11 +1,10 @@
 import Image from "next/image";
-import { FC, useState } from "react";
+import { FC, useState, useRef, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { BiMessage } from "react-icons/bi";
 import { VscVerifiedFilled } from "react-icons/vsc";
-import SocketIO from "socket.io-client";
-
+import SocketIO, { Socket } from "socket.io-client";
 import formatTimeAgo from "@/app/utils/formatTimeAgo";
 import Ratings from "@/app/utils/Ratings";
 import {
@@ -18,7 +17,7 @@ import {
 import CoursePlayer from "@/app/utils/CoursePlayer";
 
 const ENDPOINT = process.env.NEXT_PUBLIC_SOCKET_SERVER_URI || "";
-const socket = SocketIO(ENDPOINT, { transports: ["websocket"] });
+// const socket = SocketIO(ENDPOINT, { transports: ["websocket"] });
 
 // --- TypeScript Interfaces ---
 
@@ -147,6 +146,18 @@ const CourseContentMedia: FC<Props> = ({
   const [reply, setReply] = useState<string>("");
   const [reviewId, setReviewId] = useState<string>("");
 
+  const socketRef = useRef<Socket | null>(null);
+
+  useEffect(() => {
+    if (!ENDPOINT) return;
+    const socket = SocketIO(ENDPOINT, { transports: ["websocket"] });
+    socketRef.current = socket;
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, []);
+
   // RTK Query hooks
   const [addNewQuestion, { isLoading: questionLoading }] =
     useAddNewQuestionMutation();
@@ -193,7 +204,7 @@ const CourseContentMedia: FC<Props> = ({
       setQuestion("");
       refetch();
       toast.success("Question added successfully!");
-      socket?.emit("notification", {
+      socketRef.current?.emit("notification", {
         title: "New Question Received",
         message: `You have a new question in ${data[activeVideo]?.title}`,
         userId: user?._id,
@@ -227,7 +238,7 @@ const CourseContentMedia: FC<Props> = ({
       toast.success("Answer added successfully!");
 
       if (user?.role !== "admin") {
-        socket?.emit("notification", {
+        socketRef.current?.emit("notification", {
           title: "New Reply Received",
           message: `You have a new question reply in ${data[activeVideo]?.title}`,
           userId: user?._id,
@@ -263,7 +274,7 @@ const CourseContentMedia: FC<Props> = ({
       setRating(1);
       courseRefetch();
       toast.success("Review added successfully!");
-      socket?.emit("notification", {
+      socketRef.current?.emit("notification", {
         title: "New Review Received",
         message: `You have a new review in ${data[activeVideo]?.title}`,
         userId: user?._id,

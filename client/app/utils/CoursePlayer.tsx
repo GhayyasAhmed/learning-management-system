@@ -19,11 +19,6 @@ const CoursePlayer = ({ videoUrl, title }: Props) => {
       toast.error("Failed to upload video. Try again");
       return;
     }
-
-    // const url = baseUrl.endsWith("/")
-    //   ? `${baseUrl}getVdoCipherOTP`
-    //   : `${baseUrl}/getVdoCipherOTP`;
-
     axios
       .post(`${baseUrl}/course/getVdoCipherOTP`, {
         videoId: videoUrl,

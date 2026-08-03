@@ -1,9 +1,10 @@
 "use client";
 import { RootState } from "@/redux/store";
+import type { Session } from "next-auth";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { HiOutlineMenuAlt3, HiOutlineUserCircle } from "react-icons/hi";
 import { MdOutlineAdminPanelSettings } from "react-icons/md";
@@ -14,6 +15,7 @@ import {
   useSocialAuthMutation,
 } from "../../redux/features/auth/authApi";
 import { userLoggedOut } from "../../redux/features/auth/authSlice";
+import useIsMounted from "../hooks/useIsMounted";
 import CustomModal from "../utils/CustomModal";
 import { getErrorMessage } from "../utils/getErrorMessage";
 import NavItems from "../utils/NavItems";
@@ -21,7 +23,6 @@ import ThemeSwitcher from "../utils/ThemeSwitcher";
 import Login from "./Auth/Login";
 import SignUp from "./Auth/SignUp";
 import Verification from "./Auth/Verification";
-import type { Session } from "next-auth";
 
 interface CustomSession extends Session {
   accessToken?: string;
@@ -36,18 +37,11 @@ type Props = {
   setRoute: (route: string) => void;
 };
 
-const emptySubscribe = () => () => {};
-const useIsMounted = () =>
-  useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
 
 const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
   const [active, setActive] = useState(false);
   const [openSidebar, setOpenSidebar] = useState(false);
-  const mounted = useIsMounted();
+  const isMounted = useIsMounted();
   const dispatch = useDispatch();
 
   // Extract isSocial flag from state
@@ -170,7 +164,7 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
             <div className="flex items-center">
               <NavItems activeItem={activeItem} isMobile={false} />
               <ThemeSwitcher />
-              {mounted &&
+              {isMounted &&
                 user &&
                 typeof user === "object" &&
                 user.role === "admin" && (
@@ -195,7 +189,7 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
                 </button>
               </div>
 
-              {mounted && user ? (
+              {isMounted && user ? (
                 <Link href={"/profile"}>
                   <Image
                     src={
@@ -250,7 +244,7 @@ const Header = ({ activeItem, open, setOpen, route, setRoute }: Props) => {
                 &times;
               </button>
               <NavItems activeItem={activeItem} isMobile={true} />
-              {mounted && user ? (
+              {isMounted && user ? (
                 <Link href={"/profile"}>
                   <Image
                     src={

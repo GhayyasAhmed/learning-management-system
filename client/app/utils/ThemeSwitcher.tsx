@@ -1,20 +1,11 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useSyncExternalStore } from "react";
 import { BiMoon, BiSun } from "react-icons/bi";
-
-// Helper to detect if running in browser
-const subscribe = () => () => {};
-const getSnapshot = () => true;
-const getServerSnapshot = () => false;
+import useIsMounted from "../hooks/useIsMounted";
 
 const ThemeSwitcher = () => {
-  const isMounted = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot
-  );
+  const isMounted = useIsMounted();
   const { theme, setTheme } = useTheme();
 
   if (!isMounted) return null;

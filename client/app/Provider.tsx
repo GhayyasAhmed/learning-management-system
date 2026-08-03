@@ -2,21 +2,13 @@
 
 import { ThemeProvider } from "@/app/utils/theme-provide";
 import { apiSlice } from "@/redux/features/api/apiSlice";
-import { AppDispatch, store } from "@/redux/store"; // Import AppDispatch
+import { AppDispatch, store } from "@/redux/store";
 import { SessionProvider } from "next-auth/react";
-import React, { useEffect, useRef, useSyncExternalStore } from "react";
+import React, { useEffect, useRef } from "react";
 import { Provider, useDispatch } from "react-redux";
 import socketIO, { Socket } from "socket.io-client";
+import useIsMounted from "./hooks/useIsMounted";
 
-// Helper subscriptions for useSyncExternalStore to prevent SSR hydration mismatch
-const emptySubscribe = () => () => {};
-const useIsMounted = () => {
-  return useSyncExternalStore(
-    emptySubscribe,
-    () => true, // Client value
-    () => false // Server (SSR) value
-  );
-};
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (

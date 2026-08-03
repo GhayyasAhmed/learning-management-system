@@ -9,12 +9,13 @@ import { signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useSyncExternalStore, useEffect } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import avatarDefault from "../../../../public/assets/avatardefault.jpg";
 import { useLogoutUserQuery } from "../../../../redux/features/auth/authApi";
 import { userLoggedOut } from "../../../../redux/features/auth/authSlice";
+import useIsMounted from "../../../hooks/useIsMounted";
 import {
   ArrowBackIosIcon,
   ArrowForwardIosIcon,
@@ -22,8 +23,10 @@ import {
   ExitToAppIcon,
   GroupsIcon,
   HomeOutlinedIcon,
+  LaunchIcon,
   ManageHistoryIcon,
   MapOutlinedIcon,
+  NotificationsIcon,
   OndemandVideoIcon,
   PeopleOutlinedIcon,
   QuizIcon,
@@ -31,8 +34,6 @@ import {
   VideoCallIcon,
   WebIcon,
   WysiwygIcon,
-  NotificationsIcon,
-  LaunchIcon,
 } from "./Icons";
 
 type itemProps = {
@@ -42,14 +43,6 @@ type itemProps = {
   selected: string;
   setSelected: React.Dispatch<React.SetStateAction<string>>;
 };
-
-const emptySubscribe = () => () => {};
-const useIsMounted = () =>
-  useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
 
 // A reusable sidebar link component
 const Item = ({ title, to, icon, selected, setSelected }: itemProps) => {
@@ -66,7 +59,7 @@ const Item = ({ title, to, icon, selected, setSelected }: itemProps) => {
 };
 
 const AdminSideBar = () => {
-  const mounted = useIsMounted();
+  const isMounted = useIsMounted();
   const { data: session } = useSession();
   const { user } = useSelector((state: RootState) => state.auth);
   const userData = typeof user === "object" && user !== null ? user : null;
@@ -103,11 +96,11 @@ const AdminSideBar = () => {
   useEffect(() => {
     if (isLogoutSuccess) {
       dispatch(userLoggedOut());
-      toast.success("Logged out successfuldasdly!");
+      toast.success("Logged out successfully!");
     }
   }, [isLogoutSuccess, dispatch]);
 
-  if (!mounted) {
+  if (!isMounted) {
     return null;
   }
 

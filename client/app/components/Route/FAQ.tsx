@@ -1,6 +1,5 @@
-import { styles } from "@/app/styles/styles";
 import { useGetHeroDataQuery } from "@/redux/features/layout/layoutApi";
-import React, { useState } from "react";
+import { useState } from "react";
 import { HiMinus, HiPlus } from "react-icons/hi";
 
 export interface IQuestionItem {

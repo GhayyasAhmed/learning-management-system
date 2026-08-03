@@ -5,7 +5,7 @@ import { getNotificationLink } from "@/app/utils/notificationLink";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { IoMdNotificationsOutline } from "react-icons/io";
-import socketIO from "socket.io-client";
+import socketIO, { Socket } from "socket.io-client";
 import {
   useGetAllNotificationsQuery,
   useMarkAllNotificationsReadMutation,
@@ -18,7 +18,7 @@ const ENDPOINT =
   process.env.NEXT_PUBLIC_SOCKET_URI ||
   "/";
 
-const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
+// const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
 
 export interface INotification {
   _id: string;
@@ -200,6 +200,7 @@ const DashboardHeader = ({
   ] = useMarkAllNotificationsReadMutation();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -228,14 +229,18 @@ const DashboardHeader = ({
   }, [markAllSuccess, refetch]);
 
   useEffect(() => {
+    const socket = socketIO(ENDPOINT, { transports: ["websocket"] });
+    socketRef.current = socket;
     const onNewNotification = (payload: unknown) => {
       if (payload) refetch();
       playNotificationSound();
     };
 
-    socketId.on("newNotification", onNewNotification);
+    socket.on("newNotification", onNewNotification);
     return () => {
-      socketId.off("newNotification", onNewNotification);
+      socket.off("newNotification", onNewNotification);
+      socket.disconnect();
+      socketRef.current = null;
     };
   }, [refetch, playNotificationSound]);
 
