@@ -3,12 +3,6 @@ import cloudinary from "cloudinary";
 import "dotenv/config";
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
-import catchAsyncError from "../middlewares/catchAsyncError.js";
-import CourseModel, { ICourse, IReview } from "../models/course.model.js";
-import NotificationModel from "../models/notification.models.js";
-import ErrorHandler from "../utils/errorhandler.js";
-import sendEmail from "../utils/sendEmail.js";
-import { isNonEmptyString, isValidObjectId } from "../utils/validators.js";
 import {
     cacheDel,
     cacheGet,
@@ -16,6 +10,13 @@ import {
     courseCacheKey,
     courseListCacheKey,
 } from "../config/redis.js";
+import catchAsyncError from "../middlewares/catchAsyncError.js";
+import CourseModel, { ICourse, IReview } from "../models/course.model.js";
+import NotificationModel from "../models/notification.models.js";
+import ErrorHandler from "../utils/errorhandler.js";
+import { logger } from "../utils/logger.js";
+import sendEmail from "../utils/sendEmail.js";
+import { isNonEmptyString, isValidObjectId } from "../utils/validators.js";
 
 interface IStoredThumbnail {
     public_id: string;
@@ -41,8 +42,11 @@ export const updatePublicCourseCache = async (courseId: string) => {
             await cacheSet(courseCacheKey(courseId), JSON.stringify(course), 604800)
         }
         return course;
-    } catch (error) {
-        console.error("Failed to update public course Redis cache:", error);
+    } catch (error: any) {
+        logger.warn("course_cache_update_failed", {
+            courseId,
+            message: error?.message,
+        });
         return null;
     }
 };
@@ -91,7 +95,7 @@ export const editCourse = catchAsyncError(
         try {
             const { id } = req.params;
 
-             if (!isValidObjectId(id)) {
+            if (!isValidObjectId(id)) {
                 return next(new ErrorHandler("Invalid course id", 400));
             }
 
@@ -130,7 +134,7 @@ export const editCourse = catchAsyncError(
 
             await updatePublicCourseCache(id as string);
             await cacheDel(courseListCacheKey());
-            
+
             res.status(200).json({
                 success: true,
                 message: "Course updated successfully",
@@ -205,7 +209,7 @@ export const getAllCourseWithoutPurchase = catchAsyncError(
             const courses = await CourseModel.find({}).select(
                 "-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links"
             )
-            .lean();
+                .lean();
 
             await cacheSet(cacheKey, JSON.stringify(courses), 120);
 
@@ -525,7 +529,7 @@ export const addReview = catchAsyncError(
 
             await updatePublicCourseCache(courseId);
             const createdReview = course.reviews[course.reviews.length - 1];
-            
+
             const updatedCourse = await CourseModel.findById(courseId)
                 .select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links")
                 .populate({
@@ -685,6 +689,7 @@ export const generateVideoUrl = catchAsyncError(
 
             res.json(response.data);
         } catch (error: any) {
+            logger.warn("vdocipher_otp_failed", { message: error?.message });
             return next(new ErrorHandler(error.message, 400));
         }
     }

@@ -10,8 +10,9 @@ import catchAsyncError from "../middlewares/catchAsyncError.js";
 import UserModel, { IUser, emailRegexPattern } from "../models/user.model.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import { accessTokenOptions, refreshTokenOptions, sendToken } from "../utils/jwt.js";
-import { isNonEmptyString, isValidObjectId } from "../utils/validators.js";
+import { logger } from "../utils/logger.js";
 import sendEmail from "../utils/sendEmail.js";
+import { isNonEmptyString, isValidObjectId } from "../utils/validators.js";
 
 // Use lowercase primitive types 'string' instead of uppercase 'String'
 interface IRegistrationBody {
@@ -293,9 +294,9 @@ export const updateAccessToken = catchAsyncError(async (req: Request, res: Respo
 
         // Update Redis TTL to match 24 hours in seconds (24 * 60 * 60)
         const refreshTokenExpireInSeconds = parseInt(process.env.REFRESH_TOKEN_EXPIRE || "24", 10) * 60 * 60;
-        
+
         await redis.set(sessionKey(user._id.toString()), JSON.stringify(user), "EX", refreshTokenExpireInSeconds);
-        
+
         next();
     }
     catch (error: any) {
@@ -398,7 +399,10 @@ const verifySocialIdentity = async (
 
         return null;
     } catch (error: any) {
-        console.error(`Social identity verification failed for ${provider}:`, error?.message);
+        logger.warn("social_identity_verification_failed", {
+            provider,
+            message: error?.message,
+        });
         return null;
     }
 };
@@ -491,7 +495,7 @@ export const updateUserInfo = catchAsyncError(async (req: Request, res: Response
         await user.save();
 
         await redis.set(sessionKey(user._id.toString()), JSON.stringify(user), "EX", parseInt(process.env.REFRESH_TOKEN_EXPIRE || "24", 10) * 60 * 60);
-        
+
         res.status(200).json({
             success: true,
             message: "User info updated successfully",
@@ -652,7 +656,7 @@ export const deleteUser = catchAsyncError(async (req: Request, res: Response, ne
 
         await user.deleteOne({ userId })
         await redis.del(sessionKey(userId))
-        
+
         res.status(200).json({
             success: true,
             message: "User deleted successfully",

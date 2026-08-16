@@ -3,6 +3,7 @@ import ejs from "ejs";
 import nodeMailer, { Transporter } from "nodemailer";
 import path from "path";
 import { fileURLToPath } from "url";
+import { logger } from "./logger.js";
 
 // ES Module replacement for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -39,11 +40,12 @@ const sendEmail = async (options: EmailOptions): Promise<void> => {
     };
 
     await transporter.sendMail(mailOptions);
+    logger.info("email_sent", { template: options.template });
   } catch (error: any) {
-    console.error(
-      `Email send failed (template: ${options.template}):`,
-      error?.message
-    );
+    logger.error("email_send_failed", {
+      template: options.template,
+      message: error?.message,
+    });
     throw error;
   }
 };

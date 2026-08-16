@@ -1,4 +1,5 @@
 import { rateLimit } from "express-rate-limit";
+import { logger } from "../utils/logger.js";
 
 function readNumber(value: string | undefined, fallback: number): number {
     const parsed = Number(value);
@@ -23,6 +24,13 @@ function buildLimiter(
         windowMs: readNumber(process.env[windowEnvKey], defaultWindowMs),
         limit: readNumber(process.env[limitEnvKey], defaultLimit),
         message: { success: false, message },
+        handler: (req, res, next, options) => {
+            logger.warn("rate_limit_exceeded", {
+                path: req.originalUrl,
+                limiter: windowEnvKey,
+            });
+            res.status(options.statusCode).send(options.message);
+        },
     });
 }
 

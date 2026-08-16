@@ -1,5 +1,6 @@
 import { Redis } from "ioredis";
 import { env } from "./env.js";
+import { logger } from "../utils/logger.js";
 
 const redisClient = () => {
     return env.redisUrl
@@ -8,11 +9,23 @@ const redisClient = () => {
 export const redis = new Redis(redisClient())
 
 redis.on("connect", () => {
-    console.log("Redis connected");
+    logger.info("redis_connected");
+});
+
+redis.on("ready", () => {
+    logger.info("redis_ready");
+});
+
+redis.on("reconnecting", () => {
+    logger.warn("redis_reconnecting");
+});
+
+redis.on("close", () => {
+    logger.warn("redis_closed");
 });
 
 redis.on("error", (err) => {
-    console.error("Redis client error:", err.message);
+    logger.error("redis_client_error", { message: err.message });
 });
 
 
@@ -26,7 +39,7 @@ export const cacheGet = async (key: string): Promise<string | null> => {
     try {
         return await redis.get(key);
     } catch (error: any) {
-        console.error(`Redis GET failed for ${key}:`, error.message);
+        logger.warn("redis_get_failed", { key, message: error.message });
         return null;
     }
 };
@@ -39,7 +52,7 @@ export const cacheSet = async (
     try {
         await redis.set(key, value, "EX", ttlSeconds);
     } catch (error: any) {
-        console.error(`Redis SET failed for ${key}:`, error.message);
+        logger.warn("redis_set_failed", { key, message: error.message });
     }
 };
 
@@ -47,6 +60,6 @@ export const cacheDel = async (key: string): Promise<void> => {
     try {
         await redis.del(key);
     } catch (error: any) {
-        console.error(`Redis DEL failed for ${key}:`, error.message);
+        logger.warn("redis_del_failed", { key, message: error.message });
     }
 };

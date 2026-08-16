@@ -10,6 +10,7 @@ import sendEmail from "../utils/sendEmail.js";
 import Stripe from "stripe";
 import { isValidObjectId, isNonEmptyString } from "../utils/validators.js";
 import { redis, sessionKey, cacheDel, courseCacheKey, courseListCacheKey } from "../config/redis.js";
+import { logger } from "../utils/logger.js";
 
 const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || "";
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
@@ -123,11 +124,11 @@ const fulfillCourseOrder = async ({
       type: "order",
       courseId: course._id.toString(),
     });
-  } catch (error) {
-    console.error(
-      `Failed to create order notification for payment ${paymentIntentId}:`,
-      error
-    );
+  } catch (error: any) {
+    logger.warn("order_notification_failed", {
+      paymentIntentId,
+      message: error?.message,
+    });
   }
 
   try {
@@ -148,11 +149,11 @@ const fulfillCourseOrder = async ({
         },
       },
     });
-  } catch (error) {
-    console.error(
-      `Failed to send order confirmation email for payment ${paymentIntentId}:`,
-      error
-    );
+  } catch (error: any) {
+    logger.warn("order_email_failed", {
+      paymentIntentId,
+      message: error?.message,
+    });
   }
 
   return { alreadyProcessed: false, order };
@@ -277,11 +278,15 @@ export const stripeWebhook = catchAsyncError(
         STRIPE_WEBHOOK_SECRET
       );
     } catch (error: any) {
-      console.error("Stripe webhook signature verification failed:", error?.message);
+      // console.error("Stripe webhook signature verification failed:", error?.message);
+      logger.warn("stripe_webhook_invalid_signature", { message: error?.message });
       return next(
         new ErrorHandler(`Invalid webhook signature: ${error.message}`, 400)
       );
     }
+
+    logger.info("stripe_webhook_received", { eventId: event.id, type: event.type });
+
 
     if (event.type === "payment_intent.succeeded") {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
@@ -289,26 +294,36 @@ export const stripeWebhook = catchAsyncError(
       const userId = paymentIntent.metadata?.userId;
 
       if (!isNonEmptyString(courseId) || !isNonEmptyString(userId)) {
-        console.error(
-          `Stripe webhook event ${event.id}: payment_intent.succeeded (${paymentIntent.id}) is missing courseId/userId metadata; skipping fulfillment.`
-        );
+        // console.error(
+        //   `Stripe webhook event ${event.id}: payment_intent.succeeded (${paymentIntent.id}) is missing courseId/userId metadata; skipping fulfillment.`
+        // );
+        logger.warn("stripe_webhook_missing_metadata", {
+          eventId: event.id,
+          paymentIntentId: paymentIntent.id,
+        });
         return res.status(200).json({ success: true, received: true });
       }
 
       if (!isValidObjectId(courseId) || !isValidObjectId(userId)) {
-        console.error(
-          `Stripe webhook event ${event.id}: Invalid courseId or userId format in metadata; skipping fulfillment.`
-        );
+        // console.error(
+        //   `Stripe webhook event ${event.id}: Invalid courseId or userId format in metadata; skipping fulfillment.`
+        // );
+        logger.warn("stripe_webhook_invalid_metadata", { eventId: event.id });
         return res.status(200).json({ success: true, received: true });
       }
 
       try {
         await fulfillCourseOrder({ courseId, userId, paymentIntent });
+         logger.info("stripe_webhook_fulfilled", {
+          eventId: event.id,
+          paymentIntentId: paymentIntent.id,
+        });
       } catch (error: any) {
-        if (error instanceof ErrorHandler) {
-          console.error(
-            `Stripe webhook event ${event.id} could not be fulfilled: ${error.message}`
-          );
+       if (error instanceof ErrorHandler) {
+          logger.warn("stripe_webhook_fulfillment_failed", {
+            eventId: event.id,
+            message: error.message,
+          });
           return res.status(200).json({ success: true, received: true });
         }
         return next(error);
@@ -401,7 +416,7 @@ export const newPayment = catchAsyncError(
         success: true,
       });
     } catch (error: any) {
-      console.error("Stripe payment intent creation failed:", error?.message);
+      logger.error("stripe_payment_intent_failed", { message: error?.message });
       return next(new ErrorHandler(error.message, 500));
     }
   }

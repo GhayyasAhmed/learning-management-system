@@ -5,6 +5,7 @@ import catchAsyncError from "../middlewares/catchAsyncError.js";
 import NotificationModel from "../models/notification.models.js";
 import ErrorHandler from "../utils/errorhandler.js";
 import { isValidObjectId } from "../utils/validators.js";
+import { logger } from "../utils/logger.js";
 
 
 export const getAllNotifications = catchAsyncError(async (req: Request, res: Response, next: NextFunction) => {
@@ -107,12 +108,15 @@ export const updateNotificationStatus = catchAsyncError(async (req: Request, res
 
 // delete notification more than 30 days old
 
+
 cron.schedule('0 0 0 * * *',  async () => {
+    logger.info("notification_cleanup_started");
     try {
         const thirtyDaysAgo = new Date(Date.now() - 30 *24*60*60*1000)
-        await NotificationModel.deleteMany({status: "read", createdAt: {$lt: thirtyDaysAgo}})
+        const result = await NotificationModel.deleteMany({status: "read", createdAt: {$lt: thirtyDaysAgo}})
+        logger.info("notification_cleanup_completed", { deletedCount: result.deletedCount });
     } catch (error: any) {
-        console.error("Notification cleanup cron failed:", error?.message)
+        logger.error("notification_cleanup_failed", { message: error?.message });
     }
 });
 

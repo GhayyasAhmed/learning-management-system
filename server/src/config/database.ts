@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { env } from "./env.js";
+import { logger } from "../utils/logger.js";
 
 // Disable buffering globally so Mongoose immediately fails if not connected,
 // rather than hanging for 10 seconds.
@@ -14,21 +15,26 @@ export async function connectDatabase() {
 
   try {
     const db = await mongoose.connect(env.mongoUri, {
-      serverSelectionTimeoutMS: 5000, // Timeout faster in production (5s)
-      autoIndex: false, // Prevent performance hit on free tier Atlas
+      serverSelectionTimeoutMS: 5000,
+      autoIndex: false,
     });
 
     isConnected = true;
-    console.log("MongoDB connected successfully");
+    logger.info("mongo_connected");
 
      mongoose.connection.on("error", (err: any) => {
-      console.error("MongoDB connection error:", err?.message || "Unknown error");
+      logger.error("mongo_connection_error", { message: err?.message });
       isConnected = false;
     });
 
     mongoose.connection.on("disconnected", () => {
-      console.warn("MongoDB disconnected. Reconnecting...");
+      logger.warn("mongo_disconnected");
       isConnected = false;
+    });
+
+    mongoose.connection.on("reconnected", () => {
+      logger.info("mongo_reconnected");
+      isConnected = true;
     });
 
     return db;
@@ -36,7 +42,7 @@ export async function connectDatabase() {
     const message = typeof error?.message === "string"
       ? error.message.replace(/:\/\/[^@]+@/, "://****@")
       : "Unknown error";
-    console.error("Failed to connect to MongoDB:", message);
+    logger.error("mongo_connect_failed", { message });
     throw error;
   }
 }

@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
@@ -5,6 +6,7 @@ import mongoose from "mongoose";
 import connectCloudinary from "./config/cloudinary.js";
 import { connectDatabase } from "./config/database.js";
 import { env } from "./config/env.js";
+import { redis } from "./config/redis.js";
 import { stripeWebhook } from "./controllers/order.controller.js";
 import errorMiddleware from "./middlewares/error.js";
 import { generalLimiter } from "./middlewares/rateLimiter.js";
@@ -15,11 +17,40 @@ import notificationRouter from "./routes/notification.routes.js";
 import orderRouter from "./routes/order.routes.js";
 import userRouter from "./routes/userRoutes.js";
 import helmet from "helmet";
+import { logger } from "./utils/logger.js";
 
 const app = express();
 
 // Initialize Cloudinary SDK at application level (Required for Vercel Serverless)
 connectCloudinary();
+
+app.use((req, res, next) => {
+  const requestId = randomUUID();
+  req.id = requestId;
+  res.setHeader("X-Request-Id", requestId);
+  next();
+});
+
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    if (
+      req.originalUrl === "/api/v1/health-check" ||
+      req.originalUrl === "/api/v1/live" ||
+      req.originalUrl === "/test"
+    ) {
+      return;
+    }
+    logger.info("request_completed", {
+      requestId: req.id,
+      method: req.method,
+      path: req.originalUrl,
+      status: res.statusCode,
+      durationMs: Date.now() - start,
+    });
+  });
+  next();
+});
 
 app.use(
   (helmet as any)({
@@ -36,10 +67,10 @@ app.use(
     hsts:
       env.nodeEnv === "production"
         ? {
-            maxAge: env.hstsMaxAge,
-            includeSubDomains: true,
-            preload: true,
-          }
+          maxAge: env.hstsMaxAge,
+          includeSubDomains: true,
+          preload: true,
+        }
         : false,
   }),
 );
@@ -59,7 +90,7 @@ app.use(
       if (!origin || env.allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-
+      logger.warn("cors_rejected", { origin });
       return callback(new Error("CORS origin is not allowed"));
     },
 
@@ -80,8 +111,13 @@ const ensureDatabaseConnection = async (
   try {
     await connectDatabase();
     next();
-  } catch (error) {
-    console.error(`DB unavailable for ${req.method} ${req.originalUrl}`);
+  } catch (error: any) {
+    logger.error("db_unavailable", {
+      requestId: req.id,
+      method: req.method,
+      path: req.originalUrl,
+      message: error?.message,
+    });
     res.status(500).json({
       success: false,
       message: "Database connection fail: Please check MONGO_URI string or network status.",
@@ -161,12 +197,26 @@ app.get("/api/v1/env-check", (req, res) => {
   });
 });
 
+app.get("/api/v1/live", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    uptime: Math.floor(process.uptime()),
+  });
+});
+
 // Production Health Check
-app.get("/api/v1/health-check", (req, res) => {
+app.get("/api/v1/health-check", async (req, res) => {
   const isDbConnected = mongoose.connection.readyState === 1;
 
-  const systemStatus = isDbConnected ? "ok" : "degraded";
-  const statusCode = isDbConnected ? 200 : 503;
+  let isRedisConnected = false;
+  try {
+    isRedisConnected = (await redis.ping()) === "PONG";
+  } catch {
+    isRedisConnected = false;
+  }
+
+  const systemStatus = isDbConnected && isRedisConnected ? "ok" : "degraded";
+  const statusCode = systemStatus === "ok" ? 200 : 503;
 
   res.status(statusCode).json({
     status: systemStatus,
@@ -175,6 +225,9 @@ app.get("/api/v1/health-check", (req, res) => {
     services: {
       database: {
         status: isDbConnected ? "up" : "down",
+      },
+      redis: {
+        status: isRedisConnected ? "up" : "down",
       },
     },
   });
